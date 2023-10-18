@@ -44,12 +44,15 @@ grid_cell_server_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int)::String 
 small_volume_server_path(scan::HerculaneumScan)::String =
   "$(scan.volpkg_path)/volumes_small/$(scan.id)_small.tif"
 
-segment_server_path(scan::HerculaneumScan, segment_id::String; hari=false) =
+segments_server_path(scan::HerculaneumScan; hari=false) =
   if !hari
-    "$(scan.volpkg_path)/paths/$(segment_id)"
+    "$(scan.volpkg_path)/paths"
   else
-    "hari-seldon-uploads/team-finished-paths/scroll1/$(segment_id)"
+    "hari-seldon-uploads/team-finished-paths/scroll1"
   end
+
+segment_server_path(scan::HerculaneumScan, segment_id::AbstractString; hari=false) =
+  segments_server_path(scan::HerculaneumScan; hari=hari) * "/" * segment_id
 
 
 
@@ -84,12 +87,12 @@ have_small_volume(scan::HerculaneumScan) =
 load_small_volume(scan::HerculaneumScan) =
   load(small_volume_path(scan))
 
-segment_path(scan::HerculaneumScan, segment_id::String) =
+segment_path(scan::HerculaneumScan, segment_id::AbstractString) =
   joinpath(DATA_DIR, segment_server_path(scan, segment_id))
 
-have_segment(scan::HerculaneumScan, segment_id::String) =
-  isfile(segment_path(scan, segment_id))
+have_segment(scan::HerculaneumScan, segment_id::AbstractString) =
+  isdir(segment_path(scan, segment_id))
 
-load_segment_mesh(scan::HerculaneumScan, segment_id::String) =
+load_segment_mesh(scan::HerculaneumScan, segment_id::AbstractString) =
   load(joinpath(segment_path(scan, segment_id), "$segment_id.obj"))
 

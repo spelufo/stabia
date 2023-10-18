@@ -1,0 +1,10 @@
+name = "Stabia"
+uuid = "f1df13f5-ccf4-4d6f-9747-ddd05045e27a"
+authors = ["spelufo <santiagopelufo@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
+GLFW = "f7f18e0c-5ee9-5ccd-a5bf-e8befd85ed98"
+MeshIO = "7269a6da-0436-5bbc-96c2-40638cbb6118"
+ModernGL = "66fc600b-dfda-50eb-8b99-91cfa97b1301"

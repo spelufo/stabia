@@ -118,12 +118,56 @@ download_small_volume(scan::HerculaneumScan) =
 
 Download a segment mesh from the vesuvius data server.
 """
-download_segment_obj(scan::HerculaneumScan, segment_id::String; hari=false) = begin
+download_segment_obj(scan::HerculaneumScan, segment_id::AbstractString; hari=false, quiet=true) = begin
   segment_dir = segment_path(scan, segment_id)
   mkpath(segment_dir)
   out = joinpath(segment_dir, "$segment_id.obj")
   if !isfile(out)
+    if !quiet
+      println("Downloading $segment_id...")
+    end
     download_file_to_out(segment_server_path(scan, segment_id; hari=hari) * "/$segment_id.obj", out)
   end
   out
+end
+
+extract_server_dir_links(s) =
+  [match(r"href=\"([^\"]*)/\"", l).captures[1] for l = split(s, "\n") if startswith(l, "<a ")]
+
+list_server_segments(scan::HerculaneumScan; hari=false) = begin
+  dir = segments_server_path(scan; hari=hari)
+  buffer = IOBuffer()
+  download_file_to_out(dir, buffer)
+  dirstr = String(take!(buffer))
+  extract_server_dir_links(dirstr)
+end
+
+"""
+  get_new_server_segments(scan::HerculaneumScan)
+
+List all the new (not found locally) segments from the server.
+"""
+get_new_server_segments(scan::HerculaneumScan) = begin
+  new_segments = []
+  for segment_id = list_server_segments(scan, hari=true)
+    if !have_segment(scan, segment_id) push!(new_segments, segment_id) end
+  end
+  for segment_id = list_server_segments(scan, hari=false)
+    if !have_segment(scan, segment_id) push!(new_segments, segment_id) end
+  end
+  new_segments
+end
+
+"""
+  download_segment_objs(scan::HerculaneumScan)
+
+Download all segments obj files.
+"""
+download_segment_objs(scan::HerculaneumScan) = begin
+  for segment_id = list_server_segments(scan, hari=true)
+    download_segment_obj(scan, segment_id; hari=true, quiet=false)
+  end
+  for segment_id = list_server_segments(scan, hari=false)
+    download_segment_obj(scan, segment_id; hari=false, quiet=false)
+  end
 end
