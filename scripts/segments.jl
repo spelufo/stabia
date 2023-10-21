@@ -1,5 +1,10 @@
 
 
+# 2023.10.21
+# "20231016151003"
+# "20231012184420"
+
+
 # Monster segment:
 # "/stephen-parsons-uploads/recto/extras/Scroll1_part_1_wrap_recto.obj", # 20230501000000
 # "/stephen-parsons-uploads/verso/extras/Scroll1_part_1_wrap_verso.obj", # 20230501000001

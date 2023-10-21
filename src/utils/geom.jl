@@ -186,3 +186,4 @@ orientation_matrix(pose::Pose{F}) where F<:AbstractFloat =
 
 view_matrix(pose::Pose{F}) where F<:AbstractFloat =
   orientation_matrix(pose)*translation(-pose.p)
+

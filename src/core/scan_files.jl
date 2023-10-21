@@ -1,13 +1,3 @@
-struct HerculaneumScan
-  volpkg_path :: String
-  id :: String
-  resolution_um :: Float32
-  xray_energy_KeV :: Float32
-  width::Int
-  height::Int
-  slices::Int
-end
-
 const scroll_1_54 = HerculaneumScan("full-scrolls/Scroll1.volpkg", "20230205180739", 7.91f0, 54f0, 8096, 7888, 14376)
 const scroll_2_54 = HerculaneumScan("full-scrolls/Scroll2.volpkg", "20230210143520", 7.91f0, 54f0, 11984, 10112, 14428)
 const scroll_2_88 = HerculaneumScan("full-scrolls/Scroll2.volpkg", "20230212125146", 7.91f0, 88f0, 11136, 8480, 1610)
@@ -19,29 +9,32 @@ const fragment_3_54 = HerculaneumScan("fragments/Frag3.volpkg", "20230215142309"
 const fragment_3_88 = HerculaneumScan("fragments/Frag3.volpkg", "20230212182547", 3.24f0, 88f0, 6108, 1644, 6650)
 
 
-# Utils ########################################################################
-
-@inline zpad(i::Int, ndigits::Int)::String =
-  lpad(i, ndigits, "0")
-
-
 # Server paths #################################################################
 
-@inline scan_slice_filename(scan::HerculaneumScan, iz::Int)::String = begin
+@inline scan_slice_filename(scan::HerculaneumScan, iz::Int; ext=".tif") = begin
   ndigits = ceil(Int, log10(scan.slices))
-  zpad((iz - 1), ndigits) * ".tif"
+  zpad((iz - 1), ndigits) * ext
 end
 
-scan_slice_server_path(scan::HerculaneumScan, iz::Int)::String =
+scan_slice_server_path(scan::HerculaneumScan, iz::Int) =
   "$(scan.volpkg_path)/volumes/$(scan.id)/$(scan_slice_filename(scan, iz))"
 
-@inline grid_cell_filename(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int)::String =
-  "cell_yxz_$(zpad(jy, 3))_$(zpad(jx, 3))_$(zpad(jz, 3)).tif"
+@inline cell_name(jy::Int, jx::Int, jz::Int) =
+  "cell_yxz_$(zpad(jy, 3))_$(zpad(jx, 3))_$(zpad(jz, 3))"
 
-grid_cell_server_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int)::String =
-  "$(scan.volpkg_path)/volume_grids/$(scan.id)/$(grid_cell_filename(scan, jy, jx, jz))"
+@inline grid_cell_filename(jy::Int, jx::Int, jz::Int) =
+  cell_name(jy, jx, jz) * ".tif"
 
-small_volume_server_path(scan::HerculaneumScan)::String =
+@inline grid_cell_h5_filename(jy::Int, jx::Int, jz::Int) =
+  cell_name(jy, jx, jz) * ".h5"
+
+grid_cell_server_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  "$(scan.volpkg_path)/volume_grids/$(scan.id)/$(grid_cell_filename(jy, jx, jz))"
+
+grid_cell_h5_server_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  "$(scan.volpkg_path)/volume_grids_h5/$(scan.id)/$(grid_cell_h5_filename(jy, jx, jz))"
+
+small_volume_server_path(scan::HerculaneumScan) =
   "$(scan.volpkg_path)/volumes_small/$(scan.id)_small.tif"
 
 segments_server_path(scan::HerculaneumScan; hari=false) =
@@ -78,6 +71,9 @@ have_grid_cell(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
 load_grid_cell(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
   load(grid_cell_path(scan, jy, jx, jz))
 
+grid_cell_h5_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int)::String =
+  joinpath(DATA_DIR, grid_cell_h5_server_path(scan, jy, jx, jz))
+
 small_volume_path(scan::HerculaneumScan) =
   joinpath(DATA_DIR, small_volume_server_path(scan))
 
@@ -95,4 +91,37 @@ have_segment(scan::HerculaneumScan, segment_id::AbstractString) =
 
 load_segment_mesh(scan::HerculaneumScan, segment_id::AbstractString) =
   load(joinpath(segment_path(scan, segment_id), "$segment_id.obj"))
+
+missing_cells(q_cells) = begin
+  cells = []
+  for (jy, jx, jz) = q_cells
+    if !have_grid_cell(scroll_1_54, jy, jx, jz)
+      push!(cells, (jy, jx, jz))
+    end
+  end
+  cells
+end
+
+mesh_grid_cells_missing(mesh) =
+  missing_cells(mesh_grid_cells(mesh))
+
+
+# Segmentation files
+
+segmentation_dir(scan::HerculaneumScan) =
+  joinpath(DATA_DIR, scan.volpkg_path, "segmentation")
+
+cell_segmentation_dir(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  joinpath(segmentation_dir(scan), cell_name(jy, jx, jz))
+
+cell_probabilities_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  joinpath(cell_segmentation_dir(scan, jy, jx, jz), "$(cell_name(jy, jx, jz))_probabilities.h5")
+
+
+load_cell_probabilities(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
+  fid = h5open(cell_probabilities_path(scan, jy, jx, jz))
+  P = permutedims(read(fid, "exported_data")[1,:,:,:,1], (2, 1, 3))
+  close(fid)
+  P
+end
 

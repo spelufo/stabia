@@ -171,3 +171,10 @@ download_segment_objs(scan::HerculaneumScan) = begin
     download_segment_obj(scan, segment_id; hari=false, quiet=false)
   end
 end
+
+
+download_mesh_grid_cells(segment_id) = begin
+  mesh = load_segment_mesh(scroll_1_54, segment_id)
+  cells = mesh_grid_cells_missing(mesh)
+  download_grid_cells(scroll_1_54, cells)
+end

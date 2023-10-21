@@ -1,8 +1,11 @@
-using StaticArrays, GeometryBasics, Images, TiffImages, FileIO
+using StaticArrays, GeometryBasics, Images, TiffImages, FileIO, HDF5
 
-include("utils.jl")
-include("data/data.jl")
+include("utils/utils.jl")
+include("core/core.jl")
 
-using GLFW, ModernGL
+
 
 include("ui/main.jl")
+
+# schedule(Task(main))
+
