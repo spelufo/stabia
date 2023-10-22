@@ -12,7 +12,7 @@ end
 
 
 
-@inline interpolate_trilinear(V::Array{E, 3}, p::Vec{3, E}) where E = begin
+@inline interpolate_trilinear(V::Array{E, 3}, p::Vec{3, F}) where {E, F} = begin
   q = p .+ 0.5f0
   i = floor.(q)
   λ = q - i

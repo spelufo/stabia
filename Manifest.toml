@@ -2,7 +2,7 @@
 
 julia_version = "1.9.3"
 manifest_format = "2.0"
-project_hash = "69103434cb27db3f1dfb665f9e7e943fba11a9d9"
+project_hash = "c8d2794ab40d31679dd837518d59aa0cab724e72"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -78,11 +78,34 @@ git-tree-sha1 = "0c5f81f47bbbcf4aea7b2959135713459170798b"
 uuid = "62783981-4cbd-42fc-bca8-16325de8dc4b"
 version = "0.1.5"
 
+[[deps.CEnum]]
+git-tree-sha1 = "eb4cb44a499229b3b8426dcfb5dd85333951ff90"
+uuid = "fa961155-64e5-5f13-b03f-caf6b980ea82"
+version = "0.4.2"
+
+[[deps.CImGui]]
+deps = ["CEnum", "CSyntax", "ImGuiGLFWBackend", "ImGuiOpenGL2Backend", "ImGuiOpenGLBackend", "LibCImGui", "Preferences"]
+git-tree-sha1 = "00fdeaee1d757a05cdc6545950f37e6cbcd8a866"
+uuid = "5d785b6c-b76f-510e-a07c-3070796c7e87"
+version = "1.82.0"
+
+[[deps.CImGuiPack_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "70939649c5032c166ce2a1fe39a3a177b29a7907"
+uuid = "333409e9-af72-5310-9767-d6ad21a76a05"
+version = "0.1.2+0"
+
 [[deps.CPUSummary]]
 deps = ["CpuId", "IfElse", "PrecompileTools", "Static"]
 git-tree-sha1 = "601f7e7b3d36f18790e2caf83a882d88e9b71ff1"
 uuid = "2a0fbf3d-bb9c-48f3-b0a9-814d99fd7ab9"
 version = "0.2.4"
+
+[[deps.CSyntax]]
+deps = ["CEnum"]
+git-tree-sha1 = "50a830730a04cd9ab8468a60b93ac2ca9d34ba17"
+uuid = "ea656a56-6ca6-5dda-bba5-7b6963a5f74c"
+version = "0.4.0"
 
 [[deps.CatIndices]]
 deps = ["CustomUnitRanges", "OffsetArrays"]
@@ -264,12 +287,6 @@ git-tree-sha1 = "335bfdceacc84c5cdf16aadc768aa5ddfc5383cc"
 uuid = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
 version = "0.8.4"
 
-[[deps.GLFW]]
-deps = ["GLFW_jll"]
-git-tree-sha1 = "35dbc482f0967d8dceaa7ce007d16f9064072166"
-uuid = "f7f18e0c-5ee9-5ccd-a5bf-e8befd85ed98"
-version = "3.4.1"
-
 [[deps.GLFW_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libglvnd_jll", "Pkg", "Xorg_libXcursor_jll", "Xorg_libXi_jll", "Xorg_libXinerama_jll", "Xorg_libXrandr_jll"]
 git-tree-sha1 = "d972031d28c8c8d9d7b41a536ad7bb0c2579caca"
@@ -328,6 +345,24 @@ version = "0.1.16"
 git-tree-sha1 = "debdd00ffef04665ccbb3e150747a77560e8fad1"
 uuid = "615f187c-cbe4-4ef1-ba3b-2fcf58d6d173"
 version = "0.1.1"
+
+[[deps.ImGuiGLFWBackend]]
+deps = ["GLFW_jll", "LibCImGui", "Libdl"]
+git-tree-sha1 = "cde66142bed8d4e9fa5d2dce091f8e23ae223574"
+uuid = "623d79b3-9695-4e60-bd7e-2a5aabaa6933"
+version = "0.1.3"
+
+[[deps.ImGuiOpenGL2Backend]]
+deps = ["LibCImGui", "ModernGL"]
+git-tree-sha1 = "620a3abda6879ef113ca935d054395af2ef6e66e"
+uuid = "c105bd9b-9289-4129-acf4-4c081b46d160"
+version = "0.1.0"
+
+[[deps.ImGuiOpenGLBackend]]
+deps = ["LibCImGui", "ModernGL"]
+git-tree-sha1 = "3b62c67181ca6056dbd0197cd3beabac5c802527"
+uuid = "9d0819b4-44e7-43a2-ad03-8fb999128168"
+version = "0.1.2"
 
 [[deps.ImageBase]]
 deps = ["ImageCore", "Reexport"]
@@ -416,6 +451,12 @@ version = "0.1.14"
 [[deps.LazyArtifacts]]
 deps = ["Artifacts", "Pkg"]
 uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
+
+[[deps.LibCImGui]]
+deps = ["CEnum", "CImGuiPack_jll"]
+git-tree-sha1 = "d5e3aa2006592b25bc45d54ceb38775cf9f86520"
+uuid = "9be01004-c4f5-478b-abeb-cb32b114cf5e"
+version = "1.82.2"
 
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
@@ -825,9 +866,9 @@ version = "1.0.1"
 
 [[deps.Tables]]
 deps = ["DataAPI", "DataValueInterfaces", "IteratorInterfaceExtensions", "LinearAlgebra", "OrderedCollections", "TableTraits"]
-git-tree-sha1 = "a1f34829d5ac0ef499f6d84428bd6b4c71f02ead"
+git-tree-sha1 = "cb76cf677714c095e535e3501ac7954732aeea2d"
 uuid = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
-version = "1.11.0"
+version = "1.11.1"
 
 [[deps.Tar]]
 deps = ["ArgTools", "SHA"]

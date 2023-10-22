@@ -1,62 +1,104 @@
-using GLFW, ModernGL
+using CImGui
+using CImGui.ImGuiGLFWBackend
+using CImGui.ImGuiOpenGLBackend
+using CImGui.ImGuiGLFWBackend.LibGLFW
+using CImGui.ImGuiOpenGLBackend.ModernGL
 
 include("render/shaders.jl")
 include("editor.jl")
 
 @defonce the_window = nothing
+@defonce the_window_width = Int32(800)
+@defonce the_window_height = Int32(600)
+
 @defonce the_editor = nothing
 
-on_frame() = begin
-  glClearColor(1f0, 0f0, 1f0, 1f0)
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+update!() = begin
+  if CImGui.IsKeyPressed(GLFW_KEY_ESCAPE)
+    glfwSetWindowShouldClose(the_window, GLFW_TRUE)
+  end
   update!(the_editor)
+end
+
+draw!() = begin
+  begin # update window size
+    win_width, win_height = Ref{Cint}(0), Ref{Cint}(0)
+    glfwGetFramebufferSize(the_window, win_width, win_height)
+    global the_window_width; the_window_width = win_width[]
+    global the_window_height; the_window_height = win_height[]
+    glViewport(0, 0, the_window_width, the_window_height)
+  end
+  begin # clear
+    glClearColor(1f0, 1f0, 1f0, 1f0)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+  end
   draw!(the_editor)
 end
 
-on_key(window::GLFW.Window, key::GLFW.Key, scancode::Int32, action::GLFW.Action, mode::Int32) = begin
-  if key == GLFW.KEY_ESCAPE
-    GLFW.SetWindowShouldClose(window, true)
-  end
+on_key(window::Ptr{GLFWwindow}, key::Cint, scancode::Cint, action::Cint, mods::Cint)::Cvoid = begin
+  println("key pressed ", key, " ", action)
 end
 
-on_mouse(window::GLFW.Window, button::GLFW.MouseButton, action::GLFW.Action, mode::Int32) =
-  nothing
-
-
 create_window() = begin
-  GLFW.WindowHint(GLFW.CLIENT_API, GLFW.OPENGL_API)
-  GLFW.WindowHint(GLFW.OPENGL_PROFILE, GLFW.OPENGL_CORE_PROFILE)
-  GLFW.WindowHint(GLFW.CONTEXT_VERSION_MAJOR, 4)
-  GLFW.WindowHint(GLFW.CONTEXT_VERSION_MINOR, 2)
-  GLFW.WindowHint(GLFW.OPENGL_DEBUG_CONTEXT, true)
-  GLFW.WindowHint(GLFW.VISIBLE, false)
-  window = GLFW.CreateWindow(800, 600, "Stabia")
+  glsl_version = 420
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API)
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4)
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2)
+  glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true)
+  glfwWindowHint(GLFW_VISIBLE, false)
 
-  GLFW.SetWindowPos(window, 100, 100)
-  GLFW.ShowWindow(window)
+  window = glfwCreateWindow(the_window_width, the_window_height, "Stabia", C_NULL, C_NULL)
+  glfwSetWindowPos(window, 100, 100)
+  glfwShowWindow(window)
 
-  GLFW.SetKeyCallback(window, (window::GLFW.Window, key::GLFW.Key, scancode::Int32, action::GLFW.Action, mode::Int32) -> Base.invokelatest(on_key, window, key, scancode, action, mode))
-  GLFW.SetMouseButtonCallback(window, (window::GLFW.Window, button::GLFW.MouseButton, action::GLFW.Action, mode::Int32) -> Base.invokelatest(on_mouse, window, button, action, mode))
-  # GLFW.SetFramebufferSizeCallback(window, (window::GLFW.Window, width::Int32, height::Int32) -> Base.invokelatest(on_framebuffer_size, window, width, height))
-  # GLFW.SetWindowSizeCallback(window, (window::GLFW.Window, width::Int32, height::Int32) -> Base.invokelatest(on_window_size, window, width, height))
+  glfwSetKeyCallback(window, @cfunction(on_key, Cvoid, (Ptr{GLFWwindow}, Cint, Cint, Cint, Cint)))
 
-  GLFW.MakeContextCurrent(window)
-  GLFW.SwapInterval(1)
+  glfwMakeContextCurrent(window)
+  glfwSwapInterval(1)
 
-  window
+  ig_ctx = CImGui.CreateContext()
+  ig_io = CImGui.GetIO()
+  ig_io.ConfigFlags = unsafe_load(ig_io.ConfigFlags) | CImGui.ImGuiConfigFlags_DockingEnable
+
+  glfw_ctx = ImGuiGLFWBackend.create_context(window, install_callbacks=true)
+  ImGuiGLFWBackend.init(glfw_ctx)
+  gl_ctx = ImGuiOpenGLBackend.create_context(glsl_version)
+  ImGuiOpenGLBackend.init(gl_ctx)
+
+  window, ig_ctx, glfw_ctx, gl_ctx
 end
 
 main() = begin
-  global the_window;  the_window = create_window()
+  @assert isnothing(the_window) "Main window already open."
+  global the_window;  the_window, ig_ctx, glfw_ctx, gl_ctx = create_window()
   global the_editor;  the_editor = Editor()
-  while !GLFW.WindowShouldClose(the_window)
-    yield()  # Allow other tasks to run (e.g. the repl).
-    Base.invokelatest(on_frame)
-    GLFW.SwapBuffers(the_window)
-    GLFW.PollEvents()
+  try
+    while glfwWindowShouldClose(the_window) == GLFW_FALSE
+      glfwPollEvents()
+
+      yield()  # Allow other tasks to run (the repl).
+      ImGuiOpenGLBackend.new_frame(gl_ctx)
+      ImGuiGLFWBackend.new_frame(glfw_ctx)
+      CImGui.NewFrame()
+      Base.invokelatest(update!)
+      CImGui.ShowDemoWindow(Ref(true))
+
+      Base.invokelatest(draw!)
+      CImGui.Render()
+      ImGuiOpenGLBackend.render(gl_ctx)
+      glfwSwapBuffers(the_window)
+    end
+  catch e
+    @error "Error in main loop!" exception=e
+    Base.show_backtrace(stderr, catch_backtrace())
+  finally
+    ImGuiOpenGLBackend.shutdown(gl_ctx)
+    ImGuiGLFWBackend.shutdown(glfw_ctx)
+    CImGui.DestroyContext(ig_ctx)
+    glfwDestroyWindow(the_window)
+    the_window = nothing
   end
-  GLFW.DestroyWindow(the_window)
-  the_window = nothing
 end
 
 # Start main from the julia repl, like this:

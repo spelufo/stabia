@@ -47,26 +47,26 @@ rotate!(cam::PerspectiveCamera, axis::Vec3f, angle::Float32, dt::Float32) =
 
 update(cam::PerspectiveCamera, dt::Float32) = begin
   cam.aspect = ed.layout.window_width / ed.layout.window_height
-  if is_down(ed.keyboard, GLFW.KEY_1)  cam.speed = CAMERA_SPEED  end
-  if is_down(ed.keyboard, GLFW.KEY_2)  cam.speed = CAMERA_SPEED/2  end
-  if is_down(ed.keyboard, GLFW.KEY_3)  cam.speed = CAMERA_SPEED/4  end
-  if is_down(ed.keyboard, GLFW.KEY_4)  cam.speed = CAMERA_SPEED/8  end
-  if is_down(ed.keyboard, GLFW.KEY_5)  cam.speed = CAMERA_SPEED/16  end
-  if is_down(ed.keyboard, GLFW.KEY_W)  move!(cam, -vec3f_z, dt)  end
-  if is_down(ed.keyboard, GLFW.KEY_S)  move!(cam, vec3f_z, dt)  end
-  if is_down(ed.keyboard, GLFW.KEY_D)  move!(cam, vec3f_x, dt)  end
-  if is_down(ed.keyboard, GLFW.KEY_A)  move!(cam, -vec3f_x, dt)  end
-  if is_down(ed.keyboard, GLFW.KEY_E)  move!(cam, vec3f_y, dt)  end
-  if is_down(ed.keyboard, GLFW.KEY_Q)  move!(cam, -vec3f_y, dt)  end
+  if is_down(ed.keyboard, GLFW_KEY_1)  cam.speed = CAMERA_SPEED  end
+  if is_down(ed.keyboard, GLFW_KEY_2)  cam.speed = CAMERA_SPEED/2  end
+  if is_down(ed.keyboard, GLFW_KEY_3)  cam.speed = CAMERA_SPEED/4  end
+  if is_down(ed.keyboard, GLFW_KEY_4)  cam.speed = CAMERA_SPEED/8  end
+  if is_down(ed.keyboard, GLFW_KEY_5)  cam.speed = CAMERA_SPEED/16  end
+  if is_down(ed.keyboard, GLFW_KEY_W)  move!(cam, -vec3f_z, dt)  end
+  if is_down(ed.keyboard, GLFW_KEY_S)  move!(cam, vec3f_z, dt)  end
+  if is_down(ed.keyboard, GLFW_KEY_D)  move!(cam, vec3f_x, dt)  end
+  if is_down(ed.keyboard, GLFW_KEY_A)  move!(cam, -vec3f_x, dt)  end
+  if is_down(ed.keyboard, GLFW_KEY_E)  move!(cam, vec3f_y, dt)  end
+  if is_down(ed.keyboard, GLFW_KEY_Q)  move!(cam, -vec3f_y, dt)  end
 
   # TODO: Orbit instead of FPS.
   mouse_p = mouse_position(ed.window)
-  if was_released(ed.keyboard, GLFW.KEY_SPACE)
+  if was_released(ed.keyboard, GLFW_KEY_SPACE)
     cam.mouse_control = !cam.mouse_control
     if cam.mouse_control
-      GLFW.SetInputMode(ed.window, GLFW.CURSOR, GLFW.CURSOR_DISABLED)
+      GLFW_SetInputMode(ed.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED)
     else
-      GLFW.SetInputMode(ed.window, GLFW.CURSOR, GLFW.CURSOR_NORMAL)
+      GLFW_SetInputMode(ed.window, GLFW_CURSOR, GLFW_CURSOR_NORMAL)
     end
   end
   if cam.mouse_control

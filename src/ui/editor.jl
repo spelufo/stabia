@@ -18,5 +18,5 @@ update!(ed::Editor) = begin
 end
 
 draw!(ed::Editor) = begin
-  width, height = GLFW.GetFramebufferSize(the_window)
+
 end
