@@ -1,16 +1,24 @@
 using CImGui
+using CImGui.LibCImGui
 using CImGui.ImGuiGLFWBackend
 using CImGui.ImGuiOpenGLBackend
 using CImGui.ImGuiGLFWBackend.LibGLFW
 using CImGui.ImGuiOpenGLBackend.ModernGL
 
+include("render/geom.jl")
 include("render/shaders.jl")
+include("render/camera.jl")
+include("render/glmesh.jl")
+include("render/framebuffer.jl")
+include("scene.jl")
+include("view.jl")
 include("editor.jl")
 
 @defonce the_window = nothing
 @defonce the_window_width = Int32(800)
 @defonce the_window_height = Int32(600)
 
+@defonce the_scene = nothing
 @defonce the_editor = nothing
 
 update!() = begin
@@ -35,8 +43,10 @@ draw!() = begin
   draw!(the_editor)
 end
 
+CTRL_KEYMAP = Dict{Cint, Function}
+
 on_key(window::Ptr{GLFWwindow}, key::Cint, scancode::Cint, action::Cint, mods::Cint)::Cvoid = begin
-  println("key pressed ", key, " ", action)
+  on_key!(the_editor, window, key, scancode, action, mods)
 end
 
 create_window() = begin
@@ -60,6 +70,7 @@ create_window() = begin
   ig_ctx = CImGui.CreateContext()
   ig_io = CImGui.GetIO()
   ig_io.ConfigFlags = unsafe_load(ig_io.ConfigFlags) | CImGui.ImGuiConfigFlags_DockingEnable
+  # ig_io.IniFilename = C_NULL
 
   glfw_ctx = ImGuiGLFWBackend.create_context(window, install_callbacks=true)
   ImGuiGLFWBackend.init(glfw_ctx)
@@ -72,7 +83,9 @@ end
 main() = begin
   @assert isnothing(the_window) "Main window already open."
   global the_window;  the_window, ig_ctx, glfw_ctx, gl_ctx = create_window()
+  global the_scene;   the_scene = ScratchScene()
   global the_editor;  the_editor = Editor()
+  init!(the_editor)
   try
     while glfwWindowShouldClose(the_window) == GLFW_FALSE
       glfwPollEvents()
@@ -82,7 +95,6 @@ main() = begin
       ImGuiGLFWBackend.new_frame(glfw_ctx)
       CImGui.NewFrame()
       Base.invokelatest(update!)
-      CImGui.ShowDemoWindow(Ref(true))
 
       Base.invokelatest(draw!)
       CImGui.Render()

@@ -50,6 +50,18 @@ void vis(float A) { FragColor = vec4(A, A, A, 1); }
 void vis(vec2  A) { FragColor = vec4(A, 0, 1); }
 void vis(vec3  A) { FragColor = vec4(A, 1); }
 
+// vec3 colormap(float ahit) {
+//   vec3 A = vec3(0.0);
+//   if (ahit > 0.99) A = max(A, 5*ahit*vec3(1,0,0));
+//   else if (ahit > 0.80) A += 5*ahit*vec3(1,0,1);
+//   // else if (ahit > 0.70) A += 15*ahit*vec3(1,1,0);
+//   // else if (ahit > 0.50) A += ahit*vec3(0,0,0);
+//   // else if (ahit > 0.40) A += ahit*vec3(0,0,0);
+//   // else if (ahit > 0.30) A += ahit*vec3(0,0,0);
+//   // else if (ahit > 0.20) A += ahit*vec3(0,0,0);
+//   return A;
+// }
+
 vec3 colormap(float ahit) {
   vec3 A = vec3(0.0);
   if (ahit > 0.508) A += vec3(0,0,0);

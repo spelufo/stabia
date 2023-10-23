@@ -1,37 +1,37 @@
 
 
-struct Vertex
+struct GLVertex
   p :: Vec3f
 end
 
-mutable struct Mesh
-  vertices :: Vector{Vertex}
+mutable struct GLMesh
+  vertices :: Vector{GLVertex}
   indices :: Vector{UInt32}
   gl_vb :: UInt32
   gl_vi :: UInt32
   gl_va :: UInt32
 end
 
-to_gpu!(mesh::Mesh) = begin
+to_gpu!(mesh::GLMesh) = begin
   # Init box vertex array.
   id = Ref(UInt32(0))
   glGenVertexArrays(1, id)
   mesh.gl_va = id[]
   glBindVertexArray(mesh.gl_va)
 
-  # Vertex buffer.
+  # GLVertex buffer.
   id = Ref(UInt32(0))
   glGenBuffers(1, id)
   mesh.gl_vb = id[]
   glBindBuffer(GL_ARRAY_BUFFER, mesh.gl_vb)
   glBufferData(GL_ARRAY_BUFFER, sizeof(mesh.vertices), mesh.vertices, GL_STATIC_DRAW)
 
-  # Vertex attributes.
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), C_NULL)
+  # GLVertex attributes.
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLVertex), C_NULL)
   glEnableVertexAttribArray(0)
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), C_NULL + 3*sizeof(Float32))
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLVertex), C_NULL + 3*sizeof(Float32))
   glEnableVertexAttribArray(1)
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), C_NULL + 6*sizeof(Float32))
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(GLVertex), C_NULL + 6*sizeof(Float32))
   glEnableVertexAttribArray(2)
 
   # Indices buffer.
@@ -48,7 +48,7 @@ to_gpu!(mesh::Mesh) = begin
   glBindVertexArray(0)
 end
 
-draw(mesh::Mesh) = begin
+draw!(mesh::GLMesh) = begin
   glBindVertexArray(mesh.gl_va)
   glBindBuffer(GL_ARRAY_BUFFER, mesh.gl_vb)
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.gl_vi)
@@ -56,18 +56,18 @@ draw(mesh::Mesh) = begin
 end
 
 
-## Mesh builders
+## GLMesh builders
 
-box_mesh(p0::Vec3f, p1::Vec3f) = begin
-  vertices = Vertex[
-    Vertex(Vec3f(p0.x, p0.y, p0.z)),
-    Vertex(Vec3f(p1.x, p0.y, p0.z)),
-    Vertex(Vec3f(p1.x, p1.y, p0.z)),
-    Vertex(Vec3f(p0.x, p1.y, p0.z)),
-    Vertex(Vec3f(p0.x, p0.y, p1.z)),
-    Vertex(Vec3f(p1.x, p0.y, p1.z)),
-    Vertex(Vec3f(p1.x, p1.y, p1.z)),
-    Vertex(Vec3f(p0.x, p1.y, p1.z)),
+GLBoxMesh(p0::Vec3f, p1::Vec3f) = begin
+  vertices = GLVertex[
+    GLVertex(Vec3f(p0[1], p0[2], p0[3])),
+    GLVertex(Vec3f(p1[1], p0[2], p0[3])),
+    GLVertex(Vec3f(p1[1], p1[2], p0[3])),
+    GLVertex(Vec3f(p0[1], p1[2], p0[3])),
+    GLVertex(Vec3f(p0[1], p0[2], p1[3])),
+    GLVertex(Vec3f(p1[1], p0[2], p1[3])),
+    GLVertex(Vec3f(p1[1], p1[2], p1[3])),
+    GLVertex(Vec3f(p0[1], p1[2], p1[3])),
   ]
   indices = UInt32[
     0, 1, 2, 0, 2, 3, # bottom
@@ -77,32 +77,21 @@ box_mesh(p0::Vec3f, p1::Vec3f) = begin
     1, 6, 2, 1, 5, 6,
     2, 7, 3, 2, 6, 7,
   ]
-  mesh = Mesh(vertices, indices, 0, 0, 0)
+  mesh = GLMesh(vertices, indices, 0, 0, 0)
   to_gpu!(mesh)
   mesh
 end
 
 
-quad_mesh(p0::Vec3f, p1::Vec3f) = begin
-  vertices = Vertex[
-    Vertex(Vec3f(p0.x, p0.y, p0.z)),
-    Vertex(Vec3f(p1.x, p0.y, p0.z)),
-    Vertex(Vec3f(p1.x, p1.y, p0.z)),
-    Vertex(Vec3f(p0.x, p1.y, p0.z)),
-    Vertex(Vec3f(p0.x, p0.y, p1.z)),
-    Vertex(Vec3f(p1.x, p0.y, p1.z)),
-    Vertex(Vec3f(p1.x, p1.y, p1.z)),
-    Vertex(Vec3f(p0.x, p1.y, p1.z)),
+GLQuadMesh(p1::Vec3f, p2::Vec3f, p3::Vec3f, p4::Vec3f) = begin
+  vertices = GLVertex[
+    GLVertex(p1),
+    GLVertex(p2),
+    GLVertex(p3),
+    GLVertex(p4),
   ]
-  indices = UInt32[
-    0, 1, 2, 0, 2, 3, # bottom
-    4, 6, 5, 4, 7, 6, # top
-    0, 4, 5, 0, 5, 1,
-    3, 7, 4, 3, 4, 0,
-    1, 6, 2, 1, 5, 6,
-    2, 7, 3, 2, 6, 7,
-  ]
-  mesh = Mesh(vertices, indices, 0, 0, 0)
+  indices = UInt32[0, 1, 2, 0, 2, 3]
+  mesh = GLMesh(vertices, indices, 0, 0, 0)
   to_gpu!(mesh)
   mesh
 end

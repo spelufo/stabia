@@ -10,19 +10,6 @@ using LinearAlgebra, StaticArrays, GeometryBasics, Quaternions
 # const vec3f_y = Vec3f(0f0, 1f0, 0f0)
 # const vec3f_z = Vec3f(0f0, 0f0, 1f0)
 
-# @inline Base.getproperty(v::Vec3{F}, s::Symbol) where F<:AbstractFloat =
-#   s in (:x, :r, :s) ? v[1] :
-#   s in (:y, :g, :t) ? v[2] :
-#   s in (:z, :b, :p) ? v[3] :
-#   getfield(v, s)
-
-# @inline Base.getproperty(v::Vec4{F}, s::Symbol) where F<:AbstractFloat =
-#   s in (:x, :r, :s) ? v[1] :
-#   s in (:y, :g, :t) ? v[2] :
-#   s in (:z, :b, :p) ? v[3] :
-#   s in (:w, :a, :q) ? v[4] :
-#   getfield(v, s)
-
 snap_to_axis(v::Vec3{F}) where F<:AbstractFloat = begin
   k = argmax(abs.(reverse(v)))
   Vec3{F}([i==k ? sign(v[i]) : zero(F) for i in 1:3])
@@ -156,6 +143,12 @@ struct Pose{F<:AbstractFloat}
   p :: Vec3{F}
   q :: Quaternion{F}
 end
+
+Pose(p::Vec3{F}) where F<:AbstractFloat =
+  Pose(p, one(Quaternion{F}))
+
+Pose(q::Quaternion{F}) where F<:AbstractFloat =
+  Pose(zero(Vec3{F}), q)
 
 pose_to_world(pose::Pose{F}, p::Vec3{F}) where F<:AbstractFloat =
   rotate(pose.q, p) + pose.p
