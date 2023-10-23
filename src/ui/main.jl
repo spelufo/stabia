@@ -10,6 +10,7 @@ include("render/shaders.jl")
 include("render/camera.jl")
 include("render/glmesh.jl")
 include("render/framebuffer.jl")
+include("render/scan_volume_textures.jl")
 include("scene.jl")
 include("view.jl")
 include("editor.jl")
@@ -82,8 +83,11 @@ end
 
 main() = begin
   @assert isnothing(the_window) "Main window already open."
+  global the_scene
+  if isnothing(the_scene)
+    the_scene = Scene(scroll_1_54)
+  end
   global the_window;  the_window, ig_ctx, glfw_ctx, gl_ctx = create_window()
-  global the_scene;   the_scene = ScratchScene()
   global the_editor;  the_editor = Editor()
   init!(the_editor)
   try

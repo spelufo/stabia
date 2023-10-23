@@ -29,10 +29,10 @@ to_gpu!(mesh::GLMesh) = begin
   # GLVertex attributes.
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLVertex), C_NULL)
   glEnableVertexAttribArray(0)
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLVertex), C_NULL + 3*sizeof(Float32))
-  glEnableVertexAttribArray(1)
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(GLVertex), C_NULL + 6*sizeof(Float32))
-  glEnableVertexAttribArray(2)
+  # glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLVertex), C_NULL + 3*sizeof(Float32))
+  # glEnableVertexAttribArray(1)
+  # glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(GLVertex), C_NULL + 6*sizeof(Float32))
+  # glEnableVertexAttribArray(2)
 
   # Indices buffer.
   id = Ref(UInt32(0))

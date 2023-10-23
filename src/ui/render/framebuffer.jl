@@ -7,8 +7,12 @@ mutable struct Framebuffer
   rboid  :: UInt32
 end
 
+"Create an uninitialized framebuffer. Call resize! to initialize it."
+Framebuffer() =
+  Framebuffer(0, 0, 0, 0, 0)
+
 Framebuffer(width::Int, height::Int) = begin
-  fb = Framebuffer(0, 0, 0, 0, 0)
+  fb = Framebuffer()
   resize!(fb, width, height)
   fb
 end
@@ -51,7 +55,7 @@ resize!(fb::Framebuffer, width::Int, height::Int) = begin
   glBindRenderbuffer(GL_RENDERBUFFER, 0)
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fb.rboid)
 
-  @assert glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE  "framebuffer incomplete"
+  @assert glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE  "framebuffer incomplete (size $width × $height)"
 
   # Bind the default framebuffer, unbinding the one we just created.
   glBindFramebuffer(GL_FRAMEBUFFER, 0)

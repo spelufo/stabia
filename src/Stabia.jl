@@ -1,12 +1,12 @@
-using StaticArrays, GeometryBasics, Images, TiffImages, FileIO, HDF5
+# This module is to make the tooling happy and eventually build the application,
+# or distribute as a library. For now I mostly start a repl with ./dev.sh and
+# then `include("src/stabia.jl")` which loads everything into the Main package,
+# which is easier for development, hotloading code by reincluding. Eventually
+# I might give Revise.jl a look which might solve this, but this workflow is
+# very convenient and portable.
 
-include("utils/utils.jl")
-include("core/core.jl")
+module Stabia
 
-include("segmentation/ilastik.jl")
-include("segmentation/normals_field.jl")
+include("stabia.jl")
 
-include("ui/main.jl")
-
-# schedule(Task(main))
-
+end

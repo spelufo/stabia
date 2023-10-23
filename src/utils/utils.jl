@@ -10,7 +10,10 @@ end
   lpad(i, ndigits, "0")
 
 
-
+@inline gpu_ceil(x::Int) = begin
+  np = nextpow(2, x)
+  np - x < 32 ? np : (div(x, 2)+1)*2
+end
 
 @inline interpolate_trilinear(V::Array{E, 3}, p::Vec{3, F}) where {E, F} = begin
   q = p .+ 0.5f0
