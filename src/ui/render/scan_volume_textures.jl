@@ -1,23 +1,29 @@
 
 load_textures(scanvol::ScanVolume) = begin
-  if scanvol.small_texture <= 0
-    id = Ref(UInt32(0))
-    glGenTextures(1, id)
-    scanvol.small_texture = id[]
+  if scanvol.small_texture > 0
+    println("WARNING: load_textures recreating small_texture")
+    glDeleteTextures(1, Ref(scanvol.small_texture))
   end
+  id = Ref(UInt32(0))
+  glGenTextures(1, id)
+  scanvol.small_texture = id[]
   glBindTexture(GL_TEXTURE_3D, scanvol.small_texture)
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-  h, w, d = size(scanvol.small)
-  glTexImage3D(GL_TEXTURE_3D, 0, GL_R16UI, h, w, d, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, scanvol.small)
+  # Texture too large under linux+nvidia. Do a dummy chunk of 32^3.
+  # h, w, d = size(scanvol.small)
+  # glTexImage3D(GL_TEXTURE_3D, 0, GL_R16UI, h, w, d, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, scanvol.small)
+  glTexImage3D(GL_TEXTURE_3D, 0, GL_R16UI, 32, 32, 32, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, scanvol.small)
 
-  if scanvol.cell_texture <= 0
-    id = Ref(UInt32(0))
-    glGenTextures(1, id)
-    scanvol.cell_texture = id[]
+  if scanvol.cell_texture > 0
+    println("WARNING: load_textures recreating cell_texture")
+    glDeleteTextures(1, Ref(scanvol.cell_texture))
   end
+  id = Ref(UInt32(0))
+  glGenTextures(1, id)
+  scanvol.cell_texture = id[]
   glBindTexture(GL_TEXTURE_3D, scanvol.cell_texture)
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)

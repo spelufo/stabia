@@ -5,8 +5,8 @@ set -e
 export VESUVIUS_DATA_DIR="$(pwd)/../data"
 export VESUVIUS_SERVER_AUTH='registeredusers:only'
 export JULIA_NUM_THREADS=11
-# export MODERNGL_DEBUGGING=true
 export __NV_PRIME_RENDER_OFFLOAD=1
+# export MODERNGL_DEBUGGING=true
 
 julia() {
   # Leave one thread unused.
@@ -18,7 +18,7 @@ julia() {
   else
     echo 'WARNING: sysimage not found. For best performance build one by running `./dev.sh sysimage`'
   fi
-  prime-run julia --project=. $sysimagearg "$@"
+  command julia --project=. $sysimagearg "$@"
 }
 
 sysimage() {

@@ -8,14 +8,13 @@ mutable struct ScanVolume <: AbstractArray{N0f16, 3}
 
   small :: Array{N0f16, 3}  # A downsampled by SMALLER_BY version of the scan.
   small_size :: Tuple{Int, Int, Int}  # small is padded, this is the size of the data
+  small_loaded :: Bool
+  small_texture :: UInt32
 
+  j :: Tuple{Int,Int,Int}
   cell :: Array{N0f16, 3}  # The currently loaded cell, at full scan resolution.
   cell_size :: Tuple{Int, Int, Int} # cell is padded, this is the size of the data
-  jy :: Int
-  jx :: Int
-  jz :: Int
-
-  small_texture :: UInt32
+  cell_loaded :: Bool
   cell_texture :: UInt32
 end
 
@@ -29,10 +28,8 @@ ScanVolume(scan::HerculaneumScan; load_small=false) = begin
   end
   scanvol = ScanVolume(
     scan,
-    small, small_sz,
-    cell, cell_sz,
-    0, 0, 0,
-    0, 0
+    small, small_sz, false, 0,
+    (0,0,0), cell, cell_sz, false, 0,
   )
   if load_small
     load_small!(scanvol)
@@ -47,11 +44,15 @@ ScanVolume(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
 end
 
 load_small!(scanvol::ScanVolume) = begin
-  println("Loading small volume...")
-  @time begin
-    data = channelview(load_small_volume(scanvol.scan))
-    scanvol.small[1:size(data,1), 1:size(data,2), 1:size(data,3)] .= data
+  if !scanvol.small_loaded
+    println("Loading small volume...")
+    @time begin
+      data = channelview(load_small_volume(scanvol.scan))
+      scanvol.small[1:size(data,1), 1:size(data,2), 1:size(data,3)] .= data
+      scanvol.small_loaded = true
+    end
   end
+  nothing
 end
 
 focus_on_cell!(scanvol::ScanVolume, jy::Int, jx::Int, jz::Int) = begin
@@ -59,11 +60,17 @@ focus_on_cell!(scanvol::ScanVolume, jy::Int, jx::Int, jz::Int) = begin
     println("focus_on_cell!: cell $((jy, jx, jz)) not found.")
     return
   end
-  println("Loading cell...")
-  @time begin
-    data = channelview(load_grid_cell(scanvol.scan, jy, jx, jz))
-    scanvol.cell[1:GRID_CELL_SIZE, 1:GRID_CELL_SIZE, 1:GRID_CELL_SIZE] .= data
-    scanvol.jy = jy; scanvol.jx = jx; scanvol.jz = jz
+  if scanvol.j[1] != jy || scanvol.j[2] != jx || scanvol.j[3] != jz
+    scanvol.cell_loaded = false
+  end
+  if !scanvol.cell_loaded
+    println("Loading cell...")
+    @time begin
+      data = channelview(load_grid_cell(scanvol.scan, jy, jx, jz))
+      scanvol.cell[1:GRID_CELL_SIZE, 1:GRID_CELL_SIZE, 1:GRID_CELL_SIZE] .= data
+      scanvol.j = (jy, jx, jz)
+      scanvol.cell_loaded = true
+    end
   end
   nothing
 end
@@ -72,9 +79,9 @@ end
   scan_dimensions_mm(scanvol.scan)
 
 @inline cell_position(scanvol::ScanVolume) = begin
-  cry = grid_cell_range(scanvol.jy, scanvol.scan.height)
-  crx = grid_cell_range(scanvol.jx, scanvol.scan.width)
-  crz = grid_cell_range(scanvol.jz, scanvol.scan.slices)
+  cry = grid_cell_range(scanvol.j[1], scanvol.scan.height)
+  crx = grid_cell_range(scanvol.j[2], scanvol.scan.width)
+  crz = grid_cell_range(scanvol.j[3], scanvol.scan.slices)
   ( scan_position_mm(scanvol.scan, crx.start, cry.start, crz.start),
     scan_position_mm(scanvol.scan, crx.stop, cry.stop, crz.stop) )
 end
@@ -87,9 +94,9 @@ end
 
 move_focus!(scanvol::ScanVolume, djy::Int, djx::Int, djz::Int) =
   focus_on_cell!(scanvol,
-    min(max(1, scanvol.jy+djy), grid_size(scanvol, 1)),
-    min(max(1, scanvol.jx+djx), grid_size(scanvol, 2)),
-    min(max(1, scanvol.jz+djz), grid_size(scanvol, 3)))
+    min(max(1, scanvol.j[1]+djy), grid_size(scanvol, 1)),
+    min(max(1, scanvol.j[2]+djx), grid_size(scanvol, 2)),
+    min(max(1, scanvol.j[3]+djz), grid_size(scanvol, 3)))
 
 
 # Array ########################################################################
@@ -102,9 +109,9 @@ move_focus!(scanvol::ScanVolume, djy::Int, djx::Int, djz::Int) =
   (scanvol.scan.height, scanvol.scan.width, scanvol.scan.slices)
 
 @inline Base.getindex(scanvol::ScanVolume, iy::Int, ix::Int, iz::Int) = begin
-  cry = grid_cell_range(scanvol.jy, scanvol.scan.height)
-  crx = grid_cell_range(scanvol.jx, scanvol.scan.width)
-  crz = grid_cell_range(scanvol.jz, scanvol.scan.slices)
+  cry = grid_cell_range(scanvol.j[1], scanvol.scan.height)
+  crx = grid_cell_range(scanvol.j[2], scanvol.scan.width)
+  crz = grid_cell_range(scanvol.j[3], scanvol.scan.slices)
   if iy in cry && ix in crx && iz in crz
     scanvol.cell[iy-cry.start+1, ix-crx.start+1, iz-crz.start+1]
   else

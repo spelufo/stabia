@@ -4,15 +4,10 @@
 
 abstract type SceneObject end
 
-Base.@kwdef mutable struct Scene
+mutable struct Scene
   scanvol :: ScanVolume
   objects :: Vector{SceneObject}
-  camera :: Camera
 end
-
-default_scene_camera(dims) =
-  PerspectiveCamera(dims, 0.5f0 * dims, Vec3f(0f0, 0f0, 1f0), 1)
-  # PerspectiveCamera(Vec3f(5, 5, 5), zero(Vec3f), Vec3f(0, 0, 1), 1f0)
 
 # Not called by main(), for things that we want to persist, like scan data.
 Scene(scroll::HerculaneumScan) = begin
@@ -22,13 +17,13 @@ Scene(scroll::HerculaneumScan) = begin
     # StaticBoxMesh(zero(Vec3f), Vec3f(dims[1], dims[2], dims[3]/2f0)),
     # StaticBoxMesh(zero(Vec3f), Vec3f(1f0, 1f0, 1f0)),
   ]
-  camera = default_scene_camera(dims)
-  Scene(scanvol, objects, camera)
+  Scene(scanvol, objects)
 end
 
 # Called by main(), fort things to reset when a new window/editor is created.
 init!(scene::Scene) = begin
-  scene.camera = default_scene_camera(dimensions(scene.scanvol))
+  scene.scanvol.small_texture = 0
+  scene.scanvol.cell_texture = 0
 end
 
 mutable struct StaticMesh <: SceneObject
@@ -49,7 +44,8 @@ StaticQuadMesh(p::Vec3f, n::Vec3f, up::Vec3f, w::Float32, h::Float32) = begin
   StaticMesh(Pose(p), GLQuadMesh(p1, p2, p3, p4))
 end
 
-draw!(mesh::StaticMesh) = begin
-  # TODO: Object transform uniform.
+draw!(mesh::StaticMesh, shader::Shader) = begin
+  M = model_matrix(mesh.pose)
+  glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, M)
   draw!(mesh.mesh)
 end

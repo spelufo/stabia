@@ -6,6 +6,7 @@ using CImGui.ImGuiGLFWBackend.LibGLFW
 using CImGui.ImGuiOpenGLBackend.ModernGL
 
 include("render/geom.jl")
+include("render/gpu_info.jl")
 include("render/shaders.jl")
 include("render/camera.jl")
 include("render/glmesh.jl")
@@ -21,6 +22,7 @@ include("editor.jl")
 
 @defonce the_scene = nothing
 @defonce the_editor = nothing
+@defonce the_gpu_info = nothing
 
 update!() = begin
   if CImGui.IsKeyPressed(GLFW_KEY_ESCAPE)
@@ -81,16 +83,30 @@ create_window() = begin
   window, ig_ctx, glfw_ctx, gl_ctx
 end
 
+
 main() = begin
   @assert isnothing(the_window) "Main window already open."
+  println()
+
   global the_scene
   if isnothing(the_scene)
     the_scene = Scene(scroll_1_54)
   end
   init!(the_scene)
-  global the_window;  the_window, ig_ctx, glfw_ctx, gl_ctx = create_window()
-  global the_editor;  the_editor = Editor()
+  println("Scene initialized.")
+
+  global the_window
+  the_window, ig_ctx, glfw_ctx, gl_ctx = create_window()
+  println("Window created.")
+
+  global the_gpu_info
+  the_gpu_info = GPUInfo()
+
+  global the_editor
+  the_editor = Editor()
   init!(the_editor)
+  println("Editor initialized.")
+
   try
     while glfwWindowShouldClose(the_window) == GLFW_FALSE
       glfwPollEvents()

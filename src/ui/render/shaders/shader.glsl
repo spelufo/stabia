@@ -5,6 +5,7 @@ uniform vec3 cellp0;
 uniform vec3 cellp1;
 
 uniform vec3 cam;
+uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
 
@@ -21,7 +22,7 @@ void main() {
   P = v_P;
   Ray = P - cam;
   vec4 p = vec4(P, 1.0);
-  gl_Position = proj * view * p;
+  gl_Position = proj * view * model * p;
   // gl_ClipDistance[0] = -dot(p, clipplane);
 }
 
@@ -70,14 +71,20 @@ void vis(float A) { FragColor = vec4(A, A, A, 1); }
 void vis(vec2  A) { FragColor = vec4(A, 0, 1); }
 void vis(vec3  A) { FragColor = vec4(A, 1); }
 
+// float measure(vec3 p) {
+//   float d = 0.01;
+//   return float(
+//     (p.x > cellp0.x-d && p.x < cellp1.x+d &&
+//      p.y > cellp0.y-d && p.y < cellp1.y+d &&
+//      p.z > cellp0.z-d && p.z < cellp1.z+d) ?
+//     texture(Cell, 0.99999*CellScale*(p-cellp0)/(cellp1 - cellp0)).r :
+//     texture(Small, 0.99999*SmallScale*p/dimensions).r
+//     ) / 65535.0;
+// }
+
 float measure(vec3 p) {
-  float d = 0.01;
   return float(
-    (p.x > cellp0.x-d && p.x < cellp1.x+d &&
-     p.y > cellp0.y-d && p.y < cellp1.y+d &&
-     p.z > cellp0.z-d && p.z < cellp1.z+d) ?
-    texture(Cell, 0.99999*CellScale*(p-cellp0)/(cellp1 - cellp0)).r :
-    texture(Small, 0.99999*SmallScale*p/dimensions).r
+    texture(Cell, 0.99999*CellScale*(p-cellp0)/(cellp1 - cellp0)).r
     ) / 65535.0;
 }
 

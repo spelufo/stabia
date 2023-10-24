@@ -182,3 +182,6 @@ view_matrix(pose::Pose{F}) where F<:AbstractFloat =
 
 lookat_pose(p, target, up) =
   Pose(p, lookat_quat(p, target, up))
+
+model_matrix(pose::Pose{F}) where F<:AbstractFloat =
+  orientation_matrix(pose)*translation(pose.p)
