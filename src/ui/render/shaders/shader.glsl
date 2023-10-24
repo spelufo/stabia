@@ -19,16 +19,20 @@ out vec3 Ray;
 
 
 void main() {
-  P = v_P;
-  Ray = P - cam;
-  vec4 p = vec4(P, 1.0);
-  gl_Position = proj * view * model * p;
-  // gl_ClipDistance[0] = -dot(p, clipplane);
+  vec4 p = model * vec4(v_P, 1.0);
+  vec4 vp = view * p;
+  gl_Position = proj * vp;
+  P = p.xyz;
+  Ray = vp.xyz - cam;
+
+  // P = model * vec4(v_P, 1.0);
+  // Ray = P - cam;
+  // gl_Position = proj * view * P;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Fragment shader
-#line 32
+#line 35
 
 // Lib
 

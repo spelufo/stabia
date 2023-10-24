@@ -99,15 +99,15 @@ main() = begin
   the_window, ig_ctx, glfw_ctx, gl_ctx = create_window()
   println("Window created.")
 
-  global the_gpu_info
-  the_gpu_info = GPUInfo()
-
-  global the_editor
-  the_editor = Editor()
-  init!(the_editor)
-  println("Editor initialized.")
-
   try
+    global the_gpu_info
+    the_gpu_info = GPUInfo()
+
+    global the_editor
+    the_editor = Editor()
+    init!(the_editor)
+    println("Editor initialized.")
+
     while glfwWindowShouldClose(the_window) == GLFW_FALSE
       glfwPollEvents()
 

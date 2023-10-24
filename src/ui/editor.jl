@@ -39,14 +39,8 @@ init!(ed::Editor) = begin
   # push!(ed.views, View("Cross View", the_scene.camera)) # TODO: camera
 
   # ed.cell_mesh = StaticBoxMesh(zero(Vec3f), Vec3f(dims[1], dims[2], dims[3]/2f0))
-  ed.cell_mesh = StaticBoxMesh(p0, p1)
-
-  println(p0)
-  println(p1)
-  println(p)
-
-  println(p1 - p0)
-  println(p - p1)
+  offset = Vec3f(0.001)
+  ed.cell_mesh = StaticBoxMesh(p0+offset, p1-offset)
 
   nothing
 end

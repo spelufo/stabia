@@ -32,7 +32,8 @@ mutable struct StaticMesh <: SceneObject
 end
 
 StaticBoxMesh(p0::Vec3f, p1::Vec3f) =
-  StaticMesh(Pose(p0), GLBoxMesh(zero(Vec3f), p1 - p0))
+  StaticMesh(Pose(Vec3f(0f0)), GLBoxMesh(p0, p1))
+  # StaticMesh(Pose(p0), GLBoxMesh(zero(Vec3f), p1 - p0))
 
 StaticQuadMesh(p::Vec3f, n::Vec3f, up::Vec3f, w::Float32, h::Float32) = begin
   u = cross(n, up)
