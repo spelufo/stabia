@@ -8,6 +8,9 @@ struct HerculaneumScan
   slices::Int
 end
 
+# Multiply by this to convert scan voxels to millimeters.
+# A bit of a hardcoding for expedience...
+const mm = 7.91f0 / 1000f0
 
 @inline scan_dimensions_mm(scan::HerculaneumScan) =
   scan.resolution_um * Vec3f(scan.width, scan.height, scan.slices) / 1000f0

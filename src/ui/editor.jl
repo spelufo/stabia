@@ -7,9 +7,12 @@ const MODE_NORMAL = EditorMode("normal")
 mutable struct Editor
   mode :: EditorMode
   frame :: Int
-  views :: Vector{View}
+  view_3d    :: Union{Nothing, View}
+  view_top   :: Union{Nothing, View}
+  view_cross :: Union{Nothing, View}
   j :: Tuple{Int,Int,Int}
   cell_mesh :: Union{Nothing, StaticMesh}
+  cell_cut :: CellCut
   cell_normals
   cell_normals_at
   computing_normals :: Bool
@@ -17,9 +20,12 @@ mutable struct Editor
   Editor() = new(
     MODE_NORMAL,
     0,
-    View[],
+    nothing,
+    nothing,
+    nothing,
     (7,7,14),
     nothing,
+    CellCut(mm*500f0*Vec3f(6.5, 6.5, 13.5), 0),
     nothing,
     nothing,
     false,
@@ -38,24 +44,23 @@ init!(ed::Editor) = begin
   c = (p0 + p1)/2f0
 
   p = p1 + Vec3f(3.94)
-  camera = PerspectiveCamera(p, p0, Vec3f(0f0, 0f0, 1f0), 1)
-  push!(ed.views, View("3D View", camera))
+  ed.view_3d = View("3D View", PerspectiveCamera(p, p0, Vec3f(0f0, 0f0, 1f0), 1))
 
-  push!(ed.views, View("Top View", OrthographicCamera(
+  ed.view_top = View("Top View", OrthographicCamera(
     c + Vec3f(0, 0, 2f0 * 3.94f0),
     -Vec3f(0, 0, 2f0 * 3.94f0),
     Vec3f(0f0, 1f0,  0f0),
     3.94f0,
     3.94f0,
-  )))
+  ))
 
-  push!(ed.views, View("Cross View", OrthographicCamera(
+  ed.view_cross = View("Cross View", OrthographicCamera(
     c + Vec3f(0, 2f0 * 3.94f0, 0),
     -Vec3f(0, 2f0 * 3.94f0, 0),
     Vec3f(0f0, 0f0, 1f0),
     3.94f0,
     3.94f0,
-  )))
+  ))
 
   offset = Vec3f(0.001)
   ed.cell_mesh = StaticBoxMesh(p0+offset, p1-offset)
@@ -63,19 +68,17 @@ init!(ed::Editor) = begin
   nothing
 end
 
+all_views(ed::Editor) =
+  [ed.view_3d, ed.view_top, ed.view_cross]
+
 update!(ed::Editor) = begin
   if ed.frame % 60 == 0
-    for view = ed.views
+    for view = all_views(ed)
       reload!(view.shader)
     end
   end
   ed.frame += 1
-
   # check_bgtask(ed)
-
-  for view = ed.views
-    update!(view)
-  end
   nothing
 end
 
@@ -104,10 +107,17 @@ draw!(ed::Editor) = begin
   CImGui.Text("Cell: $(ed.j)")
   CImGui.Text("GPU: $(the_gpu_info.renderer_string)")
   CImGui.Text("GPU max texture buffer size: $(the_gpu_info.max_texture_buffer_size / 1024^2) MB")
-  CImGui.Text("Camera position: $(ed.views[1].camera.pose.p)")
   CImGui.End()
 
   CImGui.Begin("Controls")
+  θ = Ref(ed.cell_cut.θ)
+  DragFloat("Cut angle", θ, 0.01f0, 0f0, Float32(2π))
+  ed.cell_cut.θ = θ[]
+  p0, p1 = cell_position(the_scene.scanvol)
+  c = (p0 + p1)/2f0
+  n = 2f0 * 3.94f0 * Vec3f(cos(π/2 - ed.cell_cut.θ), sin(π/2 - ed.cell_cut.θ), 0)
+  ed.view_cross.camera.p = c + n
+  ed.view_cross.camera.n = -n
   if !ed.computing_normals
     if CImGui.Button("Compute Normals")
       compute_normals!()
@@ -117,8 +127,16 @@ draw!(ed::Editor) = begin
   end
   CImGui.End()
 
-  for view = ed.views
-    draw!(view)
+  # TODO: It seems like creating the VAOs in advance doesn't work but doing
+  # so here while the FBO is bound does. Figure out why and how to handle it.
+  draw_on_view!(ed.view_3d) do shader, width, height
+    draw!(ed.cell_cut, shader)
+  end
+  draw_on_view!(ed.view_cross) do shader, width, height
+    draw!(ed.cell_cut, shader)
+  end
+  draw_on_view!(ed.view_top) do shader, width, height
+    draw!(ed.cell_mesh, shader)
   end
   glBindFramebuffer(GL_FRAMEBUFFER, 0)
   nothing

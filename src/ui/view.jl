@@ -16,14 +16,11 @@ View(name::String, camera::Camera) =
     false,
   )
 
-update!(view::View) = begin
+draw_on_view!(draw_fn::Function, view::View) = begin
+  CImGui.Begin(view.name, C_NULL, ImGuiWindowFlags_NoScrollbar)
   if CImGui.IsKeyPressed(GLFW_KEY_W)
     view.wireframe = !view.wireframe
   end
-end
-
-draw!(view::View) = begin
-  CImGui.Begin(view.name, C_NULL, ImGuiWindowFlags_NoScrollbar)
   view_size = CImGui.GetContentRegionAvail()
   width, height = floor(Int, view_size.x), floor(Int, view_size.y)
   if width > 0 && height > 0
@@ -44,14 +41,7 @@ draw!(view::View) = begin
     set_uniforms(the_scene.scanvol, view.shader)
     set_textures(the_scene.scanvol, view.shader)
 
-    # TODO: It seems like creating the VAOs in advance doesn't work but doing
-    # so here while the FBO is bound does. Figure out why and how to handle it.
-    draw!(the_editor.cell_mesh, view.shader)
-
-    # TODO:
-    # for object = the_scene.objects
-    #   draw!(object)
-    # end
+    draw_fn(view.shader, width, height)
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0)
     CImGui.Image(Ptr{Cvoid}(UInt(view.fb.texid)), view_size, ImVec2(0, 1), ImVec2(1, 0))
