@@ -10,6 +10,11 @@ Base.@kwdef mutable struct Scene
   camera :: Camera
 end
 
+default_scene_camera(dims) =
+  PerspectiveCamera(dims, 0.5f0 * dims, Vec3f(0f0, 0f0, 1f0), 1)
+  # PerspectiveCamera(Vec3f(5, 5, 5), zero(Vec3f), Vec3f(0, 0, 1), 1f0)
+
+# Not called by main(), for things that we want to persist, like scan data.
 Scene(scroll::HerculaneumScan) = begin
   scanvol = ScanVolume(scroll)
   dims = dimensions(scanvol)
@@ -17,9 +22,13 @@ Scene(scroll::HerculaneumScan) = begin
     # StaticBoxMesh(zero(Vec3f), Vec3f(dims[1], dims[2], dims[3]/2f0)),
     # StaticBoxMesh(zero(Vec3f), Vec3f(1f0, 1f0, 1f0)),
   ]
-  # camera = PerspectiveCamera(dims, 0.5f0 * dims, Vec3f(0f0, 0f0, 1f0), 1)
-  camera = PerspectiveCamera(Vec3f(2, 2, 0), zero(Vec3f), Vec3f(0, 0, 1), 1f0)
+  camera = default_scene_camera(dims)
   Scene(scanvol, objects, camera)
+end
+
+# Called by main(), fort things to reset when a new window/editor is created.
+init!(scene::Scene) = begin
+  scene.camera = default_scene_camera(dimensions(scene.scanvol))
 end
 
 mutable struct StaticMesh <: SceneObject

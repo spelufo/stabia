@@ -50,7 +50,7 @@ end
 
 draw!(mesh::GLMesh) = begin
   glBindVertexArray(mesh.gl_va)
-  glBindBuffer(GL_ARRAY_BUFFER, mesh.gl_vb)
+  # glBindBuffer(GL_ARRAY_BUFFER, mesh.gl_vb)
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.gl_vi)
   glDrawElements(GL_TRIANGLES, length(mesh.indices), GL_UNSIGNED_INT, C_NULL)
 end

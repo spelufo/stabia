@@ -87,6 +87,7 @@ main() = begin
   if isnothing(the_scene)
     the_scene = Scene(scroll_1_54)
   end
+  init!(the_scene)
   global the_window;  the_window, ig_ctx, glfw_ctx, gl_ctx = create_window()
   global the_editor;  the_editor = Editor()
   init!(the_editor)
@@ -120,14 +121,3 @@ end
 # Start main from the julia repl, like this:
 # schedule(Task(main))
 
-
-# gl_debug_callback(
-#   GLenum source,
-#   GLenum type,
-#   GLuint id,
-#   GLenum severity,
-#   GLsizei length,
-#   const GLchar *message,
-#   const void *userParam) = begin
-
-# end

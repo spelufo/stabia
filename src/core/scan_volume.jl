@@ -1,8 +1,6 @@
 # TODO:
-# * Don't load any cells on creation
-# * Generalize to multiple loaded cells
-# * Maybe it crashes on debug gl because the zero'd array is
-#   mapped to the linux zero page?
+# - Load on background thread
+# - Generalize to multiple loaded cells?
 
 
 mutable struct ScanVolume <: AbstractArray{N0f16, 3}
@@ -51,8 +49,8 @@ end
 load_small!(scanvol::ScanVolume) = begin
   println("Loading small volume...")
   @time begin
-    data = channelview(load_small_volume(scan))
-    small[1:size(data,1), 1:size(data,2), 1:size(data,3)] .= data
+    data = channelview(load_small_volume(scanvol.scan))
+    scanvol.small[1:size(data,1), 1:size(data,2), 1:size(data,3)] .= data
   end
 end
 

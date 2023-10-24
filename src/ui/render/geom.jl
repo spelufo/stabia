@@ -162,13 +162,13 @@ pose_vec_to_world_vec(pose::Pose{F}, p::Vec3{F}) where F<:AbstractFloat =
 world_vec_to_pose_vec(pose::Pose{F}, p::Vec3{F}) where F<:AbstractFloat =
   rotate(conj(pose.q), p)
 
-front(pose::Pose{F}) where F<:AbstractFloat =
+pose_front(pose::Pose{F}) where F<:AbstractFloat =
   pose_vec_to_world_vec(pose, Vec3{F}(0.0, 0.0, -1.0))
 
-right(pose::Pose{F}) where F<:AbstractFloat =
+pose_right(pose::Pose{F}) where F<:AbstractFloat =
   pose_vec_to_world_vec(pose, Vec3{F}(1.0, 0.0, 0.0))
 
-up(pose::Pose{F}) where F<:AbstractFloat =
+pose_up(pose::Pose{F}) where F<:AbstractFloat =
   pose_vec_to_world_vec(pose, Vec3{F}(0.0, 1.0, 0.0))
 
 frame(pose::Pose{F}) where F<:AbstractFloat =
@@ -180,3 +180,5 @@ orientation_matrix(pose::Pose{F}) where F<:AbstractFloat =
 view_matrix(pose::Pose{F}) where F<:AbstractFloat =
   orientation_matrix(pose)*translation(-pose.p)
 
+lookat_pose(p, target, up) =
+  Pose(p, lookat_quat(p, target, up))

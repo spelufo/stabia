@@ -13,16 +13,16 @@ Base.@kwdef mutable struct Editor
 end
 
 load_scene_scan_volume!() = begin
-  load_small!(the_scene.scanvol)
+  load_small!(the_scene.scanvol) # This should happen on a bg thread.
   println("Loading scan volume into GPU...")
-  load_textures(the_scene.scanvol)
+  load_textures(the_scene.scanvol) # This should happen after, on the main thead.
   println("Loaded into GPU.")
 end
 
 init!(ed::Editor) = begin
   push!(ed.views, View("3D View", the_scene.camera))
-  push!(ed.views, View("Front View", the_scene.camera)) # TODO: camera
-  push!(ed.views, View("Cross View", the_scene.camera)) # TODO: camera
+  # push!(ed.views, View("Front View", the_scene.camera)) # TODO: camera
+  # push!(ed.views, View("Cross View", the_scene.camera)) # TODO: camera
 end
 
 struct KeyBinding
@@ -83,13 +83,12 @@ draw!(ed::Editor) = begin
   CImGui.EndMainMenuBar()
 
   CImGui.Begin("Info")
-  flags = Ref{GLint}(0);
-  glGetIntegerv(GL_CONTEXT_FLAGS, flags)
-
-  if flags[] & GL_CONTEXT_FLAG_DEBUG_BIT != 0
-    CImGui.Text("GL_CONTEXT_FLAG_DEBUG_BIT")
-  else
-    CImGui.Text("no debug")
+  CImGui.Text("Camera position: $(ed.views[1].camera.pose.p)")
+  CImGui.Text("Camera quaternion:  $(ed.views[1].camera.pose.q)")
+  CImGui.Text("Camera viewmatrix:")
+  vm = view_matrix(ed.views[1].camera.pose)
+  for i = 1:4
+    CImGui.Text("  $(vm[i,:])")
   end
   CImGui.End()
 

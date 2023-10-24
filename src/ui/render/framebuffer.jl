@@ -19,7 +19,7 @@ end
 
 resize!(fb::Framebuffer, width::Int, height::Int) = begin
   if fb.id > 0 && width == fb.width && height == fb.height
-    return nothing
+    return false
   end
 
   # Delete if existing, we'll create new ones.
@@ -59,5 +59,6 @@ resize!(fb::Framebuffer, width::Int, height::Int) = begin
 
   # Bind the default framebuffer, unbinding the one we just created.
   glBindFramebuffer(GL_FRAMEBUFFER, 0)
-  nothing
+
+  true
 end
