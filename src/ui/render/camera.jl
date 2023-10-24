@@ -23,7 +23,7 @@ CAMERA_SENSITIVITY = 0.05f0
 
 PerspectiveCamera(p, target, up, aspect) = begin
   q = lookat_quat(p, target, up)
-  PerspectiveCamera(Pose(p, q), aspect, 45*pi/180, 0.1f0, 1000f0)
+  PerspectiveCamera(Pose(p, q), aspect, 45*pi/180, 0.01f0, 1000f0)
     # CAMERA_SPEED, CAMERA_SENSITIVITY, mouse_position(ed.window), false)
 end
 

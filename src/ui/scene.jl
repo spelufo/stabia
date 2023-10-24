@@ -12,12 +12,13 @@ end
 
 Scene(scroll::HerculaneumScan) = begin
   scanvol = ScanVolume(scroll)
-  focus_on_cell!(scanvol, 7, 7, 14)  # TODO: Remove this, make a command or sth.
   dims = dimensions(scanvol)
   objects = [
-    StaticBoxMesh(zero(Vec3f), Vec3f(dims[1], dims[2], dims[3]/2f0)),
+    # StaticBoxMesh(zero(Vec3f), Vec3f(dims[1], dims[2], dims[3]/2f0)),
+    # StaticBoxMesh(zero(Vec3f), Vec3f(1f0, 1f0, 1f0)),
   ]
-  camera = PerspectiveCamera(dims, 0.5f0 * dims, Vec3f(0f0, 0f0, 1f0), 1)
+  # camera = PerspectiveCamera(dims, 0.5f0 * dims, Vec3f(0f0, 0f0, 1f0), 1)
+  camera = PerspectiveCamera(Vec3f(2, 2, 0), zero(Vec3f), Vec3f(0, 0, 1), 1f0)
   Scene(scanvol, objects, camera)
 end
 

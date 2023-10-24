@@ -1,6 +1,8 @@
 # TODO:
 # * Don't load any cells on creation
 # * Generalize to multiple loaded cells
+# * Maybe it crashes on debug gl because the zero'd array is
+#   mapped to the linux zero page?
 
 
 mutable struct ScanVolume <: AbstractArray{N0f16, 3}
@@ -19,21 +21,25 @@ mutable struct ScanVolume <: AbstractArray{N0f16, 3}
   cell_texture :: UInt32
 end
 
-ScanVolume(scan::HerculaneumScan) = begin
-  println("Loading small volume...")
-  small_sz = small_size(scan)
-  small = zeros(N0f16, gpu_ceil.(small_sz))
-  cell_sz = (GRID_CELL_SIZE, GRID_CELL_SIZE, GRID_CELL_SIZE)
-  cell = zeros(N0f16, gpu_ceil.(cell_sz))
-  data = channelview(load_small_volume(scan))
-  small[1:size(data,1), 1:size(data,2), 1:size(data,3)] .= data
-  println("Loaded.")
-  ScanVolume(
+ScanVolume(scan::HerculaneumScan; load_small=false) = begin
+  println("Alloc")
+  @time begin
+    small_sz = small_size(scan)
+    small = zeros(N0f16, gpu_ceil.(small_sz))
+    cell_sz = (GRID_CELL_SIZE, GRID_CELL_SIZE, GRID_CELL_SIZE)
+    cell = zeros(N0f16, gpu_ceil.(cell_sz))
+  end
+  scanvol = ScanVolume(
     scan,
     small, small_sz,
     cell, cell_sz,
     0, 0, 0,
-    0, 0)
+    0, 0
+  )
+  if load_small
+    load_small!(scanvol)
+  end
+  scanvol
 end
 
 ScanVolume(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
@@ -42,17 +48,26 @@ ScanVolume(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
   scanvol
 end
 
+load_small!(scanvol::ScanVolume) = begin
+  println("Loading small volume...")
+  @time begin
+    data = channelview(load_small_volume(scan))
+    small[1:size(data,1), 1:size(data,2), 1:size(data,3)] .= data
+  end
+end
+
 focus_on_cell!(scanvol::ScanVolume, jy::Int, jx::Int, jz::Int) = begin
   if !have_grid_cell(scanvol.scan, jy, jx, jz)
     println("focus_on_cell!: cell $((jy, jx, jz)) not found.")
     return
   end
   println("Loading cell...")
-  data = channelview(load_grid_cell(scanvol.scan, jy, jx, jz))
-  scanvol.cell[1:GRID_CELL_SIZE, 1:GRID_CELL_SIZE, 1:GRID_CELL_SIZE] .= data
-  scanvol.jy = jy; scanvol.jx = jx; scanvol.jz = jz
-  println("Loaded.")
-  return
+  @time begin
+    data = channelview(load_grid_cell(scanvol.scan, jy, jx, jz))
+    scanvol.cell[1:GRID_CELL_SIZE, 1:GRID_CELL_SIZE, 1:GRID_CELL_SIZE] .= data
+    scanvol.jy = jy; scanvol.jx = jx; scanvol.jz = jz
+  end
+  nothing
 end
 
 @inline dimensions(scanvol::ScanVolume) =

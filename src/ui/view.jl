@@ -7,13 +7,13 @@ mutable struct View
   wireframe :: Bool
 end
 
-View(name::String) =
+View(name::String, camera::Camera) =
   View(
     name,
     Framebuffer(),
     Shader("shader.glsl"),
-    PerspectiveCamera(Vec3f(2f0, 2f0, 3f0), zero(Vec3f), Vec3f(0,0,1), 1f0),
-    false,
+    camera,
+    true,
   )
 
 update!(view::View) = begin
@@ -30,19 +30,20 @@ draw!(view::View) = begin
     resize!(view.fb, width, height)
     view.camera.aspect = width/height
 
+    @assert view.fb.id != 0 "view.fb.id == 0"
     glBindFramebuffer(GL_FRAMEBUFFER, view.fb.id)
     glEnable(GL_DEPTH_TEST)
     glViewport(0, 0, width, height)
+    glPolygonMode(GL_FRONT_AND_BACK, if view.wireframe GL_LINE else GL_FILL end)
     glClearColor(1.0, 1.0, 1.0, 1.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    glPolygonMode(GL_FRONT_AND_BACK, if view.wireframe GL_LINE else GL_FILL end)
     set_uniforms(view.camera, view.shader)
-    set_textures(the_scene.scanvol, view.shader)
-    set_uniforms(the_scene.scanvol, view.shader)
+    # set_uniforms(the_scene.scanvol, view.shader)
+    # set_textures(the_scene.scanvol, view.shader)
 
-    for object = the_scene.objects
-      draw!(object)
-    end
+    draw!(StaticBoxMesh(zero(Vec3f), Vec3f(1f0, 1f0, 1f0)))
+    # for object = the_scene.objects
+    # end
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0)
     CImGui.Image(Ptr{Cvoid}(UInt(view.fb.texid)), view_size)

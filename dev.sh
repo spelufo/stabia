@@ -4,11 +4,12 @@ set -e
 
 export VESUVIUS_DATA_DIR="$(pwd)/../data"
 export VESUVIUS_SERVER_AUTH='registeredusers:only'
+export JULIA_NUM_THREADS=11
+export MODERNGL_DEBUGGING=true
 
 julia() {
   # Leave one thread unused.
   # Otherwise sometimes when I run something it freezes the machine.
-  export JULIA_NUM_THREADS=11
   sysimage='./src/sysimage/stabia_deps_sysimage.so'
   sysimagearg=''
   if [ -f "$sysimage" ]; then
