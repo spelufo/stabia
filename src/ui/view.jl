@@ -30,7 +30,7 @@ draw!(view::View) = begin
     if resize!(view.fb, width, height)
       # println("Resized view framebuffer: $width × $height")
     end
-    view.camera.aspect = width/height
+    set_viewport!(view.camera, width, height)
 
     glBindFramebuffer(GL_FRAMEBUFFER, view.fb.id)
     glEnable(GL_DEPTH_TEST)

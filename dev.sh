@@ -5,7 +5,7 @@ set -e
 export VESUVIUS_DATA_DIR="$(pwd)/../data"
 export VESUVIUS_SERVER_AUTH='registeredusers:only'
 export JULIA_NUM_THREADS=11
-export __NV_PRIME_RENDER_OFFLOAD=1
+# export __NV_PRIME_RENDER_OFFLOAD=1
 # export MODERNGL_DEBUGGING=true
 
 julia() {
@@ -13,16 +13,20 @@ julia() {
   # Otherwise sometimes when I run something it freezes the machine.
   sysimage='./src/sysimage/stabia_deps_sysimage.so'
   sysimagearg=''
-  # if [ -f "$sysimage" ]; then
-  #   sysimagearg="--sysimage=$sysimage"
-  # else
-  #   echo 'WARNING: sysimage not found. For best performance build one by running `./dev.sh sysimage`'
-  # fi
-  command julia --project=. $sysimagearg "$@"
+  if [ -f "$sysimage" ]; then
+    sysimagearg="--sysimage=$sysimage"
+  else
+    echo 'WARNING: sysimage not found. For best performance build one by running `./dev.sh sysimage`'
+  fi
+  prime-run julia --project=. $sysimagearg "$@"
 }
 
 sysimage() {
   command julia --project=. src/sysimage/create_sysimage.jl
+}
+
+test() {
+  julia test/runtests.jl
 }
 
 repl() {

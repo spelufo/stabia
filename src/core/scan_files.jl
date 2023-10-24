@@ -53,6 +53,8 @@ segment_server_path(scan::HerculaneumScan, segment_id::AbstractString; hari=fals
 
 const DATA_DIR = normpath(get(ENV, "VESUVIUS_DATA_DIR", joinpath(dirname(dirname(@__DIR__)), "data")))
 
+# Slices
+
 scan_slice_path(scan::HerculaneumScan, iz::Int)::String =
   joinpath(DATA_DIR, scan_slice_server_path(scan, iz))
 
@@ -61,6 +63,8 @@ have_slice(scan::HerculaneumScan, iz::Int) =
 
 load_slice(scan::HerculaneumScan, iz::Int) =
   load(scan_slice_path(scan, iz))
+
+# Cells
 
 grid_cell_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int)::String =
   joinpath(DATA_DIR, grid_cell_server_path(scan, jy, jx, jz))
@@ -73,24 +77,6 @@ load_grid_cell(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
 
 grid_cell_h5_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int)::String =
   joinpath(DATA_DIR, grid_cell_h5_server_path(scan, jy, jx, jz))
-
-small_volume_path(scan::HerculaneumScan) =
-  joinpath(DATA_DIR, small_volume_server_path(scan))
-
-have_small_volume(scan::HerculaneumScan) =
-  isfile(small_volume_path(scan))
-
-load_small_volume(scan::HerculaneumScan) =
-  load(small_volume_path(scan))
-
-segment_path(scan::HerculaneumScan, segment_id::AbstractString) =
-  joinpath(DATA_DIR, segment_server_path(scan, segment_id))
-
-have_segment(scan::HerculaneumScan, segment_id::AbstractString) =
-  isdir(segment_path(scan, segment_id))
-
-load_segment_mesh(scan::HerculaneumScan, segment_id::AbstractString) =
-  load(joinpath(segment_path(scan, segment_id), "$segment_id.obj"))
 
 missing_cells(q_cells) = begin
   cells = []
@@ -105,8 +91,30 @@ end
 mesh_grid_cells_missing(mesh) =
   missing_cells(mesh_grid_cells(mesh))
 
+# Small
 
-# Segmentation files
+small_volume_path(scan::HerculaneumScan) =
+  joinpath(DATA_DIR, small_volume_server_path(scan))
+
+have_small_volume(scan::HerculaneumScan) =
+  isfile(small_volume_path(scan))
+
+load_small_volume(scan::HerculaneumScan) =
+  load(small_volume_path(scan))
+
+# Segments
+
+segment_path(scan::HerculaneumScan, segment_id::AbstractString) =
+  joinpath(DATA_DIR, segment_server_path(scan, segment_id))
+
+have_segment(scan::HerculaneumScan, segment_id::AbstractString) =
+  isdir(segment_path(scan, segment_id))
+
+load_segment_mesh(scan::HerculaneumScan, segment_id::AbstractString) =
+  load(joinpath(segment_path(scan, segment_id), "$segment_id.obj"))
+
+# Segmentation
+
 
 segmentation_dir(scan::HerculaneumScan) =
   joinpath(DATA_DIR, scan.volpkg_path, "segmentation")
@@ -117,11 +125,24 @@ cell_segmentation_dir(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
 cell_probabilities_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
   joinpath(cell_segmentation_dir(scan, jy, jx, jz), "$(cell_name(jy, jx, jz))_probabilities.h5")
 
-
 load_cell_probabilities(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
   fid = h5open(cell_probabilities_path(scan, jy, jx, jz))
   P = permutedims(read(fid, "exported_data")[1,:,:,:,1], (2, 1, 3))
   close(fid)
   P
+end
+
+cell_holes_dir(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  joinpath(cell_segmentation_dir(scan, jy, jx, jz), "holes")
+
+load_cell_holes(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
+  holes = []
+  holes_dir = cell_holes_dir(scroll_1_54, 7, 7, 14)
+  for hole_filename = readdir(holes_dir)
+    endswith(hole_filename, ".stl") || continue
+    hole_path = joinpath(holes_dir, hole_filename)
+    push!(holes, load(hole_path))
+  end
+  holes
 end
 

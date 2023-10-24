@@ -10,13 +10,19 @@ mutable struct Editor
   views :: Vector{View}
   j :: Tuple{Int,Int,Int}
   cell_mesh :: Union{Nothing, StaticMesh}
+  cell_normals
+  cell_normals_at
+  computing_normals :: Bool
 
   Editor() = new(
     MODE_NORMAL,
     0,
     View[],
     (7,7,14),
-    nothing
+    nothing,
+    nothing,
+    nothing,
+    false,
   )
 end
 
@@ -29,16 +35,28 @@ init!(ed::Editor) = begin
 
   dims = dimensions(the_scene.scanvol)
   p0, p1 = cell_position(the_scene.scanvol)
+  c = (p0 + p1)/2f0
 
-  # camera = PerspectiveCamera(dims, 0.5f0 * dims, Vec3f(0f0, 0f0, 1f0), 1))
   p = p1 + Vec3f(3.94)
   camera = PerspectiveCamera(p, p0, Vec3f(0f0, 0f0, 1f0), 1)
   push!(ed.views, View("3D View", camera))
 
-  # push!(ed.views, View("Front View", the_scene.camera)) # TODO: camera
-  # push!(ed.views, View("Cross View", the_scene.camera)) # TODO: camera
+  push!(ed.views, View("Top View", OrthographicCamera(
+    c + Vec3f(0, 0, 2f0 * 3.94f0),
+    -Vec3f(0, 0, 2f0 * 3.94f0),
+    Vec3f(0f0, 1f0,  0f0),
+    3.94f0,
+    3.94f0,
+  )))
 
-  # ed.cell_mesh = StaticBoxMesh(zero(Vec3f), Vec3f(dims[1], dims[2], dims[3]/2f0))
+  push!(ed.views, View("Cross View", OrthographicCamera(
+    c + Vec3f(0, 2f0 * 3.94f0, 0),
+    -Vec3f(0, 2f0 * 3.94f0, 0),
+    Vec3f(0f0, 0f0, 1f0),
+    3.94f0,
+    3.94f0,
+  )))
+
   offset = Vec3f(0.001)
   ed.cell_mesh = StaticBoxMesh(p0+offset, p1-offset)
 
@@ -89,6 +107,16 @@ draw!(ed::Editor) = begin
   CImGui.Text("Camera position: $(ed.views[1].camera.pose.p)")
   CImGui.End()
 
+  CImGui.Begin("Controls")
+  if !ed.computing_normals
+    if CImGui.Button("Compute Normals")
+      compute_normals!()
+    end
+  else
+    CImGui.Text("Computing Normals... This will take a while.")
+  end
+  CImGui.End()
+
   for view = ed.views
     draw!(view)
   end
@@ -98,6 +126,23 @@ end
 
 
 # Commands #####################################################################
+
+compute_normals!() = begin
+  the_editor.computing_normals = true
+  compute_normals_job() = begin
+    try
+      N, P = estimate_normals(the_scene.scanvol.cell)
+      the_editor.cell_normals = N
+      the_editor.cell_normals_at = P
+    catch e
+      @error "Error computing normals!" exception=e
+      Base.show_backtrace(stderr, catch_backtrace())
+    finally
+      the_editor.computing_normals = false
+    end
+  end
+  Threads.@spawn compute_normals_job()
+end
 
 load_scene_scan_volume!() = begin
   # load_small!(the_scene.scanvol) # TODO

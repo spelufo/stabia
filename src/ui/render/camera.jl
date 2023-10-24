@@ -27,6 +27,11 @@ PerspectiveCamera(p, target, up, aspect) = begin
     # CAMERA_SPEED, CAMERA_SENSITIVITY, mouse_position(ed.window), false)
 end
 
+set_viewport!(camera::PerspectiveCamera, width, height) = begin
+  camera.aspect = width/height
+  nothing
+end
+
 set_uniforms(cam::PerspectiveCamera, shader::Shader) = begin
   view = view_matrix(cam.pose)
   proj = perspective(cam.fov, cam.aspect, cam.near, cam.far)
@@ -62,9 +67,16 @@ end
 OrthographicCamera(p, n, up, w, h) =
   OrthographicCamera(p, n, up, w, h, 1000f0)
 
+set_viewport!(camera::OrthographicCamera, width, height) = begin
+  aspect = width/height
+  camera.w = 3.95f0 * aspect
+  camera.h = 3.95f0
+  nothing
+end
+
 set_uniforms(cam::OrthographicCamera, shader::Shader) = begin
   view = lookat(cam.p, cam.p + cam.n, cam.up)
-  proj = ortho(-cam.w/2, cam.w/2, -cam.h/2, cam.h/2, 0f0, cam[3])
+  proj = ortho(-cam.w/2, cam.w/2, -cam.h/2, cam.h/2, 0f0, cam.z)
   glUniform3f(glGetUniformLocation(shader, "cam"), cam.p[1], cam.p[2], cam.p[3])
   glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, view)
   glUniformMatrix4fv(glGetUniformLocation(shader, "proj"), 1, GL_FALSE, proj)

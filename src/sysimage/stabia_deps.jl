@@ -13,6 +13,7 @@ using LinearAlgebra
 using Quaternions
 using StaticArrays
 using GeometryBasics
+using FFTW
 
 using FileIO
 using Images

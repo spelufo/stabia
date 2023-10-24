@@ -92,8 +92,14 @@ float measure(vec3 p) {
     ) / 65535.0;
 }
 
+vec3 meas(vec3 p) {
+  float a = measure(p);
+  vec3 A = vec3(a*a);
+  
+  return A;
+}
+
 void main() {
   vis(measure(P));
-  // FragColor = vec4(1, 0, 1, 1);
   return;
 }

@@ -8,6 +8,7 @@ packages = [
   "Quaternions",
   "StaticArrays",
   "GeometryBasics",
+  "FFTW",
 
   # IO and images packages.
   "FileIO",
