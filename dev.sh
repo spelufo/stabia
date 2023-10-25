@@ -11,7 +11,7 @@ export JULIA_NUM_THREADS=11
 julia() {
   # Leave one thread unused.
   # Otherwise sometimes when I run something it freezes the machine.
-  sysimage='./src/sysimage/stabia_deps_sysimage.so'
+  sysimage='./stabia_sysimage.so'
   sysimagearg=''
   if [ -f "$sysimage" ]; then
     sysimagearg="--sysimage=$sysimage"
@@ -22,7 +22,7 @@ julia() {
 }
 
 sysimage() {
-  command julia --project=. src/sysimage/create_sysimage.jl
+  command julia --project=. scripts/create_sysimage.jl
 }
 
 test() {

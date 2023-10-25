@@ -24,10 +24,8 @@ using JLD
 
 # Does this mean that core would be baked in too?
 # In that case maybe I shouldn't do this...
-include("../core/core.jl")
+include("../src/core/core.jl")
 
-println("Running stabia_deps.jl, load_small_volume")
-scroll_1_small = load_small_volume(scroll_1_54)
-println("Done")
+scroll_1_small = load_grid_cell(scroll_1_54, 7, 7, 14)
 
 nothing

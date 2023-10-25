@@ -1,3 +1,4 @@
+include("utils.jl")
 include("scan.jl")
 include("scan_files.jl")
 include("downloader.jl")

@@ -5,13 +5,8 @@ using CImGui.ImGuiOpenGLBackend
 using CImGui.ImGuiGLFWBackend.LibGLFW
 using CImGui.ImGuiOpenGLBackend.ModernGL
 
-include("render/geom.jl")
-include("render/gpu_info.jl")
-include("render/shaders.jl")
-include("render/camera.jl")
-include("render/glmesh.jl")
-include("render/framebuffer.jl")
-include("render/scan_volume_textures.jl")
+include("render/render.jl")
+include("utils.jl")
 include("scene.jl")
 include("view.jl")
 include("editor.jl")

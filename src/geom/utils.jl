@@ -1,15 +1,5 @@
 
 
-macro defonce(expr)
-  @assert expr.head == :(=) "defonce expects an assignment expression"
-  :(isdefined($__module__, $(QuoteNode(expr.args[1]))) || $(esc(expr)))
-end
-
-
-@inline zpad(i::Int, ndigits::Int)::String =
-  lpad(i, ndigits, "0")
-
-
 @inline gpu_ceil(x::Int) = begin
   np = nextpow(2, x)
   np - x < 32 ? np : (div(x, 2)+1)*2

@@ -99,6 +99,10 @@ float meas(vec3 p) {
 
 void main() {
   vec3 A = vec3(0);
+  if (length(Ray) < 0.00001) {
+    vis(vec3(1,0,1));
+    return;
+  }
   vec3 N = normalize(Ray); // not the real normal.
   // vis(meas(P)); return;
   float value = 0;
