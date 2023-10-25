@@ -66,3 +66,9 @@ draw!(cc::Plane, shader::Shader) = begin
   glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, M)
   draw!(mesh)
 end
+
+draw!(gs::GridSheet, shader::Shader) = begin
+  M = scaling(1f0)
+  glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, M)
+  draw!(GLGridMesh(gs))
+end

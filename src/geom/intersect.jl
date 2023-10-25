@@ -4,14 +4,13 @@ mutable struct Plane
   n :: Vec3f
 end
 
-
 mutable struct Ray
   p :: Vec3f
   v :: Vec3f
 end
 
-
-@inline intersect(r::Ray, s::Plane) = begin
+@inline raycast(r::Ray, s::Plane) = begin
   λ = (dot(s.p, s.n) - dot(s.n, r.p)) / dot(s.n, r.v)
-  r.p + λ*r.v
+  (r.p + λ*r.v, λ)
 end
+

@@ -5,10 +5,7 @@ using FileIO, TiffImages, JLD2
 
 include("geom/geom.jl")
 include("core/core.jl")
-
-include("segmentation/ilastik.jl")
-include("segmentation/normals_field.jl")
-
+include("segmentation/segmentation.jl")
 include("ui/main.jl")
 
 # schedule(Task(main))

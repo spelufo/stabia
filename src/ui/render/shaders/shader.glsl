@@ -90,7 +90,7 @@ float meas(vec3 p) {
 
 void main() {
   // vis(vec3(1,0,1)); return;
-  vis(meas(P)); return;
+  // vis(meas(P)); return;
   vec3 A = vec3(0);
   vec3 N = -normalize(Ray);
   float value = 0;

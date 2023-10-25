@@ -55,24 +55,34 @@ init_views!(ed::Editor) = begin
   cell_size = cell_mm(the_scan)
   p0, p1 = cell_range_mm(the_scan, ed.j...)
   c = (p0 + p1)/2f0
-  ed.view_3d = View("3D View", PerspectiveCamera(p1 + 4*E1, p0, Ez, 1))
+  ed.view_3d = View("3D View", PerspectiveCamera(p1 + 2*Vec3f(1, 0.9, 0.7), p0, Ez, 1))
   n = 2f0 * cell_size * Ez
   ed.view_top = View("Top View", OrthographicCamera(c + n, -n, Ey, cell_size, cell_size))
   n = 2f0 * cell_size * Ey
   ed.view_cross = View("Cross View", OrthographicCamera(c + n, -n, Ez, cell_size, cell_size))
-  # update_cross_camera!(ed, ed.cell_cut.p, 0)
 end
 
 all_views(ed::Editor) =
   [ed.view_3d, ed.view_top, ed.view_cross]
 
 update!(ed::Editor) = begin
+  ed.frame += 1
   if ed.frame % 60 == 0
     for view = all_views(ed)
       reload!(view.shader)
     end
   end
-  ed.frame += 1
+
+  if ed.mode == MODE_NORMAL
+    for (kb, f) = KEYMAP_NORMAL
+      if kb.continuous
+        if CImGui.IsKeyDown(kb.key) # && CImGui.IsKeyDown(kb.mods) # TODO: mods
+          f()
+        end
+      end
+    end
+  end
+
   # check_bgtask(ed)
   nothing
 end
@@ -111,7 +121,7 @@ draw!(ed::Editor) = begin
   θ = π * angle[] / 180f0
 
   update_cell_cut!(ed, ed.cell_cut.p, θ)
-  # update_cross_camera!(ed, ed.cell_cut.p, θ)
+  update_cross_camera!(ed)
 
   if !ed.computing_normals
     if CImGui.Button("Compute Normals")
@@ -123,16 +133,28 @@ draw!(ed::Editor) = begin
 
   CImGui.End()
 
+  l = cell_mm(the_scan)/9f0
+  p0, p1 = cell_range_mm(the_scan, 7, 7, 14)
+  p0 += px_mm(the_scan)*Ez
+  p1 += px_mm(the_scan)*Ez
+  gm = GridSheetFromRange(p0, p0 + cell_mm(the_scan)*Vec3f(1,1,0), Ex, l)
+
+  gm_cut = GridSheetFromCenter(ed.cell_cut.p, ed.cell_cut.n, Ez, l, 10, 10)
+
+
   # TODO: It seems like creating the VAOs in advance doesn't work but doing
   # so here while the FBO is bound does. Figure out why and how to handle it.
   draw_on_view!(ed.view_3d) do shader, width, height
-    draw!(ed.cell_cut, shader)
+    # draw!(ed.cell_cut, shader)
+    draw!(gm_cut, shader)
+    draw!(gm, shader)
   end
   draw_on_view!(ed.view_cross) do shader, width, height
-    draw!(ed.cell_cut, shader)
+    draw!(gm_cut, shader)
+    draw!(gm, shader)
   end
   draw_on_view!(ed.view_top) do shader, width, height
-    draw!(ed.cell_mesh, shader)
+    draw!(gm, shader)
   end
   glBindFramebuffer(GL_FRAMEBUFFER, 0)
   nothing
@@ -144,12 +166,9 @@ update_cell_cut!(ed::Editor, p::Vec3, θ::Float32) = begin
   nothing
 end
 
-update_cross_camera!(ed::Editor, p::Vec3, θ::Float32) = begin
-  p0, p1 = cell_range_mm(the_scan, ed.j...)
-  c = (p0 + p1)/2f0
-  n = cell_mm(the_scan) * Vec3f(sin(θ), -cos(θ), 0)
-  ed.view_cross.camera.p = c + 2*n
-  ed.view_cross.camera.n = -2*n
+update_cross_camera!(ed::Editor) = begin
+  ed.view_cross.camera.p = ed.cell_cut.p + 2*ed.cell_cut.n
+  ed.view_cross.camera.n = -ed.cell_cut.n
   nothing
 end
 
@@ -191,24 +210,48 @@ end
 #   end
 # end
 
+toggle_wireframe!(ed::Editor) = begin
+  ed.view_3d.wireframe = !ed.view_3d.wireframe
+end
+
+
+rotate_cell_cut!(ed::Editor, dθ::Float32) = begin
+  ed.cell_cut.n = rotate(ed.cell_cut.n, Ez, dθ)
+end
+
+move_cell_cut!(ed::Editor, left::Float32, fwd::Float32) = begin
+  n = normalize(ed.cell_cut.n)
+  ed.cell_cut.p += fwd*n + left*cross(n, Ez)
+end
 
 # Key bindings #################################################################
 
 struct KeyBinding
   key::Int32
   mods::Int32
+  continuous::Bool
 end
+
+KeyBinding(key, mods) =
+  KeyBinding(key, mods, false)
 
 const KeyMap = Dict{KeyBinding, Function}
 
 KEYMAP_NORMAL = KeyMap(
-  # KeyBinding(GLFW_KEY_R, 0) => reload!,
+  KeyBinding(GLFW_KEY_W, GLFW_MOD_ALT)   => () -> toggle_wireframe!(the_editor),
+
+  KeyBinding(GLFW_KEY_S, 0, true)        => () -> move_cell_cut!(the_editor, 0f0, +0.01f0),
+  KeyBinding(GLFW_KEY_W, 0, true)        => () -> move_cell_cut!(the_editor, 0f0, -0.01f0),
+  KeyBinding(GLFW_KEY_A, 0, true)        => () -> move_cell_cut!(the_editor, -0.01f0, 0f0),
+  KeyBinding(GLFW_KEY_D, 0, true)        => () -> move_cell_cut!(the_editor, +0.01f0, 0f0),
+  KeyBinding(GLFW_KEY_Q, 0, true)        => () -> rotate_cell_cut!(the_editor, -0.01f0),
+  KeyBinding(GLFW_KEY_E, 0, true)        => () -> rotate_cell_cut!(the_editor, +0.01f0),
 )
 
 on_key!(ed::Editor, window::Ptr{GLFWwindow}, key::Cint, scancode::Cint, action::Cint, mods::Cint)::Cvoid = begin
-  if action == GLFW_PRESS
-    if ed.mode == MODE_NORMAL
-      f = get(KEYMAP_NORMAL, KeyBinding(key, mods), nothing)
+  if action == GLFW_PRESS || action == GLFW_REPEAT
+    if ed.mode == MODE_NORMAL 
+      f = get(KEYMAP_NORMAL, KeyBinding(key, mods, false), nothing)
       !isnothing(f) && f()
     end
   end
