@@ -14,8 +14,8 @@ Scene(scroll::HerculaneumScan) = begin
   scanvol = ScanVolume(scroll)
   dims = dimensions(scanvol)
   objects = [
-    # StaticBoxMesh(zero(Vec3f), Vec3f(dims[1], dims[2], dims[3]/2f0)),
-    # StaticBoxMesh(zero(Vec3f), Vec3f(1f0, 1f0, 1f0)),
+    # StaticBoxMesh(E0, Vec3f(dims[1], dims[2], dims[3]/2f0)),
+    # StaticBoxMesh(E0, Vec3f(1f0, 1f0, 1f0)),
   ]
   Scene(scanvol, objects)
 end
@@ -51,23 +51,17 @@ draw!(mesh::StaticMesh, shader::Shader) = begin
   draw!(mesh.mesh)
 end
 
-mutable struct CellCut <: SceneObject
-  p :: Vec3f
-  θ :: Float32
-end
-
-draw!(cc::CellCut, shader::Shader) = begin
-  l = mm * 500f0 * sqrt(2f0) / 2f0
-  h = mm * 500f0 / 2f0
-  # l = 1f0
-  # h = 1f0
-  v = Vec3f(cos(cc.θ), sin(cc.θ), 0f0)
-  u = Vec3f(0f0, 0f0, 1f0)
-  p1 = cc.p - l*v - h*u
-  p2 = cc.p + l*v - h*u
-  p3 = cc.p + l*v + h*u
-  p4 = cc.p - l*v + h*u
-  mesh = GLQuadMesh(p1, p2, p3, p4)
+draw!(cc::Plane, shader::Shader) = begin
+  h = cell_mm(the_scan) / 2f0
+  l =  h * sqrt(2f0)
+  u = Ez
+  v = cross(u, cc.n)
+  mesh = GLQuadMesh(
+    cc.p - l*v - h*u,
+    cc.p + l*v - h*u,
+    cc.p + l*v + h*u,
+    cc.p - l*v + h*u,
+  )
   M = scaling(1f0)
   glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, M)
   draw!(mesh)

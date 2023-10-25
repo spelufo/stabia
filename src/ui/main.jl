@@ -15,6 +15,7 @@ include("editor.jl")
 @defonce the_window_width = Int32(800)
 @defonce the_window_height = Int32(600)
 
+@defonce the_scan = scroll_1_54
 @defonce the_scene = nothing
 @defonce the_editor = nothing
 @defonce the_gpu_info = nothing
@@ -99,7 +100,7 @@ main() = begin
     the_gpu_info = GPUInfo()
 
     global the_editor
-    the_editor = Editor()
+    the_editor = Editor((7, 7, 14))
     init!(the_editor)
     println("Editor initialized.")
 

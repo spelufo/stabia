@@ -23,7 +23,7 @@ ScanVolume(scan::HerculaneumScan; load_small=false) = begin
   @time begin
     small_sz = small_size(scan)
     small = zeros(N0f16, gpu_ceil.(small_sz))
-    cell_sz = (GRID_CELL_SIZE, GRID_CELL_SIZE, GRID_CELL_SIZE)
+    cell_sz = (CELL_SIZE, CELL_SIZE, CELL_SIZE)
     cell = zeros(N0f16, gpu_ceil.(cell_sz))
   end
   scanvol = ScanVolume(
@@ -56,7 +56,7 @@ load_small!(scanvol::ScanVolume) = begin
 end
 
 focus_on_cell!(scanvol::ScanVolume, jy::Int, jx::Int, jz::Int) = begin
-  if !have_grid_cell(scanvol.scan, jy, jx, jz)
+  if !have_cell(scanvol.scan, jy, jx, jz)
     println("focus_on_cell!: cell $((jy, jx, jz)) not found.")
     return
   end
@@ -66,8 +66,8 @@ focus_on_cell!(scanvol::ScanVolume, jy::Int, jx::Int, jz::Int) = begin
   if !scanvol.cell_loaded
     println("Loading cell...")
     @time begin
-      data = channelview(load_grid_cell(scanvol.scan, jy, jx, jz))
-      scanvol.cell[1:GRID_CELL_SIZE, 1:GRID_CELL_SIZE, 1:GRID_CELL_SIZE] .= data
+      data = channelview(load_cell(scanvol.scan, jy, jx, jz))
+      scanvol.cell[1:CELL_SIZE, 1:CELL_SIZE, 1:CELL_SIZE] .= data
       scanvol.j = (jy, jx, jz)
       scanvol.cell_loaded = true
     end
@@ -79,9 +79,9 @@ end
   scan_dimensions_mm(scanvol.scan)
 
 @inline cell_position(scanvol::ScanVolume) = begin
-  cry = grid_cell_range(scanvol.j[1], scanvol.scan.height)
-  crx = grid_cell_range(scanvol.j[2], scanvol.scan.width)
-  crz = grid_cell_range(scanvol.j[3], scanvol.scan.slices)
+  cry = cell_range(scanvol.j[1], scanvol.scan.height)
+  crx = cell_range(scanvol.j[2], scanvol.scan.width)
+  crz = cell_range(scanvol.j[3], scanvol.scan.slices)
   ( scan_position_mm(scanvol.scan, crx.start, cry.start, crz.start),
     scan_position_mm(scanvol.scan, crx.stop, cry.stop, crz.stop) )
 end
@@ -109,9 +109,9 @@ move_focus!(scanvol::ScanVolume, djy::Int, djx::Int, djz::Int) =
   (scanvol.scan.height, scanvol.scan.width, scanvol.scan.slices)
 
 @inline Base.getindex(scanvol::ScanVolume, iy::Int, ix::Int, iz::Int) = begin
-  cry = grid_cell_range(scanvol.j[1], scanvol.scan.height)
-  crx = grid_cell_range(scanvol.j[2], scanvol.scan.width)
-  crz = grid_cell_range(scanvol.j[3], scanvol.scan.slices)
+  cry = cell_range(scanvol.j[1], scanvol.scan.height)
+  crx = cell_range(scanvol.j[2], scanvol.scan.width)
+  crz = cell_range(scanvol.j[3], scanvol.scan.slices)
   if iy in cry && ix in crx && iz in crz
     scanvol.cell[iy-cry.start+1, ix-crx.start+1, iz-crz.start+1]
   else

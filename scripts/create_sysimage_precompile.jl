@@ -19,8 +19,7 @@ using FileIO
 using Images
 using ImageFiltering
 using TiffImages
-using HDF5
-using JLD
+using JLD2
 
 # Does this mean that core would be baked in too?
 # In that case maybe I shouldn't do this...

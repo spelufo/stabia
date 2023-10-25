@@ -1,19 +1,3 @@
-
-
-# Vec ##########################################################################
-
-# const vec3_x  = Vec3f(1.0, 0.0, 0.0)
-# const vec3_y  = Vec3f(0.0, 1.0, 0.0)
-# const vec3_z  = Vec3f(0.0, 0.0, 1.0)
-# const vec3f_x = Vec3f(1f0, 0f0, 0f0)
-# const vec3f_y = Vec3f(0f0, 1f0, 0f0)
-# const vec3f_z = Vec3f(0f0, 0f0, 1f0)
-
-snap_to_axis(v::Vec3{F}) where F<:AbstractFloat = begin
-  k = argmax(abs.(reverse(v)))
-  Vec3{F}([i==k ? sign(v[i]) : zero(F) for i in 1:3])
-end
-
 # Transformations ##############################################################
 
 scaling(s::F) where F<:AbstractFloat =

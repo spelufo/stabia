@@ -6,60 +6,61 @@ const MODE_NORMAL = EditorMode("normal")
 
 mutable struct Editor
   mode :: EditorMode
-  frame :: Int
+
   view_3d    :: Union{Nothing, View}
   view_top   :: Union{Nothing, View}
   view_cross :: Union{Nothing, View}
+
   j :: Tuple{Int,Int,Int}
+
+  cell_cut :: Plane
   cell_mesh :: Union{Nothing, StaticMesh}
-  cell_cut :: CellCut
   cell_normals
   cell_normals_at
+
+  frame :: Int
   computing_normals :: Bool
 
-  Editor() = new(
-    MODE_NORMAL,
-    0,
-    nothing,
-    nothing,
-    nothing,
-    (7,7,14),
-    nothing,
-    CellCut(mm*500f0*Vec3f(6.5, 6.5, 13.5), 0),
-    nothing,
-    nothing,
-    false,
-  )
+  Editor(j::Tuple{Int, Int, Int}) =
+    new(
+      MODE_NORMAL, # mode
+      nothing, nothing, nothing, # views
+      j,
+      Plane(cell_position_mm(the_scan, (j .+ 0.5)...), Ey),
+      nothing, # cell_mesh
+      nothing, # cell_normals
+      nothing, # cell_normals_at
+      0,       # frame
+      false,   # computing_normals
+    )
 end
 
-const CELL_SIDE = 500f0 * mm
 
 init!(ed::Editor) = begin
-  # Ugh..
   focus_on_cell!(the_scene.scanvol, the_editor.j...)
-  println("Loading textures into GPU...")
+  # println("Loading textures into GPU...")
   load_textures(the_scene.scanvol)
-  println("Loaded into GPU.")
+  # println("Loaded into GPU.")
 
-  dims = dimensions(the_scene.scanvol)
-  p0, p1 = cell_position(the_scene.scanvol)
-  c = (p0 + p1)/2f0
+  init_views!(ed::Editor)
 
-  p = p1 + Vec3f(3.94)
-  ed.view_3d = View("3D View", PerspectiveCamera(p, p0, Vec3f(0f0, 0f0, 1f0), 1))
-
-  n = Vec3f(0, 0, 2f0 * CELL_SIDE)
-  ed.view_top = View("Top View", OrthographicCamera(
-    c + n, -n, Vec3f(0f0, 1f0,  0f0), CELL_SIDE, CELL_SIDE))
-
-  n = Vec3f(0, 2f0 * CELL_SIDE, 0)
-  ed.view_cross = View("Cross View", OrthographicCamera(
-    c + n, -n, Vec3f(0f0, 0f0, 1f0), CELL_SIDE, CELL_SIDE))
-
-  offset = Vec3f(0.001)
+  p0, p1 = cell_range_mm(the_scan, ed.j...)
+  offset = Vec3f(px_mm(the_scan))
   ed.cell_mesh = StaticBoxMesh(p0+offset, p1-offset)
 
   nothing
+end
+
+init_views!(ed::Editor) = begin
+  cell_size = cell_mm(the_scan)
+  p0, p1 = cell_range_mm(the_scan, ed.j...)
+  c = (p0 + p1)/2f0
+  ed.view_3d = View("3D View", PerspectiveCamera(p1 + 4*E1, p0, Ez, 1))
+  n = 2f0 * cell_size * Ez
+  ed.view_top = View("Top View", OrthographicCamera(c + n, -n, Ey, cell_size, cell_size))
+  n = 2f0 * cell_size * Ey
+  ed.view_cross = View("Cross View", OrthographicCamera(c + n, -n, Ez, cell_size, cell_size))
+  # update_cross_camera!(ed, ed.cell_cut.p, 0)
 end
 
 all_views(ed::Editor) =
@@ -104,15 +105,14 @@ draw!(ed::Editor) = begin
   CImGui.End()
 
   CImGui.Begin("Controls")
-  angle = Ref(180f0 * ed.cell_cut.θ / π)
+
+  angle = Ref(180f0 * acos(ed.cell_cut.n[1]) / π)
   DragFloat("Cut angle", angle, 1f0, -180f0, 180f0)
-  ed.cell_cut.θ = π * angle[] / 180f0
-  p0, p1 = cell_position(the_scene.scanvol)
-  c = (p0 + p1)/2f0
-  n = 2f0 * CELL_SIDE * Vec3f(sin(ed.cell_cut.θ), -cos(ed.cell_cut.θ), 0)
-  ed.view_cross.camera.p = c + n
-  ed.view_cross.camera.n = -n
-  CImGui.Text("Camera p: $(ed.view_cross.camera.p)")
+  θ = π * angle[] / 180f0
+
+  update_cell_cut!(ed, ed.cell_cut.p, θ)
+  # update_cross_camera!(ed, ed.cell_cut.p, θ)
+
   if !ed.computing_normals
     if CImGui.Button("Compute Normals")
       compute_normals!()
@@ -120,6 +120,7 @@ draw!(ed::Editor) = begin
   else
     CImGui.Text("Computing Normals... This will take a while.")
   end
+
   CImGui.End()
 
   # TODO: It seems like creating the VAOs in advance doesn't work but doing
@@ -137,8 +138,22 @@ draw!(ed::Editor) = begin
   nothing
 end
 
+update_cell_cut!(ed::Editor, p::Vec3, θ::Float32) = begin
+  ed.cell_cut.p = p
+  ed.cell_cut.n = Vec3f(cos(θ), sin(θ), 0)
+  nothing
+end
 
-# Commands #####################################################################
+update_cross_camera!(ed::Editor, p::Vec3, θ::Float32) = begin
+  p0, p1 = cell_range_mm(the_scan, ed.j...)
+  c = (p0 + p1)/2f0
+  n = cell_mm(the_scan) * Vec3f(sin(θ), -cos(θ), 0)
+  ed.view_cross.camera.p = c + 2*n
+  ed.view_cross.camera.n = -2*n
+  nothing
+end
+
+
 
 compute_normals!() = begin
   the_editor.computing_normals = true

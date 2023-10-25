@@ -66,39 +66,39 @@ end
 Download the slices of a layer of the cell grid from the vesuvius data server.
 """
 download_grid_layer_slices(scan::HerculaneumScan, jz::Int) = begin
-  layers = 1:ceil(Int, scan.slices / GRID_CELL_SIZE)
+  layers = 1:ceil(Int, scan.slices / CELL_SIZE)
   @assert jz in layers "lz out of bounds"
-  download_scan_slices(scan, grid_cell_range(jz, scan.slices))
+  download_scan_slices(scan, cell_range(jz, scan.slices))
 end
 
 """
-  download_grid_cell(scan::HerculaneumScan, jy, jx, jz)
+  download_cell(scan::HerculaneumScan, jy, jx, jz)
 
 Download a grid cell file from the vesuvius data server.
 """
-download_grid_cell(scan::HerculaneumScan, jy, jx, jz) =
-  download_file(grid_cell_server_path(scan, jy, jx, jz))
+download_cell(scan::HerculaneumScan, jy, jx, jz) =
+  download_file(cell_server_path(scan, jy, jx, jz))
 
 """
-  download_grid_cells(scan::HerculaneumScan, cells)
+  download_cells(scan::HerculaneumScan, cells)
 
 Download grid cell files from the vesuvius data server. (uses Threads.@threads)
 """
-download_grid_cells(scan::HerculaneumScan, cells; quiet=false) = begin
+download_cells(scan::HerculaneumScan, cells; quiet=false) = begin
   Threads.@threads for (jy, jx, jz) = cells
     quiet || println("Downloading grid cell ($jy, $jx, $jz)")
-    download_grid_cell(scroll_1_54, jy, jx, jz)
+    download_cell(scroll_1_54, jy, jx, jz)
   end
 end
 
 """
-  download_grid_cells_range(scan::HerculaneumScan, jys, jxs, jzs; quiet=false)
+  download_cells_range(scan::HerculaneumScan, jys, jxs, jzs; quiet=false)
 
 Download a range of grid cells from the vesuvius data server.
 """
-download_grid_cells_range(scan::HerculaneumScan, jys, jxs, jzs; quiet=false) = begin
+download_cells_range(scan::HerculaneumScan, jys, jxs, jzs; quiet=false) = begin
   for jy in jys, jx in jxs, jz in jzs
-    filename = grid_cell_server_path(scan, jy, jx, jz)
+    filename = cell_server_path(scan, jy, jx, jz)
     quiet || println("Downloading $filename...")
     download_file(filename)
   end
@@ -173,8 +173,8 @@ download_segment_objs(scan::HerculaneumScan) = begin
 end
 
 
-download_mesh_grid_cells(segment_id) = begin
+download_mesh_cells(segment_id) = begin
   mesh = load_segment_mesh(scroll_1_54, segment_id)
-  cells = mesh_grid_cells_missing(mesh)
-  download_grid_cells(scroll_1_54, cells)
+  cells = mesh_cells_missing(mesh)
+  download_cells(scroll_1_54, cells)
 end
