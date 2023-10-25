@@ -32,6 +32,8 @@ mutable struct Editor
   )
 end
 
+const CELL_SIDE = 500f0 * mm
+
 init!(ed::Editor) = begin
   # Ugh..
   focus_on_cell!(the_scene.scanvol, the_editor.j...)
@@ -46,21 +48,13 @@ init!(ed::Editor) = begin
   p = p1 + Vec3f(3.94)
   ed.view_3d = View("3D View", PerspectiveCamera(p, p0, Vec3f(0f0, 0f0, 1f0), 1))
 
+  n = Vec3f(0, 0, 2f0 * CELL_SIDE)
   ed.view_top = View("Top View", OrthographicCamera(
-    c + Vec3f(0, 0, 2f0 * 3.94f0),
-    -Vec3f(0, 0, 2f0 * 3.94f0),
-    Vec3f(0f0, 1f0,  0f0),
-    3.94f0,
-    3.94f0,
-  ))
+    c + n, -n, Vec3f(0f0, 1f0,  0f0), CELL_SIDE, CELL_SIDE))
 
+  n = Vec3f(0, 2f0 * CELL_SIDE, 0)
   ed.view_cross = View("Cross View", OrthographicCamera(
-    c + Vec3f(0, 2f0 * 3.94f0, 0),
-    -Vec3f(0, 2f0 * 3.94f0, 0),
-    Vec3f(0f0, 0f0, 1f0),
-    3.94f0,
-    3.94f0,
-  ))
+    c + n, -n, Vec3f(0f0, 0f0, 1f0), CELL_SIDE, CELL_SIDE))
 
   offset = Vec3f(0.001)
   ed.cell_mesh = StaticBoxMesh(p0+offset, p1-offset)
@@ -110,14 +104,15 @@ draw!(ed::Editor) = begin
   CImGui.End()
 
   CImGui.Begin("Controls")
-  θ = Ref(ed.cell_cut.θ)
-  DragFloat("Cut angle", θ, 0.01f0, 0f0, Float32(2π))
-  ed.cell_cut.θ = θ[]
+  angle = Ref(180f0 * ed.cell_cut.θ / π)
+  DragFloat("Cut angle", angle, 1f0, -180f0, 180f0)
+  ed.cell_cut.θ = π * angle[] / 180f0
   p0, p1 = cell_position(the_scene.scanvol)
   c = (p0 + p1)/2f0
-  n = 2f0 * 3.94f0 * Vec3f(cos(π/2 - ed.cell_cut.θ), sin(π/2 - ed.cell_cut.θ), 0)
+  n = 2f0 * CELL_SIDE * Vec3f(sin(ed.cell_cut.θ), -cos(ed.cell_cut.θ), 0)
   ed.view_cross.camera.p = c + n
   ed.view_cross.camera.n = -n
+  CImGui.Text("Camera p: $(ed.view_cross.camera.p)")
   if !ed.computing_normals
     if CImGui.Button("Compute Normals")
       compute_normals!()

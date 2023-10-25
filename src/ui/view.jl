@@ -34,7 +34,7 @@ draw_on_view!(draw_fn::Function, view::View) = begin
     glViewport(0, 0, width, height)
     glPolygonMode(GL_FRONT_AND_BACK, if view.wireframe GL_LINE else GL_FILL end)
 
-    glClearColor(1.0, 1.0, 1.0, 1.0)
+    glClearColor(0.2, 0.2, 0.2, 1.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     set_uniforms(view.camera, view.shader)

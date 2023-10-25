@@ -92,14 +92,24 @@ float measure(vec3 p) {
     ) / 65535.0;
 }
 
-vec3 meas(vec3 p) {
-  float a = measure(p);
-  vec3 A = vec3(a*a);
-  
-  return A;
+float meas(vec3 p) {
+  float v = measure(p);
+  return max(0, (v - 0.15)/1.15);
 }
 
 void main() {
-  vis(measure(P));
+  vec3 A = vec3(0);
+  vec3 N = normalize(Ray); // not the real normal.
+  // vis(meas(P)); return;
+  float value = 0;
+  float nmerge_step = 7.91/1000;
+  float offset = 0;
+  value += meas(P - (offset)*N);
+  A.r = value;
+  value += meas(P - (offset + nmerge_step)*N);
+  A.g = value/2;
+  value += meas(P - (offset + 2*nmerge_step)*N);
+  A.b = value/3;
+  vis(A);
   return;
 }
