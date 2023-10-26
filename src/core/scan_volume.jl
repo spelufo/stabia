@@ -1,19 +1,18 @@
 # TODO:
-# - Load on background thread
-# - Generalize to multiple loaded cells?
+# - Generalize to multiple loaded cells
 
 
 mutable struct ScanVolume <: AbstractArray{N0f16, 3}
   scan :: HerculaneumScan
 
   small :: Array{N0f16, 3}  # A downsampled by SMALLER_BY version of the scan.
-  small_size :: Tuple{Int, Int, Int}  # small is padded, this is the size of the data
+  small_size :: Ints3  # small is padded, this is the size of the data
   small_loaded :: Bool
   small_texture :: UInt32
 
-  j :: Tuple{Int,Int,Int}
+  j :: Ints3
   cell :: Array{N0f16, 3}  # The currently loaded cell, at full scan resolution.
-  cell_size :: Tuple{Int, Int, Int} # cell is padded, this is the size of the data
+  cell_size :: Ints3 # cell is padded, this is the size of the data
   cell_loaded :: Bool
   cell_texture :: UInt32
 end

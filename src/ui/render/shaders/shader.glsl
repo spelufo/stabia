@@ -24,10 +24,6 @@ void main() {
   gl_Position = proj * vp;
   P = p.xyz;
   Ray = vp.xyz - cam;
-
-  // P = model * vec4(v_P, 1.0);
-  // Ray = P - cam;
-  // gl_Position = proj * view * P;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -76,9 +72,7 @@ void vis(vec2  A) { FragColor = vec4(A, 0, 1); }
 void vis(vec3  A) { FragColor = vec4(A, 1); }
 
 float measure(vec3 p) {
-  return float(
-    texture(Cell, 0.99999*CellScale*(p-cellp0)/(cellp1 - cellp0)).r
-    ) / 65535.0;
+  return float(texture(Cell, CellScale*(p-cellp0)/(cellp1 - cellp0)).r) / 65535.0;
 }
 
 float meas(vec3 p) {

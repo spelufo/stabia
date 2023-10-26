@@ -4,75 +4,84 @@ end
 
 const MODE_NORMAL = EditorMode("normal")
 
+
+mutable struct EditorView
+  name :: String
+  fb :: Framebuffer
+  shader :: Shader
+  camera :: Camera
+  wireframe :: Bool
+end
+
+EditorView(name::String, camera::Camera) =
+  EditorView(name, Framebuffer(), Shader("shader.glsl"), camera, false)
+
+
 mutable struct Editor
+  doc :: Document
+  scan :: HerculaneumScan
+  cell :: Cell
+
   mode :: EditorMode
-
-  view_3d    :: Union{Nothing, View}
-  view_top   :: Union{Nothing, View}
-  view_cross :: Union{Nothing, View}
-
-  j :: Tuple{Int,Int,Int}
-
-  cell_cut :: Plane
-  cell_mesh :: Union{Nothing, StaticMesh}
-  cell_normals
-  cell_normals_at
-
+  cursor :: Pose
   frame :: Int
-  computing_normals :: Bool
+  view_3d    :: Union{EditorView, Nothing}
+  view_top   :: Union{EditorView, Nothing}
+  view_cross :: Union{EditorView, Nothing}
 
-  Editor(j::Tuple{Int, Int, Int}) =
-    new(
-      MODE_NORMAL, # mode
-      nothing, nothing, nothing, # views
-      j,
-      Plane(cell_position_mm(the_scan, (j .+ 0.5)...), Ey),
-      nothing, # cell_mesh
-      nothing, # cell_normals
-      nothing, # cell_normals_at
-      0,       # frame
-      false,   # computing_normals
-    )
+  sheet
 end
 
-
-init!(ed::Editor) = begin
-  focus_on_cell!(the_scene.scanvol, the_editor.j...)
-  # println("Loading textures into GPU...")
-  load_textures(the_scene.scanvol)
-  # println("Loaded into GPU.")
-
-  init_views!(ed::Editor)
-
-  p0, p1 = cell_range_mm(the_scan, ed.j...)
-  offset = Vec3f(px_mm(the_scan))
-  ed.cell_mesh = StaticBoxMesh(p0+offset, p1-offset)
-
-  nothing
+Editor(doc::Document) = begin
+  # TODO: At some point we should be able to start the editor without
+  # any loaded cells. For now, we load the cell at startup and make things easier
+  # for all the downstream code.
+  # cell = !isempty(doc.cells) && doc.cells[1] || nothing
+  cell = doc.cells[1]
+  load_textures(cell)
+  ed = Editor(
+    doc, doc.scan, cell,
+    MODE_NORMAL,
+    Pose(center(cell)), # cursor
+    0, # frame
+    nothing, nothing, nothing, # views
+    nothing, # sheet
+  )
+  reset_views!(ed)
+  ed
 end
 
-init_views!(ed::Editor) = begin
-  cell_size = cell_mm(the_scan)
-  p0, p1 = cell_range_mm(the_scan, ed.j...)
-  c = (p0 + p1)/2f0
-  ed.view_3d = View("3D View", PerspectiveCamera(p1 + 2*Vec3f(1, 0.9, 0.7), p0, Ez, 1))
-  n = 2f0 * cell_size * Ez
-  ed.view_top = View("Top View", OrthographicCamera(c + n, -n, Ey, cell_size, cell_size))
-  n = 2f0 * cell_size * Ey
-  ed.view_cross = View("Cross View", OrthographicCamera(c + n, -n, Ez, cell_size, cell_size))
+reset_views!(ed::Editor) = begin
+  p = ed.cell.p
+  c = center(ed.cell)
+  L = ed.cell.L
+
+  name = "3D View"
+  ed.view_3d = EditorView(name, PerspectiveCamera(p + 3*Vec3f(1, 0.9, 0.7), p, Ez, 1))
+
+  name = "Top View"
+  n = 2f0 * L * Ez
+  ed.view_top = EditorView(name, OrthographicCamera(c + n, -n, Ey, L, L))
+
+  name = "Cross View"
+  n = 2f0 * L * Ey
+  ed.view_cross = EditorView(name, OrthographicCamera(c + n, -n, Ez, L, L))
 end
 
-all_views(ed::Editor) =
-  [ed.view_3d, ed.view_top, ed.view_cross]
+editor_views(ed::Editor) =
+  (ed.view_3d, ed.view_top, ed.view_cross)
 
 update!(ed::Editor) = begin
   ed.frame += 1
+
+  # reload shaders
   if ed.frame % 60 == 0
-    for view = all_views(ed)
+    for view = editor_views(ed)
       reload!(view.shader)
     end
   end
 
+  # handle keys
   if ed.mode == MODE_NORMAL
     for (kb, f) = KEYMAP_NORMAL
       if kb.continuous
@@ -83,146 +92,74 @@ update!(ed::Editor) = begin
     end
   end
 
-  # check_bgtask(ed)
   nothing
 end
 
-draw!(ed::Editor) = begin
-  LibCImGui.igDockSpaceOverViewport(C_NULL, ImGuiDockNodeFlags_PassthruCentralNode, C_NULL)
-
-  CImGui.BeginMainMenuBar()
-    if CImGui.BeginMenu("File")
-      CImGui.MenuItem("New")
-      CImGui.MenuItem("Open")
-      CImGui.MenuItem("Save")
-      CImGui.MenuItem("Save As...")
-      CImGui.EndMenu()
-    end
-    if CImGui.BeginMenu("Edit")
-      CImGui.MenuItem("Edit")
-      CImGui.EndMenu()
-    end
-    if CImGui.BeginMenu("Help")
-      CImGui.MenuItem("Help")
-      CImGui.EndMenu()
-    end
-  CImGui.EndMainMenuBar()
-
-  CImGui.Begin("Info")
-  CImGui.Text("Cell: $(ed.j)")
-  CImGui.Text("GPU: $(the_gpu_info.renderer_string)")
-  CImGui.Text("GPU max texture buffer size: $(the_gpu_info.max_texture_buffer_size / 1024^2) MB")
-  CImGui.End()
+draw(ed::Editor) = begin
+  draw_dockspace(ed)
+  draw_menu_bar(ed)
+  draw_info(ed)
 
   CImGui.Begin("Controls")
+    # angle = Ref(180f0 * acos(ed.cursor.n[1]) / π)
+    # DragFloat("Cut angle", angle, 1f0, -180f0, 180f0)
+    # θ = π * angle[] / 180f0
 
-  angle = Ref(180f0 * acos(ed.cell_cut.n[1]) / π)
-  DragFloat("Cut angle", angle, 1f0, -180f0, 180f0)
-  θ = π * angle[] / 180f0
-
-  update_cell_cut!(ed, ed.cell_cut.p, θ)
-  update_cross_camera!(ed)
-
-  if !ed.computing_normals
-    if CImGui.Button("Compute Normals")
-      compute_normals!()
-    end
-  else
-    CImGui.Text("Computing Normals... This will take a while.")
-  end
-
+    # update_cursor!(ed, ed.cursor.p, θ)
+    # update_cross_camera!(ed)
   CImGui.End()
 
-  l = cell_mm(the_scan)/9f0
-  p0, p1 = cell_range_mm(the_scan, 7, 7, 14)
-  p0 += px_mm(the_scan)*Ez
-  p1 += px_mm(the_scan)*Ez
-  gm = GridSheetFromRange(p0, p0 + cell_mm(the_scan)*Vec3f(1,1,0), Ex, l)
+  # l = cell_mm(the_scan)/9f0
+  # p0, p1 = cell_range_mm(the_scan, 7, 7, 14)
+  # p0 += px_mm(the_scan)*Ez
+  # p1 += px_mm(the_scan)*Ez
+  # gm = GridSheetFromRange(p0, p0 + cell_mm(the_scan)*Vec3f(1,1,0), Ex, l)
 
-  gm_cut = GridSheetFromCenter(ed.cell_cut.p, ed.cell_cut.n, Ez, l, 10, 10)
+  # gm_cut = GridSheetFromCenter(ed.cursor.p, ed.cursor.n, Ez, l, 10, 10)
 
-
-  # TODO: It seems like creating the VAOs in advance doesn't work but doing
-  # so here while the FBO is bound does. Figure out why and how to handle it.
-  draw_on_view!(ed.view_3d) do shader, width, height
-    # draw!(ed.cell_cut, shader)
-    draw!(gm_cut, shader)
-    draw!(gm, shader)
+  draw_on_view!(ed, ed.view_3d) do shader, width, height
+    draw_axis_planes(ed, shader)
   end
-  draw_on_view!(ed.view_cross) do shader, width, height
-    draw!(gm_cut, shader)
-    draw!(gm, shader)
+  draw_on_view!(ed, ed.view_cross) do shader, width, height
+    draw_axis_planes(ed, shader)
   end
-  draw_on_view!(ed.view_top) do shader, width, height
-    draw!(gm, shader)
+  draw_on_view!(ed, ed.view_top) do shader, width, height
+    draw_axis_planes(ed, shader)
   end
   glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
   nothing
 end
 
-update_cell_cut!(ed::Editor, p::Vec3, θ::Float32) = begin
-  ed.cell_cut.p = p
-  ed.cell_cut.n = Vec3f(cos(θ), sin(θ), 0)
+draw_axis_planes(ed::Editor, shader::Shader) = begin
+  nothing
+end
+
+update_cursor!(ed::Editor, p::Vec3, θ::Float32) = begin
+  ed.cursor.p = p
+  ed.cursor.n = Vec3f(cos(θ), sin(θ), 0)
   nothing
 end
 
 update_cross_camera!(ed::Editor) = begin
-  ed.view_cross.camera.p = ed.cell_cut.p + 2*ed.cell_cut.n
-  ed.view_cross.camera.n = -ed.cell_cut.n
+  ed.view_cross.camera.p = ed.cursor.p + 2*ed.cursor.n
+  ed.view_cross.camera.n = -ed.cursor.n
   nothing
 end
-
-
-
-compute_normals!() = begin
-  the_editor.computing_normals = true
-  compute_normals_job() = begin
-    try
-      N, P = estimate_normals(the_scene.scanvol.cell)
-      the_editor.cell_normals = N
-      the_editor.cell_normals_at = P
-    catch e
-      @error "Error computing normals!" exception=e
-      Base.show_backtrace(stderr, catch_backtrace())
-    finally
-      the_editor.computing_normals = false
-    end
-  end
-  Threads.@spawn compute_normals_job()
-end
-
-load_scene_scan_volume!() = begin
-  # load_small!(the_scene.scanvol) # TODO
-  nothing
-end
-
-# check_bgtask(ed::Editor) = begin
-#   if !isnothing(ed.bgtask)
-#     if istaskdone(ed.bgtask)
-#       println("Loading textures into GPU...")
-#       load_textures(the_scene.scanvol)
-#       println("Loaded into GPU.")
-#       ed.bgtask = nothing
-#     elseif istaskfailed(ed.bgtask)
-#       println("Background task failed.")
-#       ed.bgtask = nothing
-#     end
-#   end
-# end
 
 toggle_wireframe!(ed::Editor) = begin
   ed.view_3d.wireframe = !ed.view_3d.wireframe
 end
 
-
-rotate_cell_cut!(ed::Editor, dθ::Float32) = begin
-  ed.cell_cut.n = rotate(ed.cell_cut.n, Ez, dθ)
+rotate_cursor!(ed::Editor, dθ::Float32) = begin
+  ed.cursor.n = rotate(ed.cursor.n, Ez, dθ)
 end
 
-move_cell_cut!(ed::Editor, left::Float32, fwd::Float32) = begin
-  n = normalize(ed.cell_cut.n)
-  ed.cell_cut.p += fwd*n + left*cross(n, Ez)
+move_cursor!(ed::Editor, left::Float32, fwd::Float32) = begin
+  n = normalize(ed.cursor.n)
+  ed.cursor.p += fwd*n + left*cross(n, Ez)
 end
+
 
 # Key bindings #################################################################
 
@@ -240,12 +177,12 @@ const KeyMap = Dict{KeyBinding, Function}
 KEYMAP_NORMAL = KeyMap(
   KeyBinding(GLFW_KEY_W, GLFW_MOD_ALT)   => () -> toggle_wireframe!(the_editor),
 
-  KeyBinding(GLFW_KEY_S, 0, true)        => () -> move_cell_cut!(the_editor, 0f0, +0.01f0),
-  KeyBinding(GLFW_KEY_W, 0, true)        => () -> move_cell_cut!(the_editor, 0f0, -0.01f0),
-  KeyBinding(GLFW_KEY_A, 0, true)        => () -> move_cell_cut!(the_editor, -0.01f0, 0f0),
-  KeyBinding(GLFW_KEY_D, 0, true)        => () -> move_cell_cut!(the_editor, +0.01f0, 0f0),
-  KeyBinding(GLFW_KEY_Q, 0, true)        => () -> rotate_cell_cut!(the_editor, -0.01f0),
-  KeyBinding(GLFW_KEY_E, 0, true)        => () -> rotate_cell_cut!(the_editor, +0.01f0),
+  KeyBinding(GLFW_KEY_S, 0, true)        => () -> move_cursor!(the_editor, 0f0, +0.01f0),
+  KeyBinding(GLFW_KEY_W, 0, true)        => () -> move_cursor!(the_editor, 0f0, -0.01f0),
+  KeyBinding(GLFW_KEY_A, 0, true)        => () -> move_cursor!(the_editor, -0.01f0, 0f0),
+  KeyBinding(GLFW_KEY_D, 0, true)        => () -> move_cursor!(the_editor, +0.01f0, 0f0),
+  KeyBinding(GLFW_KEY_Q, 0, true)        => () -> rotate_cursor!(the_editor, -0.01f0),
+  KeyBinding(GLFW_KEY_E, 0, true)        => () -> rotate_cursor!(the_editor, +0.01f0),
 )
 
 on_key!(ed::Editor, window::Ptr{GLFWwindow}, key::Cint, scancode::Cint, action::Cint, mods::Cint)::Cvoid = begin
@@ -256,4 +193,38 @@ on_key!(ed::Editor, window::Ptr{GLFWwindow}, key::Cint, scancode::Cint, action::
     end
   end
   nothing
+end
+
+################################################################################
+
+draw_on_view!(draw_fn::Function, ed::Editor, view::EditorView) = begin
+  CImGui.Begin(view.name, C_NULL, ImGuiWindowFlags_NoScrollbar)
+  view_size = CImGui.GetContentRegionAvail()
+  width, height = floor(Int, view_size.x), floor(Int, view_size.y)
+  if width > 0 && height > 0
+    if resize!(view.fb, width, height)
+      # println("Resized view framebuffer: $width × $height")
+    end
+    set_viewport!(view.camera, width, height)
+
+    glBindFramebuffer(GL_FRAMEBUFFER, view.fb.id)
+    glEnable(GL_DEPTH_TEST)
+    glViewport(0, 0, width, height)
+    glPolygonMode(GL_FRONT_AND_BACK, if view.wireframe GL_LINE else GL_FILL end)
+
+    glClearColor(0.2, 0.2, 0.2, 1.0)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+    set_uniforms(view.camera, view.shader)
+    set_uniforms(ed.cell, view.shader)
+    set_textures(ed.cell, view.shader)
+
+    # TODO: It seems like creating the VAOs in advance doesn't work but doing
+    # so here while the FBO is bound does. Figure out why and how to handle it.
+    draw_fn(view.shader, width, height)
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0)
+    CImGui.Image(Ptr{Cvoid}(UInt(view.fb.texid)), view_size, ImVec2(0, 1), ImVec2(1, 0))
+  end
+  CImGui.End()
 end

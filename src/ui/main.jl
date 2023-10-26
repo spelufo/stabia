@@ -7,17 +7,16 @@ using CImGui.ImGuiOpenGLBackend.ModernGL
 
 include("render/render.jl")
 include("utils.jl")
-include("scene.jl")
-include("view.jl")
+include("document.jl")
+include("render/tex_cell.jl")
 include("editor.jl")
+include("editor_ui.jl")
 
+@defonce the_doc = nothing
+@defonce the_editor = nothing
 @defonce the_window = nothing
 @defonce the_window_width = Int32(800)
 @defonce the_window_height = Int32(600)
-
-@defonce the_scan = scroll_1_54
-@defonce the_scene = nothing
-@defonce the_editor = nothing
 @defonce the_gpu_info = nothing
 
 update!() = begin
@@ -27,7 +26,7 @@ update!() = begin
   update!(the_editor)
 end
 
-draw!() = begin
+draw() = begin
   begin # update window size
     win_width, win_height = Ref{Cint}(0), Ref{Cint}(0)
     glfwGetFramebufferSize(the_window, win_width, win_height)
@@ -39,7 +38,7 @@ draw!() = begin
     glClearColor(1f0, 1f0, 1f0, 1f0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
   end
-  draw!(the_editor)
+  draw(the_editor)
 end
 
 CTRL_KEYMAP = Dict{Cint, Function}
@@ -81,27 +80,26 @@ end
 
 
 main() = begin
-  @assert isnothing(the_window) "Main window already open."
-  println()
-
-  global the_scene
-  if isnothing(the_scene)
-    the_scene = Scene(scroll_1_54)
-  end
-  init!(the_scene)
-  println("Scene initialized.")
-
-  global the_window
-  the_window, ig_ctx, glfw_ctx, gl_ctx = create_window()
-  println("Window created.")
-
   try
+    @assert isnothing(the_window) "Main window already open."
+    println()
+
+    global the_doc
+    if isnothing(the_doc)
+      the_doc = Document(scroll_1_54, [Cell(scroll_1_54, (7, 7, 14))], [])
+    end
+    reload!(the_doc)
+    println("Document initialized.")
+
+    global the_window
+    the_window, ig_ctx, glfw_ctx, gl_ctx = create_window()
+    println("Window created.")
+
     global the_gpu_info
     the_gpu_info = GPUInfo()
 
     global the_editor
-    the_editor = Editor((7, 7, 14))
-    init!(the_editor)
+    the_editor = Editor(the_doc)
     println("Editor initialized.")
 
     while glfwWindowShouldClose(the_window) == GLFW_FALSE
@@ -113,7 +111,7 @@ main() = begin
       CImGui.NewFrame()
       Base.invokelatest(update!)
 
-      Base.invokelatest(draw!)
+      Base.invokelatest(draw)
       CImGui.Render()
       ImGuiOpenGLBackend.render(gl_ctx)
       glfwSwapBuffers(the_window)

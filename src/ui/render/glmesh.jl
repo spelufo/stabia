@@ -48,7 +48,7 @@ to_gpu!(mesh::GLMesh) = begin
   glBindVertexArray(0)
 end
 
-draw!(mesh::GLMesh) = begin
+draw(mesh::GLMesh) = begin
   glBindVertexArray(mesh.gl_va)
   # glBindBuffer(GL_ARRAY_BUFFER, mesh.gl_vb)
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.gl_vi)
@@ -57,6 +57,14 @@ end
 
 
 ## GLMesh builders
+
+GLMesh(mesh::Mesh) = begin
+  vertices = reinterpret(GLVertex, metafree(coordinates(mesh)))
+  indices = reinterpret(UInt32, faces(mesh))
+  mesh = GLMesh(vertices, indices, 0, 0, 0)
+  to_gpu!(mesh)
+  mesh
+end
 
 GLBoxMesh(p0::Vec3f, p1::Vec3f) = begin
   vertices = GLVertex[
@@ -116,3 +124,4 @@ GLGridMesh(g::GridSheet) = begin
   to_gpu!(mesh)
   mesh
 end
+

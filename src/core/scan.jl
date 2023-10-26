@@ -11,6 +11,10 @@ struct HerculaneumScan
   slices::Int
 end
 
+const Ints1 = NTuple{1, Int}
+const Ints2 = NTuple{2, Int}
+const Ints3 = NTuple{3, Int}
+
 # Measures
 
 @inline px_mm(scan::HerculaneumScan) =

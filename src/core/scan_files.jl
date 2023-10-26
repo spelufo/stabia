@@ -136,6 +136,9 @@ end
 cell_normals_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
   joinpath(cell_segmentation_dir(scan, jy, jx, jz), "$(cell_name(jy, jx, jz))_normals.jld2")
 
+have_cell_normals(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  isfile(cell_normals_path(scan, jy, jx, jz))
+
 load_cell_normals(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
   load(cell_normals_path(scan, jy, jx, jz))
 

@@ -22,7 +22,7 @@ julia() {
 }
 
 sysimage() {
-  command julia --project=. scripts/create_sysimage.jl
+  prime-run julia --project=. scripts/create_sysimage.jl
 }
 
 test() {
