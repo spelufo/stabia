@@ -29,6 +29,7 @@ mutable struct Editor
   view_top   :: Union{EditorView, Nothing}
   view_cross :: Union{EditorView, Nothing}
 
+  draw_axis_planes :: Ref{Bool}
   sheet
 end
 
@@ -45,6 +46,7 @@ Editor(doc::Document) = begin
     Pose(center(cell)), # cursor
     0, # frame
     nothing, nothing, nothing, # views
+    Ref(true),
     nothing, # sheet
   )
   reset_views!(ed)
@@ -92,6 +94,8 @@ update!(ed::Editor) = begin
     end
   end
 
+  update_cursor_camera!(ed)
+
   nothing
 end
 
@@ -99,15 +103,8 @@ draw(ed::Editor) = begin
   draw_dockspace(ed)
   draw_menu_bar(ed)
   draw_info(ed)
+  draw_controls(ed)
 
-  CImGui.Begin("Controls")
-    # angle = Ref(180f0 * acos(ed.cursor.n[1]) / π)
-    # DragFloat("Cut angle", angle, 1f0, -180f0, 180f0)
-    # θ = π * angle[] / 180f0
-
-    # update_cursor!(ed, ed.cursor.p, θ)
-    # update_cursor_camera!(ed)
-  CImGui.End()
 
   # l = ed.cell.L/9f0
   # p0, p1 = cell_range_mm(ed.scan, 7, 7, 14)
@@ -118,13 +115,13 @@ draw(ed::Editor) = begin
   # gm_cut = GridSheetFromCenter(ed.cursor.p, ed.cursor.n, Ez, l, 10, 10)
 
   draw_on_view!(ed, ed.view_3d) do shader, width, height
-    draw_axis_planes(ed, shader)
+    ed.draw_axis_planes[] && draw_axis_planes(ed, shader)
   end
   draw_on_view!(ed, ed.view_cross) do shader, width, height
-    draw_axis_planes(ed, shader)
+    ed.draw_axis_planes[] && draw_axis_planes(ed, shader)
   end
   draw_on_view!(ed, ed.view_top) do shader, width, height
-    draw(StaticQuadMesh(center(ed.cell), Ez, Ey, ed.cell.L, ed.cell.L), shader)
+    ed.draw_axis_planes[] && draw_axis_planes(ed, shader)
   end
   glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
@@ -132,16 +129,17 @@ draw(ed::Editor) = begin
 end
 
 draw_axis_planes(ed::Editor, shader::Shader) = begin
-  c = center(ed.cell)
+  c = ed.cursor.p
+  q = ed.cursor.q
   l = ed.cell.L
-  draw(StaticQuadMesh(c, Ez, Ey, l, l), shader)
-  draw(StaticQuadMesh(c, Ey, Ez, l, l), shader)
-  draw(StaticQuadMesh(c, Ex, Ez, l, l), shader)
+  draw(StaticQuadMesh(c, rotate(Ez, q), rotate(Ey, q), l, l), shader)
+  draw(StaticQuadMesh(c, rotate(Ey, q), rotate(Ez, q), l, l), shader)
+  draw(StaticQuadMesh(c, rotate(Ex, q), rotate(Ez, q), l, l), shader)
   nothing
 end
 
 update_cursor_camera!(ed::Editor) = begin
-  f = front(ed.cursor)
+  f = forward(ed.cursor)
   ed.view_cross.camera.p = ed.cursor.p + 2f0*f
   ed.view_cross.camera.n = -f
   nothing
@@ -157,8 +155,8 @@ rotate_cursor!(ed::Editor, dθ::Float32) = begin
   ed.cursor = rotate(ed.cursor, Ez, dθ)
 end
 
-move_cursor!(ed::Editor, dleft::Float32, dfwd::Float32) = begin
-  ed.cursor = move(ed.cursor, dfwd * forward(ed.cursor) + dleft*left(ed.cursor))
+move_cursor!(ed::Editor, dx::Float32, dy::Float32, dz::Float32) = begin
+  ed.cursor = move(ed.cursor, dx*xdir(ed.cursor) + dy*ydir(ed.cursor) + dz*zdir(ed.cursor))
 end
 
 
@@ -175,15 +173,19 @@ KeyBinding(key, mods) =
 
 const KeyMap = Dict{KeyBinding, Function}
 
+Δc = 0.015f0
+
 KEYMAP_NORMAL = KeyMap(
   KeyBinding(GLFW_KEY_W, GLFW_MOD_ALT)   => () -> toggle_wireframe!(the_editor),
 
-  KeyBinding(GLFW_KEY_S, 0, true)        => () -> move_cursor!(the_editor, 0f0, +0.01f0),
-  KeyBinding(GLFW_KEY_W, 0, true)        => () -> move_cursor!(the_editor, 0f0, -0.01f0),
-  KeyBinding(GLFW_KEY_A, 0, true)        => () -> move_cursor!(the_editor, -0.01f0, 0f0),
-  KeyBinding(GLFW_KEY_D, 0, true)        => () -> move_cursor!(the_editor, +0.01f0, 0f0),
-  KeyBinding(GLFW_KEY_Q, 0, true)        => () -> rotate_cursor!(the_editor, -0.01f0),
-  KeyBinding(GLFW_KEY_E, 0, true)        => () -> rotate_cursor!(the_editor, +0.01f0),
+  KeyBinding(GLFW_KEY_W, 0, true)        => () -> move_cursor!(the_editor, 0f0, +Δc, 0f0),
+  KeyBinding(GLFW_KEY_S, 0, true)        => () -> move_cursor!(the_editor, 0f0, -Δc, 0f0),
+  KeyBinding(GLFW_KEY_A, 0, true)        => () -> move_cursor!(the_editor, -Δc, 0f0, 0f0),
+  KeyBinding(GLFW_KEY_D, 0, true)        => () -> move_cursor!(the_editor, +Δc, 0f0, 0f0),
+  KeyBinding(GLFW_KEY_Q, 0, true)        => () -> move_cursor!(the_editor, 0f0, 0f0, -Δc),
+  KeyBinding(GLFW_KEY_E, 0, true)        => () -> move_cursor!(the_editor, 0f0, 0f0, +Δc),
+  KeyBinding(GLFW_KEY_R, 0, true)        => () -> rotate_cursor!(the_editor, -Δc),
+  KeyBinding(GLFW_KEY_F, 0, true)        => () -> rotate_cursor!(the_editor, +Δc),
 )
 
 on_key!(ed::Editor, window::Ptr{GLFWwindow}, key::Cint, scancode::Cint, action::Cint, mods::Cint)::Cvoid = begin

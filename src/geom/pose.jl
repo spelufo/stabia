@@ -74,23 +74,14 @@ world_vec_to_pose_vec(pose::Pose{F}, p::Vec3{F}) where F<:AbstractFloat =
 move(pose::Pose{F}, v::Vec3f) where F<:AbstractFloat =
   Pose(pose.p + v, pose.q)
 
-forward(pose::Pose{F}) where F<:AbstractFloat =
-  pose_vec_to_world_vec(pose, Vec3{F}(0.0, 0.0, -1.0))
-
-right(pose::Pose{F}) where F<:AbstractFloat =
+xdir(pose::Pose{F}) where F<:AbstractFloat =
   pose_vec_to_world_vec(pose, Vec3{F}(1.0, 0.0, 0.0))
 
-up(pose::Pose{F}) where F<:AbstractFloat =
+ydir(pose::Pose{F}) where F<:AbstractFloat =
   pose_vec_to_world_vec(pose, Vec3{F}(0.0, 1.0, 0.0))
 
-backward(pose::Pose{F}) where F<:AbstractFloat =
-  -forward(pose)
-
-left(pose::Pose{F}) where F<:AbstractFloat =
-  -right(pose)
-
-down(pose::Pose{F}) where F<:AbstractFloat =
-  -up(pose)
+zdir(pose::Pose{F}) where F<:AbstractFloat =
+  pose_vec_to_world_vec(pose, Vec3{F}(0.0, 0.0, 1.0))
 
 frame(pose::Pose{F}) where F<:AbstractFloat =
   rotation_matrix(pose.q)

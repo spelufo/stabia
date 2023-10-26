@@ -36,11 +36,10 @@ StaticBoxMesh(p0::Vec3f, p1::Vec3f) =
   StaticMesh(Pose(E0), GLBoxMesh(p0, p1))
   # StaticMesh(Pose(p0), GLBoxMesh(zero(Vec3f), p1 - p0))
 
-StaticQuadMesh(p::Vec3f, n::Vec3f, up::Vec3f, w::Float32, h::Float32) = begin
+StaticQuadMesh(p::Vec3f, n::Vec3f, v::Vec3f, w::Float32, h::Float32) = begin
   h /= 2f0
   w /= 2f0
-  u = cross(n, up)
-  v = cross(u, n)
+  u = cross(n, v)
   p1 = - w*u - h*v
   p2 = + w*u - h*v
   p3 = + w*u + h*v
