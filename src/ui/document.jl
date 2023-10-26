@@ -33,16 +33,18 @@ mutable struct StaticMesh <: DocumentObject
 end
 
 StaticBoxMesh(p0::Vec3f, p1::Vec3f) =
-  StaticMesh(Pose(p0), GLBoxMesh(zero(Vec3f), p1 - p0))
-  # StaticMesh(Pose(Vec3f(0f0)), GLBoxMesh(p0, p1))
+  StaticMesh(Pose(E0), GLBoxMesh(p0, p1))
+  # StaticMesh(Pose(p0), GLBoxMesh(zero(Vec3f), p1 - p0))
 
 StaticQuadMesh(p::Vec3f, n::Vec3f, up::Vec3f, w::Float32, h::Float32) = begin
+  h /= 2f0
+  w /= 2f0
   u = cross(n, up)
   v = cross(u, n)
-  p1 = p + w*u
-  p3 = p - w*u
-  p2 = p + h*v
-  p4 = p - h*v
+  p1 = - w*u - h*v
+  p2 = + w*u - h*v
+  p3 = + w*u + h*v
+  p4 = - w*u + h*v
   StaticMesh(Pose(p), GLQuadMesh(p1, p2, p3, p4))
 end
 

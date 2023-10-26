@@ -72,7 +72,7 @@ void vis(vec2  A) { FragColor = vec4(A, 0, 1); }
 void vis(vec3  A) { FragColor = vec4(A, 1); }
 
 float measure(vec3 p) {
-  return float(texture(Cell, CellScale*(p-cellp0)/(cellp1 - cellp0)).r) / 65535.0;
+  return float(texture(Cell, (p-cellp0)/(cellp1 - cellp0)).r) / 65535.0;
 }
 
 float meas(vec3 p) {

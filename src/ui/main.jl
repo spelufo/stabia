@@ -80,21 +80,21 @@ end
 
 
 main() = begin
+  @assert isnothing(the_window) "Main window already open."
+  println()
+
+  global the_doc
+  if isnothing(the_doc)
+    the_doc = Document(scroll_1_54, [Cell(scroll_1_54, (7,7,14))], [])
+  end
+  reload!(the_doc)
+  println("Document initialized.")
+
+  global the_window
+  the_window, ig_ctx, glfw_ctx, gl_ctx = create_window()
+  println("Window created.")
+
   try
-    @assert isnothing(the_window) "Main window already open."
-    println()
-
-    global the_doc
-    if isnothing(the_doc)
-      the_doc = Document(scroll_1_54, [Cell(scroll_1_54, (7, 7, 14))], [])
-    end
-    reload!(the_doc)
-    println("Document initialized.")
-
-    global the_window
-    the_window, ig_ctx, glfw_ctx, gl_ctx = create_window()
-    println("Window created.")
-
     global the_gpu_info
     the_gpu_info = GPUInfo()
 
@@ -116,10 +116,8 @@ main() = begin
       ImGuiOpenGLBackend.render(gl_ctx)
       glfwSwapBuffers(the_window)
     end
-  catch e
-    @error "Error in main loop!" exception=e
-    Base.show_backtrace(stderr, catch_backtrace())
   finally
+    global the_window
     ImGuiOpenGLBackend.shutdown(gl_ctx)
     ImGuiGLFWBackend.shutdown(glfw_ctx)
     CImGui.DestroyContext(ig_ctx)
@@ -128,6 +126,8 @@ main() = begin
   end
 end
 
-# Start main from the julia repl, like this:
-# schedule(Task(main))
-
+# To start asynchronously from the REPL. The usual dev workflow is:
+# julia> include("src/stabia.jl"); start_stabia!()
+# julia> include("src/stabia.jl") # reload code with the window still open
+start_stabia!() =
+  errormonitor(schedule(Task(main)))

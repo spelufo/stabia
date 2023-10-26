@@ -20,7 +20,7 @@ end
 set_textures(cell::Cell, shader::Shader) = begin
   glActiveTexture(GL_TEXTURE1)
   glBindTexture(GL_TEXTURE_3D, cell.texture)
-  scale = cell.L / CELL_SIZE
+  scale = 1f0
   glUniform3f(glGetUniformLocation(shader, "CellScale"), scale, scale, scale)
   glUniform1i(glGetUniformLocation(shader, "Cell"), 1)
 end

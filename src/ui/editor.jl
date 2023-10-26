@@ -57,7 +57,7 @@ reset_views!(ed::Editor) = begin
   L = ed.cell.L
 
   name = "3D View"
-  ed.view_3d = EditorView(name, PerspectiveCamera(p + 3*Vec3f(1, 0.9, 0.7), p, Ez, 1))
+  ed.view_3d = EditorView(name, PerspectiveCamera(p + 2*L*Vec3f(1, 1, 0.7), p, Ez, 1))
 
   name = "Top View"
   n = 2f0 * L * Ez
@@ -84,7 +84,7 @@ update!(ed::Editor) = begin
   # handle keys
   if ed.mode == MODE_NORMAL
     for (kb, f) = KEYMAP_NORMAL
-      if kb.continuous
+      if kb.continuous && kb.mods == 0
         if CImGui.IsKeyDown(kb.key) # && CImGui.IsKeyDown(kb.mods) # TODO: mods
           f()
         end
@@ -106,14 +106,14 @@ draw(ed::Editor) = begin
     # θ = π * angle[] / 180f0
 
     # update_cursor!(ed, ed.cursor.p, θ)
-    # update_cross_camera!(ed)
+    # update_cursor_camera!(ed)
   CImGui.End()
 
-  # l = cell_mm(the_scan)/9f0
-  # p0, p1 = cell_range_mm(the_scan, 7, 7, 14)
-  # p0 += px_mm(the_scan)*Ez
-  # p1 += px_mm(the_scan)*Ez
-  # gm = GridSheetFromRange(p0, p0 + cell_mm(the_scan)*Vec3f(1,1,0), Ex, l)
+  # l = ed.cell.L/9f0
+  # p0, p1 = cell_range_mm(ed.scan, 7, 7, 14)
+  # p0 += ed.cell.L*Ez
+  # p1 += ed.cell.L*Ez
+  # gm = GridSheetFromRange(p0, p0 + ed.cell.L*Vec3f(1,1,0), Ex, l)
 
   # gm_cut = GridSheetFromCenter(ed.cursor.p, ed.cursor.n, Ez, l, 10, 10)
 
@@ -124,7 +124,7 @@ draw(ed::Editor) = begin
     draw_axis_planes(ed, shader)
   end
   draw_on_view!(ed, ed.view_top) do shader, width, height
-    draw_axis_planes(ed, shader)
+    draw(StaticQuadMesh(center(ed.cell), Ez, Ey, ed.cell.L, ed.cell.L), shader)
   end
   glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
@@ -132,32 +132,33 @@ draw(ed::Editor) = begin
 end
 
 draw_axis_planes(ed::Editor, shader::Shader) = begin
+  c = center(ed.cell)
+  l = ed.cell.L
+  draw(StaticQuadMesh(c, Ez, Ey, l, l), shader)
+  draw(StaticQuadMesh(c, Ey, Ez, l, l), shader)
+  draw(StaticQuadMesh(c, Ex, Ez, l, l), shader)
   nothing
 end
 
-update_cursor!(ed::Editor, p::Vec3, θ::Float32) = begin
-  ed.cursor.p = p
-  ed.cursor.n = Vec3f(cos(θ), sin(θ), 0)
-  nothing
-end
-
-update_cross_camera!(ed::Editor) = begin
-  ed.view_cross.camera.p = ed.cursor.p + 2*ed.cursor.n
-  ed.view_cross.camera.n = -ed.cursor.n
+update_cursor_camera!(ed::Editor) = begin
+  f = front(ed.cursor)
+  ed.view_cross.camera.p = ed.cursor.p + 2f0*f
+  ed.view_cross.camera.n = -f
   nothing
 end
 
 toggle_wireframe!(ed::Editor) = begin
   ed.view_3d.wireframe = !ed.view_3d.wireframe
+  ed.view_top.wireframe = !ed.view_top.wireframe
+  ed.view_cross.wireframe = !ed.view_cross.wireframe
 end
 
 rotate_cursor!(ed::Editor, dθ::Float32) = begin
-  ed.cursor.n = rotate(ed.cursor.n, Ez, dθ)
+  ed.cursor = rotate(ed.cursor, Ez, dθ)
 end
 
-move_cursor!(ed::Editor, left::Float32, fwd::Float32) = begin
-  n = normalize(ed.cursor.n)
-  ed.cursor.p += fwd*n + left*cross(n, Ez)
+move_cursor!(ed::Editor, dleft::Float32, dfwd::Float32) = begin
+  ed.cursor = move(ed.cursor, dfwd * forward(ed.cursor) + dleft*left(ed.cursor))
 end
 
 
@@ -187,7 +188,7 @@ KEYMAP_NORMAL = KeyMap(
 
 on_key!(ed::Editor, window::Ptr{GLFWwindow}, key::Cint, scancode::Cint, action::Cint, mods::Cint)::Cvoid = begin
   if action == GLFW_PRESS || action == GLFW_REPEAT
-    if ed.mode == MODE_NORMAL 
+    if ed.mode == MODE_NORMAL
       f = get(KEYMAP_NORMAL, KeyBinding(key, mods, false), nothing)
       !isnothing(f) && f()
     end
@@ -212,7 +213,7 @@ draw_on_view!(draw_fn::Function, ed::Editor, view::EditorView) = begin
     glViewport(0, 0, width, height)
     glPolygonMode(GL_FRONT_AND_BACK, if view.wireframe GL_LINE else GL_FILL end)
 
-    glClearColor(0.2, 0.2, 0.2, 1.0)
+    glClearColor(0.5, 0.5, 0.5, 1.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     set_uniforms(view.camera, view.shader)

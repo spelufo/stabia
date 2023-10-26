@@ -13,16 +13,19 @@ vector_part(q::Quaternion{F}) where F<:AbstractFloat =
 rotation_quat(axis::Vec3{F}, angle::F) where F<:AbstractFloat =
   quat(cos(angle/2), sin(angle/2)*normalize(axis))
 
-rotate(q::Quaternion{F}, v::Vec3{F}) where F<:AbstractFloat =
-  vector_part(q*quat(v)*conj(q))
+rotate(v::Vec3{F}, by::Quaternion{F}) where F<:AbstractFloat =
+  vector_part(by*quat(v)*conj(by))
 
-rotate(v::Vec3{F}, axis::Vec3{F}, angle::F) where F<:AbstractFloat =
-  rotate(rotation_quat(axis, angle), v)
+rotate(q::Quaternion{F}, by::Quaternion{F}) where F<:AbstractFloat =
+  by*q
+
+rotate(x, axis::Vec3{F}, angle::F) where F<:AbstractFloat =
+  rotate(x, rotation_quat(axis, angle))
 
 rotation_matrix(q::Quaternion{F}) where F<:AbstractFloat = begin
-  rx = rotate(q, Vec3{F}(1.0, 0.0, 0.0))
-  ry = rotate(q, Vec3{F}(0.0, 1.0, 0.0))
-  rz = rotate(q, Vec3{F}(0.0, 0.0, 1.0))
+  rx = rotate(Vec3{F}(1.0, 0.0, 0.0), q)
+  ry = rotate(Vec3{F}(0.0, 1.0, 0.0), q)
+  rz = rotate(Vec3{F}(0.0, 0.0, 1.0), q)
   @SMatrix F[
     rx[1] ry[1] rz[1] 0.0;
     rx[2] ry[2] rz[2] 0.0;
@@ -57,16 +60,19 @@ Pose(q::Quaternion{F}) where F<:AbstractFloat =
   Pose(zero(Vec3{F}), q)
 
 pose_to_world(pose::Pose{F}, p::Vec3{F}) where F<:AbstractFloat =
-  rotate(pose.q, p) + pose.p
+  rotate(p, pose.q) + pose.p
 
 world_to_pose(pose::Pose{F}, p::Vec3{F}) where F<:AbstractFloat =
-  rotate(conj(pose.q), p - pose.p)
+  rotate(p - pose.p, conj(pose.q))
 
 pose_vec_to_world_vec(pose::Pose{F}, p::Vec3{F}) where F<:AbstractFloat =
-  rotate(pose.q, p)
+  rotate(p, pose.q)
 
 world_vec_to_pose_vec(pose::Pose{F}, p::Vec3{F}) where F<:AbstractFloat =
-  rotate(conj(pose.q), p)
+  rotate(p, conj(pose.q))
+
+move(pose::Pose{F}, v::Vec3f) where F<:AbstractFloat =
+  Pose(pose.p + v, pose.q)
 
 forward(pose::Pose{F}) where F<:AbstractFloat =
   pose_vec_to_world_vec(pose, Vec3{F}(0.0, 0.0, -1.0))
@@ -77,8 +83,20 @@ right(pose::Pose{F}) where F<:AbstractFloat =
 up(pose::Pose{F}) where F<:AbstractFloat =
   pose_vec_to_world_vec(pose, Vec3{F}(0.0, 1.0, 0.0))
 
+backward(pose::Pose{F}) where F<:AbstractFloat =
+  -forward(pose)
+
+left(pose::Pose{F}) where F<:AbstractFloat =
+  -right(pose)
+
+down(pose::Pose{F}) where F<:AbstractFloat =
+  -up(pose)
+
 frame(pose::Pose{F}) where F<:AbstractFloat =
   rotation_matrix(pose.q)
+
+rotate(pose::Pose{F}, by::Quaternion{F}) where F<:AbstractFloat =
+  Pose(pose.p, rotate(pose.q, by))
 
 orientation_matrix(pose::Pose{F}) where F<:AbstractFloat =
   rotation_matrix(conj(pose.q))
