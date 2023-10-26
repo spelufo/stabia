@@ -38,10 +38,10 @@ draw_controls(ed::Editor) = begin
   # update_cursor_camera!(ed)
 
   cp = ed.cursor.p
-  cf = forward(ed.cursor)
+  cf = ydir(ed.cursor)
 
   CImGui.Text("Cursor p: $(cp[1]), $(cp[2]), $(cp[3])")
-  CImGui.Text("Cursor f: $(cf[1]), $(cf[2]), $(cf[3])")
+  CImGui.Text("Cursor y: $(cf[1]), $(cf[2]), $(cf[3])")
   CImGui.Checkbox("Axis Planes", ed.draw_axis_planes)
   CImGui.End()
 end

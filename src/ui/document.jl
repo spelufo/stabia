@@ -16,7 +16,10 @@ Cell(scan::HerculaneumScan, j::Ints3) = begin
   p0, p1 = cell_range_mm(scan, j...)
   L = p1[1] - p0[1]
   V = load_cell(scan, j...)
-  N = have_cell_normals(scan, j...) && load_cell_normals(scan, j...) || nothing
+  N = nothing
+  if have_cell_normals(scan, j...)
+    N, _ = load_cell_normals(scan, j...)
+  end
   Cell(j, p0, L, V, N, UInt32(0))
 end
 
@@ -33,8 +36,8 @@ mutable struct StaticMesh <: DocumentObject
 end
 
 StaticBoxMesh(p0::Vec3f, p1::Vec3f) =
-  StaticMesh(Pose(E0), GLBoxMesh(p0, p1))
-  # StaticMesh(Pose(p0), GLBoxMesh(zero(Vec3f), p1 - p0))
+  StaticMesh(Pose(p0), GLBoxMesh(zero(Vec3f), p1 - p0))
+  # StaticMesh(Pose(E0), GLBoxMesh(p0, p1))
 
 StaticQuadMesh(p::Vec3f, n::Vec3f, v::Vec3f, w::Float32, h::Float32) = begin
   h /= 2f0

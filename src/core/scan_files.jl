@@ -140,8 +140,7 @@ have_cell_normals(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
   isfile(cell_normals_path(scan, jy, jx, jz))
 
 load_cell_normals(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
-  load(cell_normals_path(scan, jy, jx, jz))
+  load(cell_normals_path(scan, jy, jx, jz), "N", "P")
 
 save_cell_normals(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int, N, P) =
   save(cell_normals_path(scan, jy, jx, jz), "N", N, "P", P)
-

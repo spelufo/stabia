@@ -8,7 +8,7 @@ const fragment_2_88 = HerculaneumScan("fragments/Frag2.volpkg", "20230226143835"
 const fragment_3_54 = HerculaneumScan("fragments/Frag3.volpkg", "20230215142309", 3.24f0, 54f0, 6312, 1440, 6656)
 const fragment_3_88 = HerculaneumScan("fragments/Frag3.volpkg", "20230212182547", 3.24f0, 88f0, 6108, 1644, 6650)
 
-const scroll_1_54_mask = [
+scroll_1_54_mask = [
   1  7  1 ;
   1  8  1 ;
   1  9  1 ;

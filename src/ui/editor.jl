@@ -139,7 +139,7 @@ draw_axis_planes(ed::Editor, shader::Shader) = begin
 end
 
 update_cursor_camera!(ed::Editor) = begin
-  f = forward(ed.cursor)
+  f = ydir(ed.cursor)
   ed.view_cross.camera.p = ed.cursor.p + 2f0*f
   ed.view_cross.camera.n = -f
   nothing
