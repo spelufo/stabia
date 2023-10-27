@@ -29,8 +29,17 @@ mutable struct Editor
   view_top   :: Union{EditorView, Nothing}
   view_cross :: Union{EditorView, Nothing}
 
-  draw_axis_planes :: Ref{Bool}
+  style :: Int32
+  draw_axis_xy :: Ref{Bool}
+  draw_axis_yz :: Ref{Bool}
+  draw_axis_zx :: Ref{Bool}
+
   sheet
+  sheet_update! :: Union{Function, Nothing}
+  δ :: Ref{Float32}
+  k_s :: Ref{Float32}
+  k_n :: Ref{Float32}
+  equipot_running :: Bool
 end
 
 Editor(doc::Document) = begin
@@ -46,8 +55,14 @@ Editor(doc::Document) = begin
     Pose(center(cell)), # cursor
     0, # frame
     nothing, nothing, nothing, # views
-    Ref(true),
+    Int32(1), # style
+    Ref(true), Ref(false), Ref(false), # draw_axis_*
     nothing, # sheet
+    nothing, # sheet_update!
+    Ref(cell.L/500f0), # δ
+    Ref(1f0), # k_s
+    Ref(1f0), # k_n
+    false,
   )
   reset_views!(ed)
   ed
@@ -59,7 +74,7 @@ reset_views!(ed::Editor) = begin
   L = ed.cell.L
 
   name = "3D View"
-  ed.view_3d = EditorView(name, PerspectiveCamera(p + 2*L*Vec3f(1, 1, 0.7), p, Ez, 1))
+  ed.view_3d = EditorView(name, PerspectiveCamera(p + 1.5f0*L*Vec3f(1, 1, 0.7), p, Ez, 1))
 
   name = "Top View"
   n = 2f0 * L * Ez
@@ -115,13 +130,16 @@ draw(ed::Editor) = begin
   # gm_cut = GridSheetFromCenter(ed.cursor.p, ed.cursor.n, Ez, l, 10, 10)
 
   draw_on_view!(ed, ed.view_3d) do shader, width, height
-    ed.draw_axis_planes[] && draw_axis_planes(ed, shader)
+    draw_axis_planes(ed, shader)
+    !isnothing(ed.sheet) && draw(ed.sheet, shader)
   end
   draw_on_view!(ed, ed.view_cross) do shader, width, height
-    ed.draw_axis_planes[] && draw_axis_planes(ed, shader)
+    draw_axis_planes(ed, shader)
+    !isnothing(ed.sheet) && draw(ed.sheet, shader)
   end
   draw_on_view!(ed, ed.view_top) do shader, width, height
-    ed.draw_axis_planes[] && draw_axis_planes(ed, shader)
+    draw_axis_planes(ed, shader)
+    !isnothing(ed.sheet) && draw(ed.sheet, shader)
   end
   glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
@@ -132,9 +150,9 @@ draw_axis_planes(ed::Editor, shader::Shader) = begin
   c = ed.cursor.p
   q = ed.cursor.q
   l = ed.cell.L
-  draw(StaticQuadMesh(c, rotate(Ez, q), rotate(Ey, q), l, l), shader)
-  draw(StaticQuadMesh(c, rotate(Ey, q), rotate(Ez, q), l, l), shader)
-  draw(StaticQuadMesh(c, rotate(Ex, q), rotate(Ez, q), l, l), shader)
+  ed.draw_axis_xy[] && draw(StaticQuadMesh(c, rotate(Ez, q), rotate(Ey, q), l, l), shader)
+  ed.draw_axis_yz[] && draw(StaticQuadMesh(c, rotate(Ex, q), rotate(Ez, q), l, l), shader)
+  ed.draw_axis_zx[] && draw(StaticQuadMesh(c, rotate(Ey, q), rotate(Ez, q), l, l), shader)
   nothing
 end
 
@@ -176,16 +194,22 @@ const KeyMap = Dict{KeyBinding, Function}
 Δc = 0.015f0
 
 KEYMAP_NORMAL = KeyMap(
-  KeyBinding(GLFW_KEY_W, GLFW_MOD_ALT)   => () -> toggle_wireframe!(the_editor),
-
   KeyBinding(GLFW_KEY_W, 0, true)        => () -> move_cursor!(the_editor, 0f0, +Δc, 0f0),
   KeyBinding(GLFW_KEY_S, 0, true)        => () -> move_cursor!(the_editor, 0f0, -Δc, 0f0),
   KeyBinding(GLFW_KEY_A, 0, true)        => () -> move_cursor!(the_editor, -Δc, 0f0, 0f0),
   KeyBinding(GLFW_KEY_D, 0, true)        => () -> move_cursor!(the_editor, +Δc, 0f0, 0f0),
-  KeyBinding(GLFW_KEY_Q, 0, true)        => () -> move_cursor!(the_editor, 0f0, 0f0, -Δc),
-  KeyBinding(GLFW_KEY_E, 0, true)        => () -> move_cursor!(the_editor, 0f0, 0f0, +Δc),
-  KeyBinding(GLFW_KEY_R, 0, true)        => () -> rotate_cursor!(the_editor, -Δc),
-  KeyBinding(GLFW_KEY_F, 0, true)        => () -> rotate_cursor!(the_editor, +Δc),
+  KeyBinding(GLFW_KEY_F, 0, true)        => () -> move_cursor!(the_editor, 0f0, 0f0, -Δc),
+  KeyBinding(GLFW_KEY_R, 0, true)        => () -> move_cursor!(the_editor, 0f0, 0f0, +Δc),
+  KeyBinding(GLFW_KEY_Q, 0, true)        => () -> rotate_cursor!(the_editor, -Δc),
+  KeyBinding(GLFW_KEY_E, 0, true)        => () -> rotate_cursor!(the_editor, +Δc),
+
+  KeyBinding(GLFW_KEY_W, GLFW_MOD_ALT)   => () -> toggle_wireframe!(the_editor),
+  KeyBinding(GLFW_KEY_0, 0)              => () -> the_editor.style = 0,
+  KeyBinding(GLFW_KEY_1, 0)              => () -> the_editor.style = 1,
+  KeyBinding(GLFW_KEY_2, 0)              => () -> the_editor.style = 2,
+  KeyBinding(GLFW_KEY_3, 0)              => () -> the_editor.style = 3,
+  KeyBinding(GLFW_KEY_4, 0)              => () -> the_editor.style = 4,
+  KeyBinding(GLFW_KEY_5, 0)              => () -> the_editor.style = 5,
 )
 
 on_key!(ed::Editor, window::Ptr{GLFWwindow}, key::Cint, scancode::Cint, action::Cint, mods::Cint)::Cvoid = begin
@@ -218,6 +242,7 @@ draw_on_view!(draw_fn::Function, ed::Editor, view::EditorView) = begin
     glClearColor(0.5, 0.5, 0.5, 1.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
+    glUniform1i(glGetUniformLocation(view.shader, "style"), ed.style)
     set_uniforms(view.camera, view.shader)
     set_uniforms(ed.cell, view.shader)
     set_textures(ed.cell, view.shader)

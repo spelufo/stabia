@@ -10,6 +10,7 @@ mutable struct Cell <: DocumentObject
   V :: Array{N0f16,3}
   N :: Union{Array{Vec3f,3}, Nothing}
   texture :: UInt32
+  N_texture :: UInt32
 end
 
 Cell(scan::HerculaneumScan, j::Ints3) = begin
@@ -20,7 +21,7 @@ Cell(scan::HerculaneumScan, j::Ints3) = begin
   if have_cell_normals(scan, j...)
     N, _ = load_cell_normals(scan, j...)
   end
-  Cell(j, p0, L, V, N, UInt32(0))
+  Cell(j, p0, L, V, N, UInt32(0), UInt32(0))
 end
 
 center(cell::Cell) =
