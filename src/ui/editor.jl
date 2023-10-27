@@ -33,6 +33,7 @@ mutable struct Editor
   draw_axis_xy :: Ref{Bool}
   draw_axis_yz :: Ref{Bool}
   draw_axis_zx :: Ref{Bool}
+  draw_holes :: Ref{Bool}
 
   sheet
   sheet_update! :: Union{Function, Nothing}
@@ -57,6 +58,7 @@ Editor(doc::Document) = begin
     nothing, nothing, nothing, # views
     Int32(1), # style
     Ref(true), Ref(false), Ref(false), # draw_axis_*
+    Ref(false), # draw_holes
     nothing, # sheet
     nothing, # sheet_update!
     Ref(cell.L/500f0), # δ
@@ -74,7 +76,7 @@ reset_views!(ed::Editor) = begin
   L = ed.cell.L
 
   name = "3D View"
-  ed.view_3d = EditorView(name, PerspectiveCamera(p + 1.5f0*L*Vec3f(1, 1, 0.7), p, Ez, 1))
+  ed.view_3d = EditorView(name, PerspectiveCamera(p + 1.5f0*L*Vec3f(1, 1, 0.9), p, Ez, 1))
 
   name = "Top View"
   n = 2f0 * L * Ez
@@ -120,18 +122,10 @@ draw(ed::Editor) = begin
   draw_info(ed)
   draw_controls(ed)
 
-
-  # l = ed.cell.L/9f0
-  # p0, p1 = cell_range_mm(ed.scan, 7, 7, 14)
-  # p0 += ed.cell.L*Ez
-  # p1 += ed.cell.L*Ez
-  # gm = GridSheetFromRange(p0, p0 + ed.cell.L*Vec3f(1,1,0), Ex, l)
-
-  # gm_cut = GridSheetFromCenter(ed.cursor.p, ed.cursor.n, Ez, l, 10, 10)
-
   draw_on_view!(ed, ed.view_3d) do shader, width, height
     draw_axis_planes(ed, shader)
     !isnothing(ed.sheet) && draw(ed.sheet, shader)
+    !isnothing(ed.cell.holes) && ed.draw_holes[] && draw_holes(ed.cell, shader)
   end
   draw_on_view!(ed, ed.view_cross) do shader, width, height
     draw_axis_planes(ed, shader)
@@ -177,6 +171,15 @@ move_cursor!(ed::Editor, dx::Float32, dy::Float32, dz::Float32) = begin
   ed.cursor = move(ed.cursor, dx*xdir(ed.cursor) + dy*ydir(ed.cursor) + dz*zdir(ed.cursor))
 end
 
+rotate_3d_view!(ed::Editor, dθ::Float32, dψ::Float32) = begin
+  c = center(ed.cell)
+  p = ed.view_3d.camera.pose.p
+  q = ed.view_3d.camera.pose.q
+  p = rotate(p - c, Ez, dθ) + c
+  q = rotate(q, Ez, dθ)
+  ed.view_3d.camera.pose = Pose(p, q)
+end
+
 
 # Key bindings #################################################################
 
@@ -202,6 +205,9 @@ KEYMAP_NORMAL = KeyMap(
   KeyBinding(GLFW_KEY_R, 0, true)        => () -> move_cursor!(the_editor, 0f0, 0f0, +Δc),
   KeyBinding(GLFW_KEY_Q, 0, true)        => () -> rotate_cursor!(the_editor, -Δc),
   KeyBinding(GLFW_KEY_E, 0, true)        => () -> rotate_cursor!(the_editor, +Δc),
+
+  KeyBinding(GLFW_KEY_G+1, 0, true)      => () -> rotate_3d_view!(the_editor, -Δc, 0f0),
+  KeyBinding(GLFW_KEY_L, 0, true)        => () -> rotate_3d_view!(the_editor, +Δc, 0f0),
 
   KeyBinding(GLFW_KEY_W, GLFW_MOD_ALT)   => () -> toggle_wireframe!(the_editor),
   KeyBinding(GLFW_KEY_0, 0)              => () -> the_editor.style = 0,
@@ -247,8 +253,6 @@ draw_on_view!(draw_fn::Function, ed::Editor, view::EditorView) = begin
     set_uniforms(ed.cell, view.shader)
     set_textures(ed.cell, view.shader)
 
-    # TODO: It seems like creating the VAOs in advance doesn't work but doing
-    # so here while the FBO is bound does. Figure out why and how to handle it.
     draw_fn(view.shader, width, height)
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0)

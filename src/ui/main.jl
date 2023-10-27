@@ -5,10 +5,7 @@ using CImGui.ImGuiOpenGLBackend
 using CImGui.ImGuiGLFWBackend.LibGLFW
 using CImGui.ImGuiOpenGLBackend.ModernGL
 
-include("render/render.jl")
 include("utils.jl")
-include("document.jl")
-include("render/tex_cell.jl")
 include("editor.jl")
 include("editor_ui.jl")
 
@@ -83,16 +80,16 @@ main() = begin
   @assert isnothing(the_window) "Main window already open."
   println()
 
+  global the_window
+  the_window, ig_ctx, glfw_ctx, gl_ctx = create_window()
+  println("Window created.")
+
   global the_doc
   if isnothing(the_doc)
     the_doc = Document(scroll_1_54, [Cell(scroll_1_54, (7,7,14))], [])
   end
   reload!(the_doc)
   println("Document initialized.")
-
-  global the_window
-  the_window, ig_ctx, glfw_ctx, gl_ctx = create_window()
-  println("Window created.")
 
   try
     global the_gpu_info

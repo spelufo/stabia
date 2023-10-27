@@ -25,6 +25,6 @@ using JLD2
 # In that case maybe I shouldn't do this...
 include("../src/core/core.jl")
 
-scroll_1_small = load_grid_cell(scroll_1_54, 7, 7, 14)
+scroll_1_small = load_cell(scroll_1_54, 7, 7, 14)
 
 nothing

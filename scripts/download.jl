@@ -8,7 +8,7 @@ layer_coverage(layer_jz::Int) = begin
     jy, jx, jz = scroll_1_54_mask[r, :]
     if jz == layer_jz
       total += 1
-      if have_grid_cell(scroll_1_54, jy, jx, jz)
+      if have_cell(scroll_1_54, jy, jx, jz)
         have += 1
       end
     end
@@ -23,7 +23,7 @@ grid_coverage() = begin
   total = size(scroll_1_54_mask, 1)
   for r = 1:total
     jy, jx, jz = scroll_1_54_mask[r, :]
-    if have_grid_cell(scroll_1_54, jy, jx, jz)
+    if have_cell(scroll_1_54, jy, jx, jz)
       have += 1
     end
   end
@@ -50,7 +50,7 @@ download_layer(layer_jz::Int) = begin
     for r = 1:size(scroll_1_54_mask, 1)
       jy, jx, jz = scroll_1_54_mask[r, :]
       if jz == layer_jz && jy == thread_jy
-        download_grid_cell(scroll_1_54, jy, jx, jz)
+        download_cell(scroll_1_54, jy, jx, jz)
         println("downloaded $jy $jx $jz")
       end
     end

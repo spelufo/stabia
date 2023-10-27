@@ -4,7 +4,7 @@ using FFTW
 include("../src/Stabia.jl")
 
 # if !@isdefined V
-#   @time V = Float32.(load_grid_cell(scroll_1_54, 8, 5, 15))
+#   @time V = Float32.(load_cell(scroll_1_54, 8, 5, 15))
 #   @time M = load_cell_probabilities(scroll_1_54, 8, 5, 15)
 #   v = V[1:100, 1:100, 1:100]
 # end

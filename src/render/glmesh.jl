@@ -58,8 +58,9 @@ end
 
 ## GLMesh builders
 
-GLMesh(mesh::Mesh) = begin
-  vertices = reinterpret(GLVertex, metafree(coordinates(mesh)))
+GLMesh(mesh::Mesh; scale :: Float32 = 1f0) = begin
+  vertices = reinterpret(GLVertex, scale .* metafree(coordinates(mesh)))
+  # vertices .*= scale
   indices = reinterpret(UInt32, faces(mesh))
   mesh = GLMesh(vertices, indices, 0, 0, 0)
   to_gpu!(mesh)
@@ -103,25 +104,3 @@ GLQuadMesh(p1::Vec3f, p2::Vec3f, p3::Vec3f, p4::Vec3f) = begin
   to_gpu!(mesh)
   mesh
 end
-
-
-GLGridMesh(g::GridSheet) = begin
-  vertices = reinterpret(GLVertex, vec(g.points))
-  ny, nx = size(g.points)
-  indices = Array{UInt32, 1}(undef, 2*3*(ny-1)*(nx-1))
-  for ix = 0:nx-2
-    for iy = 0:ny-2
-      id = ix*ny + iy
-      indices[6*(iy + ix*(ny-1)) + 1] = id
-      indices[6*(iy + ix*(ny-1)) + 2] = id + nx
-      indices[6*(iy + ix*(ny-1)) + 3] = id + nx + 1
-      indices[6*(iy + ix*(ny-1)) + 4] = id
-      indices[6*(iy + ix*(ny-1)) + 5] = id + nx + 1
-      indices[6*(iy + ix*(ny-1)) + 6] = id + 1
-    end
-  end
-  mesh = GLMesh(vertices, indices, 0, 0, 0)
-  to_gpu!(mesh)
-  mesh
-end
-

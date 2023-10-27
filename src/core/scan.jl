@@ -40,11 +40,10 @@ cell_center_mm(scan::HerculaneumScan, jy::Real, jx::Real, jz::Real) = begin
   (p0 + p1) / 2f0
 end
 
-scroll_radius_dir(scan::HerculaneumScan, jy::Int, jx, jz::Int) = begin
+scroll_radius_dir(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
   @assert scan == scroll_1_54 "Only scroll_1_54 supported for now."
   o = scroll_1_54_core[jz]
   p = cell_center_mm(scan, jy, jx, jz)
-  @show o p
   @assert abs(p[3] - o[3]) < 0.1f0 "Expected core and cell points to be at the same z coordinate."
   normalize(p - o)
 end

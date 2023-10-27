@@ -51,6 +51,9 @@ draw_controls(ed::Editor) = begin
   CImGui.Checkbox("ZX", ed.draw_axis_zx)
 
   CImGui.Separator()
+  CImGui.Checkbox("Holes Meshes", ed.draw_holes)
+
+  CImGui.Separator()
   CImGui.Text("Normals Equipotential")
   if CImGui.Button("Initialize")
     cell = ed.cell

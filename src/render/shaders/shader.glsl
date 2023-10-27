@@ -12,7 +12,7 @@ uniform mat4 proj;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Vertex shader
-#line 15
+#line 16
 
 layout (location = 0) in vec3 v_P;
 out vec3 P;
@@ -29,7 +29,7 @@ void main() {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Fragment shader
-#line 35
+#line 33
 
 // Lib
 
@@ -87,18 +87,17 @@ float meas(vec3 p) {
 }
 
 vec3 measure_normal(vec3 p) {
-  return texture(CellN, ((p-cellp0)/(cellp1 - cellp0)).yxz).rbg;
+  return texture(CellN, ((p-cellp0)/(cellp1 - cellp0)).yxz).rgb;
 }
 
 vec3 meas_normal(vec3 p) {
-  vec3 n = measure_normal(p);
-  // if (n.r < 0) {
-  //   n.r = 0;
-  //   n.b = 1.0;
-  // } else {
-  //   n.b = 0.0;
-  // }
-  return normalize(n);
+  vec3 v = measure_normal(p);
+  float g = 0.4;
+  float M = 40;
+  float x = max(0, pow(abs(v.x)/M, g));
+  float y = max(0, pow(abs(v.y)/M, g));
+  float z = max(0, pow(abs(v.z)/M, g));
+  return vec3(x,y,z);
 }
 
 void main() {
@@ -106,8 +105,13 @@ void main() {
     vis(meas(P));
 
   } else if (style == 2) {
-    // vis(normalize(measure_normal(P)));
-    vis(0.2*meas_normal(P) + 0.8*meas(P));
+    vis(length(measure_normal(P)/20)); return;
+    float a = measure(P);
+    vec3 A = vec3(a);
+    if (a > 0.35) {
+      A *= 0.5 + 0.5*meas_normal(P);
+    }
+    vis(A);
 
   } else if (style == 3) {
     vec3 A = vec3(0);

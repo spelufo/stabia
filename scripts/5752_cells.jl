@@ -236,7 +236,7 @@ top_pipeline(cell_jy::Int, cell_jx::Int, cell_jz::Int) = begin
   cell_name = cell_filename(cell_jy, cell_jx, cell_jz)
   cell_dir = "$SEGDATA_DIR/$cell_name"
   isdir(cell_dir) || mkdir(cell_dir)
-  cell_h5_file = grid_cell_h5_path(scroll_1_54, cell_jy, cell_jx, cell_jz)
+  cell_h5_file = cell_h5_path(scroll_1_54, cell_jy, cell_jx, cell_jz)
 
   # 3. Ilastik pixel classification. `*_probabilities.h5`     (1000M) ( 180s)
   probabilities_file = "$cell_dir/$(cell_name)_probabilities.h5"

@@ -122,6 +122,10 @@ end
 cell_holes_dir(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
   joinpath(cell_segmentation_dir(scan, jy, jx, jz), "holes")
 
+
+have_cell_holes(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  isdir(cell_holes_dir(scan, jy, jx, jz))
+
 load_cell_holes(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
   holes = []
   holes_dir = cell_holes_dir(scroll_1_54, 7, 7, 14)
