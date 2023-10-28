@@ -10,5 +10,3 @@ include("document/document.jl")
 include("segment/segment.jl")
 include("ui/main.jl")
 
-# schedule(Task(main))
-

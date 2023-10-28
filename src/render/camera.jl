@@ -41,6 +41,12 @@ set_uniforms(cam::PerspectiveCamera, shader::Shader) = begin
   glUniformMatrix4fv(glGetUniformLocation(shader, "proj"), 1, GL_FALSE, proj)
 end
 
+mouse_ray(cam::PerspectiveCamera, ndc::Vec2f) = begin
+  view = view_matrix(cam.pose)
+  proj = perspective(cam.fov, cam.aspect, cam.near, cam.far)
+  Ray(cam.pose.p, camera_ray_dir(ndc, proj, view))
+end
+
 move!(cam::PerspectiveCamera, dir::Vec3f, dt::Float32) =
   cam.pose = Pose{Float32}(
     cam.pose.p + cam.speed * dt * pose_vec_to_world_vec(cam.pose, dir),

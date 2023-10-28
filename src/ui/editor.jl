@@ -1,21 +1,24 @@
+mutable struct Viewport
+  name :: String
+  pos :: ImVec2
+  size :: ImVec2
+  visible :: Bool
+  fb :: Framebuffer
+  shader :: Shader
+  camera :: Camera
+  wireframe :: Bool
+  mouse_click_start :: Union{ImVec2, Nothing}
+end
+
+Viewport(name::String, camera::Camera) =
+  Viewport(name, ImVec2(0, 0), ImVec2(0, 0), true, Framebuffer(),
+    Shader("shader.glsl"), camera, false, nothing)
+
 struct EditorMode
   name::String
 end
 
 const MODE_NORMAL = EditorMode("normal")
-
-
-mutable struct EditorView
-  name :: String
-  fb :: Framebuffer
-  shader :: Shader
-  camera :: Camera
-  wireframe :: Bool
-end
-
-EditorView(name::String, camera::Camera) =
-  EditorView(name, Framebuffer(), Shader("shader.glsl"), camera, false)
-
 
 mutable struct Editor
   doc :: Document
@@ -25,9 +28,9 @@ mutable struct Editor
   mode :: EditorMode
   cursor :: Pose
   frame :: Int
-  view_3d    :: Union{EditorView, Nothing}
-  view_top   :: Union{EditorView, Nothing}
-  view_cross :: Union{EditorView, Nothing}
+  view_3d    :: Union{Viewport, Nothing}
+  view_top   :: Union{Viewport, Nothing}
+  view_cross :: Union{Viewport, Nothing}
 
   style :: Int32
   draw_axis_xy :: Ref{Bool}
@@ -35,6 +38,12 @@ mutable struct Editor
   draw_axis_zx :: Ref{Bool}
   draw_holes :: Ref{Bool}
 
+  perps :: Vector{Perp}
+  perp_adding :: Bool
+  perp_add_start :: Vec3f
+  perp_add_end :: Vec3f
+
+  # sheet sim
   sheet
   sheet_update! :: Union{Function, Nothing}
   δ :: Ref{Float32}
@@ -59,6 +68,14 @@ Editor(doc::Document) = begin
     Int32(1), # style
     Ref(true), Ref(false), Ref(false), # draw_axis_*
     Ref(false), # draw_holes
+
+    # perps
+    Perp[],
+    false,
+    E0,
+    E0,
+
+    # sheet sim
     nothing, # sheet
     nothing, # sheet_update!
     Ref(cell.L/500f0), # δ
@@ -70,27 +87,10 @@ Editor(doc::Document) = begin
   ed
 end
 
-reset_views!(ed::Editor) = begin
-  p = ed.cell.p
-  c = center(ed.cell)
-  L = ed.cell.L
-
-  name = "3D View"
-  ed.view_3d = EditorView(name, PerspectiveCamera(p + 1.5f0*L*Vec3f(1, 1, 0.9), p, Ez, 1))
-
-  name = "Top View"
-  n = 2f0 * L * Ez
-  ed.view_top = EditorView(name, OrthographicCamera(c + n, -n, Ey, L, L))
-
-  name = "Cross View"
-  n = 2f0 * L * Ey
-  ed.view_cross = EditorView(name, OrthographicCamera(c + n, -n, Ez, L, L))
-end
-
 editor_views(ed::Editor) =
   (ed.view_3d, ed.view_top, ed.view_cross)
 
-update!(ed::Editor) = begin
+draw_frame(ed::Editor) = begin
   ed.frame += 1
 
   # reload shaders
@@ -113,30 +113,14 @@ update!(ed::Editor) = begin
 
   update_cursor_camera!(ed)
 
-  nothing
-end
-
-draw(ed::Editor) = begin
   draw_dockspace(ed)
   draw_menu_bar(ed)
   draw_info(ed)
   draw_controls(ed)
 
-  draw_on_view!(ed, ed.view_3d) do shader, width, height
-    draw_axis_planes(ed, shader)
-    !isnothing(ed.sheet) && draw(ed.sheet, shader)
-    !isnothing(ed.cell.holes) && ed.draw_holes[] && draw_holes(ed.cell, shader)
-  end
-  draw_on_view!(ed, ed.view_cross) do shader, width, height
-    draw_axis_planes(ed, shader)
-    !isnothing(ed.sheet) && draw(ed.sheet, shader)
-  end
-  draw_on_view!(ed, ed.view_top) do shader, width, height
-    draw_axis_planes(ed, shader)
-    !isnothing(ed.sheet) && draw(ed.sheet, shader)
-  end
-  glBindFramebuffer(GL_FRAMEBUFFER, 0)
-
+  draw_view_3d(ed, ed.view_3d)
+  draw_view_top(ed, ed.view_top)
+  draw_view_cross(ed, ed.view_cross)
   nothing
 end
 
@@ -226,37 +210,4 @@ on_key!(ed::Editor, window::Ptr{GLFWwindow}, key::Cint, scancode::Cint, action::
     end
   end
   nothing
-end
-
-################################################################################
-
-draw_on_view!(draw_fn::Function, ed::Editor, view::EditorView) = begin
-  CImGui.Begin(view.name, C_NULL, ImGuiWindowFlags_NoScrollbar)
-  view_size = CImGui.GetContentRegionAvail()
-  width, height = floor(Int, view_size.x), floor(Int, view_size.y)
-  if width > 0 && height > 0
-    if resize!(view.fb, width, height)
-      # println("Resized view framebuffer: $width × $height")
-    end
-    set_viewport!(view.camera, width, height)
-
-    glBindFramebuffer(GL_FRAMEBUFFER, view.fb.id)
-    glEnable(GL_DEPTH_TEST)
-    glViewport(0, 0, width, height)
-    glPolygonMode(GL_FRONT_AND_BACK, if view.wireframe GL_LINE else GL_FILL end)
-
-    glClearColor(0.5, 0.5, 0.5, 1.0)
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
-    glUniform1i(glGetUniformLocation(view.shader, "style"), ed.style)
-    set_uniforms(view.camera, view.shader)
-    set_uniforms(ed.cell, view.shader)
-    set_textures(ed.cell, view.shader)
-
-    draw_fn(view.shader, width, height)
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0)
-    CImGui.Image(Ptr{Cvoid}(UInt(view.fb.texid)), view_size, ImVec2(0, 1), ImVec2(1, 0))
-  end
-  CImGui.End()
 end

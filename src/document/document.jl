@@ -3,6 +3,7 @@
 abstract type DocumentObject end
 
 include("cell.jl")
+include("perp.jl")
 include("sheet.jl")
 include("mesh.jl")
 include("misc.jl")

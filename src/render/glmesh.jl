@@ -1,5 +1,4 @@
 
-
 struct GLVertex
   p :: Vec3f
 end

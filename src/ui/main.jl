@@ -8,6 +8,7 @@ using CImGui.ImGuiOpenGLBackend.ModernGL
 include("utils.jl")
 include("editor.jl")
 include("editor_ui.jl")
+include("viewport.jl")
 
 @defonce the_doc = nothing
 @defonce the_editor = nothing
@@ -16,14 +17,7 @@ include("editor_ui.jl")
 @defonce the_window_height = Int32(800)
 @defonce the_gpu_info = nothing
 
-update!() = begin
-  if CImGui.IsKeyPressed(GLFW_KEY_ESCAPE)
-    glfwSetWindowShouldClose(the_window, GLFW_TRUE)
-  end
-  update!(the_editor)
-end
-
-draw() = begin
+draw_frame() = begin
   begin # update window size
     win_width, win_height = Ref{Cint}(0), Ref{Cint}(0)
     glfwGetFramebufferSize(the_window, win_width, win_height)
@@ -35,10 +29,8 @@ draw() = begin
     glClearColor(1f0, 1f0, 1f0, 1f0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
   end
-  draw(the_editor)
+  draw_frame(the_editor)
 end
-
-CTRL_KEYMAP = Dict{Cint, Function}
 
 on_key(window::Ptr{GLFWwindow}, key::Cint, scancode::Cint, action::Cint, mods::Cint)::Cvoid = begin
   on_key!(the_editor, window, key, scancode, action, mods)
@@ -101,14 +93,14 @@ main() = begin
 
     while glfwWindowShouldClose(the_window) == GLFW_FALSE
       glfwPollEvents()
-
       yield()  # Allow other tasks to run (the repl).
       ImGuiOpenGLBackend.new_frame(gl_ctx)
       ImGuiGLFWBackend.new_frame(glfw_ctx)
       CImGui.NewFrame()
-      Base.invokelatest(update!)
-
-      Base.invokelatest(draw)
+      if CImGui.IsKeyPressed(GLFW_KEY_ESCAPE)
+        glfwSetWindowShouldClose(the_window, GLFW_TRUE)
+      end
+      Base.invokelatest(draw_frame)
       CImGui.Render()
       ImGuiOpenGLBackend.render(gl_ctx)
       glfwSwapBuffers(the_window)
