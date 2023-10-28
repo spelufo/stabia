@@ -6,13 +6,11 @@ end
 
 Perp(p::Vec3f, p2::Vec3f) = begin
   v = normalize(Vec3f(p2[1], p2[2], p[3]) - p)
-  θ = acos(dot(v, Ex))
-  if dot(v, Ey) < 0  θ = -θ  end
-  Perp(p, θ)
+  Perp(p, angle(v, Ex))
 end
 
-# perp_n(perp::Perp) =
-#   Vec3f(-sin(perp.θ), cos(perp.θ), 0f0)
+perp_n(perp::Perp) =
+  Vec3f(-sin(perp.θ), cos(perp.θ), 0f0)
 
 perp_u(perp::Perp) =
   Vec3f(cos(perp.θ), sin(perp.θ), 0f0)
