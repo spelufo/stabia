@@ -97,9 +97,6 @@ main() = begin
       ImGuiOpenGLBackend.new_frame(gl_ctx)
       ImGuiGLFWBackend.new_frame(glfw_ctx)
       CImGui.NewFrame()
-      if CImGui.IsKeyPressed(GLFW_KEY_ESCAPE)
-        glfwSetWindowShouldClose(the_window, GLFW_TRUE)
-      end
       Base.invokelatest(draw_frame)
       CImGui.Render()
       ImGuiOpenGLBackend.render(gl_ctx)

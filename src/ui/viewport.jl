@@ -1,3 +1,5 @@
+# Init #########################################################################
+
 reset_views!(ed::Editor) = begin
   p = ed.cell.p
   c = center(ed.cell)
@@ -15,38 +17,15 @@ reset_views!(ed::Editor) = begin
   ed.view_cross = Viewport(name, OrthographicCamera(c + n, -n, Ez, L, L))
 end
 
+
+# View 3d ######################################################################
+
 draw_view_3d(ed::Editor, view::Viewport) = begin
   BeginViewport(ed, view)
 
-  mpos = CImGui.GetMousePos() - view.pos
-  if CImGui.IsWindowHovered()
-    if CImGui.IsMouseClicked(0)
-      view.click_start = mpos
-      hit, λ = raycast(mouse_ray(view, mpos), Plane(ed.cursor.p, Ez))
-      if λ > 0 && all(ed.cell.p .<= hit .<= ed.cell.p .+ ed.cell.L)
-        ed.perp_add_start = hit
-      end
-    end
-  end
-  if !isnothing(ed.perp_add_start)
-    hit, λ = raycast(mouse_ray(view, mpos), Plane(ed.cursor.p, Ez))
-    if λ > 0
-      perp = Perp(ed.perp_add_start, hit)
-      mesh = GLMesh(perp, ed.cell.p, ed.cell.p .+ ed.cell.L)
-      draw(mesh, view.shader)
-      if CImGui.IsMouseReleased(0)
-        push!(ed.perps, perp)
-        push!(ed.perp_meshes, mesh)
-        ed.perp_add_start = nothing
-      end
-    end
-  end
-  if CImGui.IsMouseReleased(0)
-    view.click_start = nothing
-  end
-
+  do_perps_add(ed, view)
+  draw_perps(ed, view)
   draw_axis_planes(ed, view.shader)
-  for mesh = ed.perp_meshes  draw(mesh, view.shader)  end
   !isnothing(ed.sheet) && draw(ed.sheet, view.shader)
   !isnothing(ed.cell.holes) && ed.draw_holes[] && draw_holes(ed.cell, view.shader)
 
@@ -54,30 +33,89 @@ draw_view_3d(ed::Editor, view::Viewport) = begin
 end
 
 
+# View Top #####################################################################
+
 draw_view_top(ed::Editor, view::Viewport) = begin
   BeginViewport(ed, view)
 
+  do_perps_add(ed, view)
+  draw_perps(ed, view)
   draw_axis_planes(ed, view.shader)
   !isnothing(ed.sheet) && draw(ed.sheet, view.shader)
 
   EndViewport(ed, view)
 end
+
+
+# View Cross ###################################################################
 
 draw_view_cross(ed::Editor, view::Viewport) = begin
   BeginViewport(ed, view)
 
+  draw_perps(ed, view)
   draw_axis_planes(ed, view.shader)
   !isnothing(ed.sheet) && draw(ed.sheet, view.shader)
 
   EndViewport(ed, view)
 end
 
+
+# Common #######################################################################
+
+draw_perps(ed::Editor, view::Viewport) = begin
+  for mesh = ed.perp_meshes
+    draw(mesh, view.shader)
+  end
+end
+
+do_perps_add(ed::Editor, view::Viewport) = begin
+  mpos = CImGui.GetMousePos() - view.pos
+  if CImGui.IsWindowHovered()
+    # Start adding on click down.
+    if CImGui.IsMouseClicked(0)
+      if isnothing(ed.perp_add_start)
+        mr = mouse_ray(view, mpos)
+        hit, λ = raycast(mr, Plane(ed.cursor.p, Ez))
+        if λ >= 0 && all(ed.cell.p .<= hit .<= ed.cell.p .+ ed.cell.L)
+          ed.perp_add_start = hit
+        end
+      end
+    end
+    # Add on click release.
+    if !isnothing(ed.perp_add_start)
+      hit, λ = raycast(mouse_ray(view, mpos), Plane(ed.cursor.p, Ez))
+      if λ > 0
+        perp = Perp(ed.perp_add_start, hit)
+        ed.perp_add_mesh = GLMesh(perp, ed.cell.p, ed.cell.p .+ ed.cell.L)
+        if CImGui.IsMouseReleased(0)
+          # TODO: check it is the same view the click started. Small bug.
+          push!(ed.perps, perp)
+          push!(ed.perp_meshes, ed.perp_add_mesh)
+          ed.perp_add_start = nothing
+          ed.perp_add_mesh = nothing
+        end
+      end
+    end
+  end
+  # Draw preview if adding
+  if !isnothing(ed.perp_add_mesh)
+    draw(ed.perp_add_mesh, view.shader)
+  end
+  if CImGui.IsKeyPressed(GLFW_KEY_DELETE)
+    ed.perps = []
+    ed.perp_meshes = []
+  end
+  if CImGui.IsKeyPressed(GLFW_KEY_ESCAPE)
+    ed.perp_add_start = nothing
+    ed.perp_add_mesh = nothing
+  end
+end
 
 screen_to_ndc(view::Viewport, p::ImVec2) =
   Vec2f(2f0 * p.x / view.size.x - 1f0, 1f0 - 2f0 * p.y / view.size.y)
 
 mouse_ray(view::Viewport, mpos) =
-  mouse_ray(view.camera, screen_to_ndc(view, mpos))
+  camera_ray(view.camera, screen_to_ndc(view, mpos))
 
 BeginViewport(ed::Editor, view::Viewport) = begin
   CImGui.Begin(view.name)

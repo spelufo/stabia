@@ -76,13 +76,3 @@ lookat(pos::Vec3{F}, target::Vec3{F}, up::Vec3{F}) where F<:AbstractFloat = begi
   ]
 end
 
-camera_ray_dir(ndc::Vec2f, proj_mat::Mat4f, view_mat::Mat4f) = begin
-  # Convert to homogeneous clip coordinates
-  ray_clip = Vec4f(ndc[1], ndc[2], -1f0, 1f0)
-  # Convert to eye (camera) coordinates
-  ray_eye = inv(proj_mat) * ray_clip
-  ray_eye = Vec4f(ray_eye[1], ray_eye[2], -1.0, 0.0)
-  # Convert to world coordinates
-  normalize(inv(view_mat) * ray_eye)
-end
-

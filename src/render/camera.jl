@@ -32,19 +32,23 @@ set_viewport!(camera::PerspectiveCamera, width, height) = begin
   nothing
 end
 
-set_uniforms(cam::PerspectiveCamera, shader::Shader) = begin
-  view = view_matrix(cam.pose)
-  proj = perspective(cam.fov, cam.aspect, cam.near, cam.far)
-  p = cam.pose.p
-  glUniform3f(glGetUniformLocation(shader, "cam"), p[1], p[2], p[3])
-  glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, view)
-  glUniformMatrix4fv(glGetUniformLocation(shader, "proj"), 1, GL_FALSE, proj)
-end
+position(cam::PerspectiveCamera) =
+  cam.pose.p
 
-mouse_ray(cam::PerspectiveCamera, ndc::Vec2f) = begin
-  view = view_matrix(cam.pose)
-  proj = perspective(cam.fov, cam.aspect, cam.near, cam.far)
-  Ray(cam.pose.p, camera_ray_dir(ndc, proj, view))
+camera_view_matrix(cam::PerspectiveCamera) =
+  view_matrix(cam.pose)
+
+camera_proj_matrix(cam::PerspectiveCamera) =
+  perspective(cam.fov, cam.aspect, cam.near, cam.far)
+
+camera_ray(cam::PerspectiveCamera, ndc::Vec2f) = begin
+  view = camera_view_matrix(cam)
+  proj = camera_proj_matrix(cam)
+  ray_clip = Vec4f(ndc[1], ndc[2], -1f0, 1f0)
+  ray_eye = inv(proj) * ray_clip
+  ray_eye = Vec4f(ray_eye[1], ray_eye[2], -1.0, 0.0)
+  ray_dir = normalize(inv(view) * ray_eye)
+  Ray(position(cam), ray_dir)
 end
 
 move!(cam::PerspectiveCamera, dir::Vec3f, dt::Float32) =
@@ -80,10 +84,31 @@ set_viewport!(camera::OrthographicCamera, width, height) = begin
   nothing
 end
 
-set_uniforms(cam::OrthographicCamera, shader::Shader) = begin
-  view = lookat(cam.p, cam.p + cam.n, cam.up)
-  proj = ortho(-cam.w/2, cam.w/2, -cam.h/2, cam.h/2, 0f0, cam.z)
-  glUniform3f(glGetUniformLocation(shader, "cam"), cam.p[1], cam.p[2], cam.p[3])
-  glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, view)
-  glUniformMatrix4fv(glGetUniformLocation(shader, "proj"), 1, GL_FALSE, proj)
+position(cam::OrthographicCamera) =
+  cam.p
+
+camera_view_matrix(cam::OrthographicCamera) =
+  lookat(cam.p, cam.p + cam.n, cam.up)
+
+camera_proj_matrix(cam::OrthographicCamera) =
+  ortho(-cam.w/2, cam.w/2, -cam.h/2, cam.h/2, 0f0, cam.z)
+
+camera_ray(cam::OrthographicCamera, ndc::Vec2f) = begin
+  view_mat = camera_view_matrix(cam)
+  half_width = cam.w / 2.0
+  half_height = cam.h / 2.0
+  world_pos_x = ndc[1] * half_width
+  world_pos_y = ndc[2] * half_height
+  world_pos = inv(view_mat) * Vec4f(world_pos_x, world_pos_y, -cam.z, 1.0)
+  ray_dir = -normalize(cam.n)
+  Ray(Vec3f(world_pos[1], world_pos[2], world_pos[3]), ray_dir)
+end
+
+# Common #######################################################################
+
+set_uniforms(cam::Camera, shader::Shader) = begin
+  p = position(cam)
+  glUniform3f(glGetUniformLocation(shader, "cam"), p[1], p[2], p[3])
+  glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, camera_view_matrix(cam))
+  glUniformMatrix4fv(glGetUniformLocation(shader, "proj"), 1, GL_FALSE, camera_proj_matrix(cam))
 end

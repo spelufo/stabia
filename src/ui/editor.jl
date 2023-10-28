@@ -41,6 +41,7 @@ mutable struct Editor
   perps :: Vector{Perp}
   perp_meshes :: Vector{GLMesh}
   perp_add_start :: Union{Vec3f, Nothing}
+  perp_add_mesh :: Union{GLMesh, Nothing}
 
   # sheet sim
   sheet
@@ -71,6 +72,7 @@ Editor(doc::Document) = begin
     # perps
     Perp[],
     GLMesh[],
+    nothing,
     nothing,
 
     # sheet sim
