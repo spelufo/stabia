@@ -10,7 +10,5 @@ draw(cc::Plane, shader::Shader) = begin
     cc.p + l*v + h*u,
     cc.p - l*v + h*u,
   )
-  M = scaling(1f0)
-  glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, M)
-  draw(mesh)
+  draw(mesh, shader)
 end

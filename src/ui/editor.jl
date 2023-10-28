@@ -7,7 +7,7 @@ mutable struct Viewport
   shader :: Shader
   camera :: Camera
   wireframe :: Bool
-  mouse_click_start :: Union{ImVec2, Nothing}
+  click_start :: Union{ImVec2, Nothing}
 end
 
 Viewport(name::String, camera::Camera) =
@@ -39,9 +39,8 @@ mutable struct Editor
   draw_holes :: Ref{Bool}
 
   perps :: Vector{Perp}
-  perp_adding :: Bool
-  perp_add_start :: Vec3f
-  perp_add_end :: Vec3f
+  perp_meshes :: Vector{GLMesh}
+  perp_add_start :: Union{Vec3f, Nothing}
 
   # sheet sim
   sheet
@@ -71,9 +70,8 @@ Editor(doc::Document) = begin
 
     # perps
     Perp[],
-    false,
-    E0,
-    E0,
+    GLMesh[],
+    nothing,
 
     # sheet sim
     nothing, # sheet

@@ -30,9 +30,7 @@ center(cell::Cell) =
 
 draw_holes(cell::Cell, shader::Shader) = begin
   for hole = cell.holes
-    M = scaling(1f0)
-    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, M)
-    draw(hole)
+    draw(hole, shader)
   end
 end
 

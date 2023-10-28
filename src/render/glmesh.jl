@@ -54,6 +54,12 @@ draw(mesh::GLMesh) = begin
   glDrawElements(GL_TRIANGLES, length(mesh.indices), GL_UNSIGNED_INT, C_NULL)
 end
 
+draw(mesh::GLMesh, shader::Shader) = begin
+  M = scaling(1f0)
+  glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, M)
+  draw(mesh)
+end
+
 
 ## GLMesh builders
 
