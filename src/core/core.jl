@@ -1,3 +1,5 @@
+using GeometryBasics
+
 include("utils.jl")
 include("scan.jl")
 include("scans.jl")

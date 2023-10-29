@@ -6,7 +6,7 @@ end
 
 Perp(p::Vec3f, p2::Vec3f) = begin
   v = normalize(Vec3f(p2[1], p2[2], p[3]) - p)
-  Perp(p, angle(v, Ex))
+  Perp(p, angle(Ex, v))
 end
 
 perp_n(perp::Perp) =
@@ -31,3 +31,15 @@ GLMesh(perp::Perp, p0::Vec3f, p1::Vec3f) = begin
     Vec3f(neg_hit[1], neg_hit[2], p0[3]),
   )
 end
+
+interpolate(λ::Float32, perp1::Perp, perp2::Perp) =
+  Perp(λ*perp1.p + (1f0-λ)*perp2.p, λ*perp1.θ + (1f0-λ)*perp2.θ)
+
+
+
+mutable struct Perps
+  perps :: Vector{Perp}
+  meshes :: Vector{GLMesh}
+end
+
+

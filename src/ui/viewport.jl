@@ -52,9 +52,18 @@ end
 draw_view_cross(ed::Editor, view::Viewport) = begin
   BeginViewport(ed, view)
 
-  draw_perps(ed, view)
-  draw_axis_planes(ed, view.shader)
-  !isnothing(ed.sheet) && draw(ed.sheet, view.shader)
+  if 1 <= ed.perp_active <= length(ed.perps)
+    perp = ed.perps[ed.perp_active]
+    perp_mesh = ed.perp_meshes[ed.perp_active]
+    n = perp_n(perp)
+    view.camera.p = perp.p + 2f0*n
+    view.camera.n = -n
+    set_viewport!(view.camera, view.size.x, view.size.y)
+    draw(perp_mesh, view.shader)
+  end
+
+  # draw_axis_planes(ed, view.shader)
+  # !isnothing(ed.sheet) && draw(ed.sheet, view.shader)
 
   EndViewport(ed, view)
 end
@@ -72,7 +81,7 @@ do_perps_add(ed::Editor, view::Viewport) = begin
   mpos = CImGui.GetMousePos() - view.pos
   if CImGui.IsWindowHovered()
     # Start adding on click down.
-    if CImGui.IsMouseClicked(0)
+    if CImGui.IsMouseClicked(0) && !CImGui.IsMouseDragging()
       if isnothing(ed.perp_add_start)
         mr = mouse_ray(view, mpos)
         hit, λ = raycast(mr, Plane(ed.cursor.p, Ez))
@@ -91,6 +100,7 @@ do_perps_add(ed::Editor, view::Viewport) = begin
           # TODO: check it is the same view the click started. Small bug.
           push!(ed.perps, perp)
           push!(ed.perp_meshes, ed.perp_add_mesh)
+          ed.perp_active = length(ed.perps)
           ed.perp_add_start = nothing
           ed.perp_add_mesh = nothing
         end

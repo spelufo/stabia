@@ -31,15 +31,31 @@ end
 
 draw_controls(ed::Editor) = begin
   CImGui.Begin("Controls")
-  # angle = Ref(180f0 * acos(ed.cursor.n[1]) / π)
-  # DragFloat("Cut angle", angle, 1f0, -180f0, 180f0)
-  # θ = π * angle[] / 180f0
-  # update_cursor!(ed, ed.cursor.p, θ)
-  # update_cursor_camera!(ed)
-
   cp = ed.cursor.p
   cf = ydir(ed.cursor)
 
+  CImGui.Text("Perps")
+  for i = 1:length(ed.perps)
+    if CImGui.Button("o##$i")
+      ed.perp_active = i
+    end
+    CImGui.SameLine(); if CImGui.Button("^##$i") && i > 1
+      ed.perps[i-1], ed.perps[i] = ed.perps[i], ed.perps[i-1]
+      ed.perp_meshes[i-1], ed.perp_meshes[i] = ed.perp_meshes[i], ed.perp_meshes[i-1]
+    end
+    CImGui.SameLine(); if CImGui.Button("v##$i") && i < length(ed.perps)
+      ed.perps[i+1], ed.perps[i] = ed.perps[i], ed.perps[i+1]
+      ed.perp_meshes[i+1], ed.perp_meshes[i] = ed.perp_meshes[i], ed.perp_meshes[i+1]
+    end
+    CImGui.SameLine(); if CImGui.Button("×##$i")
+      deleteat!(ed.perps, i)
+      deleteat!(ed.perp_meshes, i)
+    end
+    CImGui.SameLine(); CImGui.Text("$i")
+  end
+  # if CImGui.Button("Transition")
+
+  CImGui.Separator()
   CImGui.Text("Cursor")
   CImGui.Text("Cursor p: $(cp[1]), $(cp[2]), $(cp[3])")
   CImGui.Text("Cursor y: $(cf[1]), $(cf[2]), $(cf[3])")

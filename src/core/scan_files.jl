@@ -137,14 +137,50 @@ load_cell_holes(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
   holes
 end
 
-cell_normals_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
-  joinpath(cell_segmentation_dir(scan, jy, jx, jz), "$(cell_name(jy, jx, jz))_normals.jld2")
+cell_normals_fft_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  joinpath(cell_segmentation_dir(scan, jy, jx, jz), "$(cell_name(jy, jx, jz))_normals_fft.jld2")
 
-have_cell_normals(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
-  isfile(cell_normals_path(scan, jy, jx, jz))
+have_cell_normals_fft(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  isfile(cell_normals_fft_path(scan, jy, jx, jz))
 
-load_cell_normals(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
-  load(cell_normals_path(scan, jy, jx, jz), "N", "P")
+load_cell_normals_fft(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  load(cell_normals_fft_path(scan, jy, jx, jz), "N", "P")
 
-save_cell_normals(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int, N, P) =
-  save(cell_normals_path(scan, jy, jx, jz), "N", N, "P", P)
+save_cell_normals_fft(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int, N, P) =
+  save(cell_normals_fft_path(scan, jy, jx, jz), "N", N, "P", P)
+
+cell_derivatives_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  joinpath(cell_segmentation_dir(scan, jy, jx, jz), "$(cell_name(jy, jx, jz))_derivatives.jld2")
+
+have_cell_derivatives(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  isfile(cell_derivatives_path(scan, jy, jx, jz))
+
+load_cell_derivatives(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int, names) =
+  load(cell_derivatives_path(scan, jy, jx, jz), names...)
+
+cell_normals_steger_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  joinpath(cell_segmentation_dir(scan, jy, jx, jz), "$(cell_name(jy, jx, jz))_normals_steger.jld2")
+
+have_cell_normals_steger(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  isfile(cell_normals_steger_path(scan, jy, jx, jz))
+
+load_cell_normals_steger(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  load(cell_normals_steger_path(scan, jy, jx, jz), "N", "r")
+
+save_cell_normals_steger(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int, N, r) =
+  save(cell_normals_steger_path(scan, jy, jx, jz), "N", N, "r", r)
+
+cell_normals_relaxed_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  cell_normals_steger_path(scan, jy, jx, jz)
+
+have_cell_normals_relaxed(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  have_cell_normals_steger(scan, jy, jx, jz)
+
+load_cell_normals_relaxed(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  load(cell_normals_steger_path(scan, jy, jx, jz), "Nr", "rr")
+
+save_cell_normals_relaxed(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int, Nr, rr) =
+  jldopen(cell_normals_steger_path(scan, jy, jx, jz), "a+") do f
+    f["Nr"] = Nr
+    f["rr"] = rr
+  end

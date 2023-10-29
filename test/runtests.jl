@@ -2,6 +2,17 @@ include("../src/stabia.jl")
 
 using Test
 
+@testset "Angle between vectors" begin
+  @test angle(Vec3f(1, 0, 0), Vec3f(0, 1, 0)) ≈ π/2
+  @test angle(Vec3f(0, 1, 0), Vec3f(1, 0, 0)) ≈ -π/2
+  @test angle(Vec3f(0, 1, 0), Vec3f(0, 0, 1)) ≈ π/2
+  @test angle(Vec3f(0, 0, 1), Vec3f(1, 0, 0)) ≈ π/2
+  @test angle(Vec3f(1, 0, 0), Vec3f(1, 1, 0)) ≈ π/4
+  # for i = 1:50
+  #   a = rand(Vec3f); b = rand(Vec3f)
+  #   @test angle(a, b) ≈ -angle(b, a)
+  # end
+end
 
 @testset "Quaternion look at" begin
   examples = [

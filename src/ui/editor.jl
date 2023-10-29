@@ -42,6 +42,7 @@ mutable struct Editor
   perp_meshes :: Vector{GLMesh}
   perp_add_start :: Union{Vec3f, Nothing}
   perp_add_mesh :: Union{GLMesh, Nothing}
+  perp_active :: Int
 
   # sheet sim
   sheet
@@ -74,6 +75,7 @@ Editor(doc::Document) = begin
     GLMesh[],
     nothing,
     nothing,
+    0,
 
     # sheet sim
     nothing, # sheet
@@ -162,6 +164,9 @@ rotate_3d_view!(ed::Editor, dθ::Float32, dψ::Float32) = begin
   p = rotate(p - c, Ez, dθ) + c
   q = rotate(q, Ez, dθ)
   ed.view_3d.camera.pose = Pose(p, q)
+  p = rotate(p - c, xdir(ed.view_3d.camera.pose), dψ) + c
+  q = rotate(q, xdir(ed.view_3d.camera.pose), dψ)
+  ed.view_3d.camera.pose = Pose(p, q)
 end
 
 
@@ -192,6 +197,8 @@ KEYMAP_NORMAL = KeyMap(
 
   KeyBinding(GLFW_KEY_G+1, 0, true)      => () -> rotate_3d_view!(the_editor, -Δc, 0f0),
   KeyBinding(GLFW_KEY_L, 0, true)        => () -> rotate_3d_view!(the_editor, +Δc, 0f0),
+  KeyBinding(GLFW_KEY_J, 0, true)        => () -> rotate_3d_view!(the_editor, 0f0, -Δc),
+  KeyBinding(GLFW_KEY_K, 0, true)        => () -> rotate_3d_view!(the_editor, 0f0, +Δc),
 
   KeyBinding(GLFW_KEY_W, GLFW_MOD_ALT)   => () -> toggle_wireframe!(the_editor),
   KeyBinding(GLFW_KEY_0, 0)              => () -> the_editor.style = 0,

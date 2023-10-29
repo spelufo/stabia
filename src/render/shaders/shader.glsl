@@ -105,13 +105,13 @@ void main() {
     vis(meas(P));
 
   } else if (style == 2) {
-    vis(length(measure_normal(P)/20)); return;
-    float a = measure(P);
-    vec3 A = vec3(a);
-    if (a > 0.35) {
-      A *= 0.5 + 0.5*meas_normal(P);
+    vec3 N = measure_normal(P);
+    float a = meas(P);
+    if (a < 0.05) {
+      vis(a);
+    } else {
+      vis(0.5*vec3(a) + vec3(a) * N);
     }
-    vis(A);
 
   } else if (style == 3) {
     vec3 A = vec3(0);

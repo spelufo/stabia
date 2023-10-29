@@ -29,7 +29,7 @@ estimate_normal(v::AbstractArray{Float32, 3}, radius_dir::Vec3f) = begin
   N
 end
 
-estimate_normals(V::Array{Float32, 3}, radius_dir::Vec3f; l=10) = begin
+build_normals_fft(V::Array{Float32, 3}, radius_dir::Vec3f; l=10) = begin
   ly, lx, lz = size(V)
   N = zeros(Vec3f, div.(size(V), l))
   w = div(l, 2)
@@ -45,7 +45,7 @@ estimate_normals(V::Array{Float32, 3}, radius_dir::Vec3f; l=10) = begin
   N
 end
 
-estimate_normals_points(ls::Ints3; l=10, PType=Vec3f) = begin
+build_normals_fft_points(ls::Ints3; l=10, PType=Vec3f) = begin
   ly, lx, lz = ls
   P = zeros(PType, div.(ls, l))
   w = div(l, 2)
@@ -57,7 +57,7 @@ estimate_normals_points(ls::Ints3; l=10, PType=Vec3f) = begin
   P
 end
 
-compute_cell_normals(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
+build_cell_normals_fft(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
   if have_cell_normals(scan, jy, jx, jz)
     println("Cell normals were already computed. Delete the file to recompute.")
     println("path: ", cell_normals_path(scan, jy, jx, jz))
@@ -67,8 +67,8 @@ compute_cell_normals(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
   println("Loading cell...")
   @time V = load_cell(scan, jy, jx, jz)
   println("Computing normals...")
-  @time N = estimate_normals(Float32.(V), radius_dir)
-  P = estimate_normals_points(size(V))
+  @time N = build_normals_fft(Float32.(V), radius_dir)
+  P = build_normals_fft_points(size(V))
   println("Saving normals...")
   @time save_cell_normals(scan, jy, jx, jz, N, P)
   nothing

@@ -1,20 +1,6 @@
 # Follows Steger's paper and Ghassaei's virtual-unfolding.
 
-using StaticArrays, LinearAlgebra, JLD2
-using Images, TiffImages, ImageFiltering, ImageView
-
-# TODO: Replace JLD -> JLD2.
-
 const Vol = Array{Float32,3}
-
-load_cell(filename::String) =
-  convert(Vol, load(filename))
-
-if !@isdefined V
-  println("Loading...")
-  V = load_cell("../data/full-scrolls/Scroll1.volpkg/volume_grids/20230205180739/cell_yxz_006_008_004.tif")
-end
-
 
 # using SpecialFunctions: erf
 # ϕ(σ, x) = (sqrt(π/2) * (erf(x * σ)/sqrt(2) + 1)) / σ
@@ -34,57 +20,60 @@ steger_kernels(w::Float32) = begin
   G0, G1, G2
 end
 
+
 # Do this in a function and save it so that we don't hold onto the result,
 # because at  500M each we quickly run out of memory and the OS kills us.
-build_derivative!(V::Vol, k1::Vector{Float32}, k2::Vector{Float32}, k3::Vector{Float32}, name::String) = begin
+build_derivative(V::Vol, k1::Vector{Float32}, k2::Vector{Float32}, k3::Vector{Float32}, path::String, name::String) = begin
   G = imfilter(V, kernelfactors((k1, k2, k3)))::Vol
-  jldopen("data/G.jld", isfile("data/G.jld") ? "r+" : "w") do f
+  jldopen(path, "a+") do f
     f[name] = G
   end
 end
 
-# const w = 7f0  # Thickness.
-const w = 15f0  # Thickness.
-const G0, G1, G2 = steger_kernels(w)
-
-
-# 1. Derivatives ###############################################################
-
-build_derivatives!(V::Array{Float32,3}) = begin
+build_cell_derivatives(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int; thickness::Float32 = 15f0) = begin
+  path = cell_derivatives_path(scan, jy, jx, jz)
+  println("Loading cell...")
+  @time V = convert(Vol, load_cell(scan, jy, jx, jz))
+  println("Building steger kernels...")
+  @time G0, G1, G2 = steger_kernels(thickness)
   println("Building first derivatives...")
-  @time build_derivative!(V, G1, G0, G0, "GY")
-  @time build_derivative!(V, G0, G1, G0, "GX")
-  @time build_derivative!(V, G0, G0, G1, "GZ")
+  @time build_derivative(V, G1, G0, G0, path, "GY")
+  @time build_derivative(V, G0, G1, G0, path, "GX")
+  @time build_derivative(V, G0, G0, G1, path, "GZ")
   GC.gc()
-
   println("Building second derivatives...")
-  @time build_derivative!(V, G0, G1, G1, "GZX")
-  @time build_derivative!(V, G1, G0, G1, "GYZ")
-  @time build_derivative!(V, G1, G1, G0, "GXY")
+  @time build_derivative(V, G0, G1, G1, path, "GZX")
+  @time build_derivative(V, G1, G0, G1, path, "GYZ")
+  @time build_derivative(V, G1, G1, G0, path, "GXY")
   GC.gc()
-  @time build_derivative!(V, G2, G0, G0, "GYY")
-  @time build_derivative!(V, G0, G2, G0, "GXX")
-  @time build_derivative!(V, G0, G0, G2, "GZZ")
+  @time build_derivative(V, G2, G0, G0, path, "GYY")
+  @time build_derivative(V, G0, G2, G0, path, "GXX")
+  @time build_derivative(V, G0, G0, G2, path, "GZZ")
   GC.gc()
+  jldopen(path, "a+") do f
+    f["thickness"] = thickness
+  end
+  println("Done.")
 end
 
-# build_derivatives!(V)
+# julia> build_cell_derivatives(scroll_1_54, 7, 7, 14)
+# Loading cell...
+#   1.615908 seconds (66.41 k allocations: 1.168 GiB, 2.61% gc time, 2.97% compilation time)
+# Building steger kernels...
 # Building first derivatives...
-#   3.340213 seconds (98.75 k allocations: 1016.523 MiB, 1.12% gc time, 54.92% compilation time)
-#   3.828404 seconds (43.74 k allocations: 1013.721 MiB, 0.35% gc time, 4.67% compilation time: 7% of which was recompilation)
-#   4.360553 seconds (15.63 k allocations: 1011.783 MiB, 0.45% gc time, 0.56% compilation time)
+#  14.030557 seconds (234.53 k allocations: 2.627 GiB, 0.08% gc time, 0.89% compilation time)
+#  11.938562 seconds (166 allocations: 2.613 GiB, 0.37% gc time)
+#  11.966965 seconds (162 allocations: 2.613 GiB, 0.17% gc time)
 # Building second derivatives...
-#   3.758675 seconds (15.13 k allocations: 1011.758 MiB, 0.02% gc time)
-#   6.014720 seconds (15.13 k allocations: 1011.758 MiB, 0.03% gc time)
-#   6.138643 seconds (15.13 k allocations: 1011.758 MiB, 0.57% gc time)
-#   2.633229 seconds (15.13 k allocations: 1011.758 MiB, 0.03% gc time)
-#   4.580047 seconds (15.13 k allocations: 1011.758 MiB, 0.03% gc time)
-#   5.104660 seconds (15.13 k allocations: 1011.758 MiB, 0.05% gc time)
+#  11.598430 seconds (164 allocations: 2.613 GiB, 0.01% gc time)
+#  11.965154 seconds (167 allocations: 2.613 GiB, 0.16% gc time)
+#  12.092336 seconds (168 allocations: 2.613 GiB, 0.17% gc time)
+#  11.778744 seconds (170 allocations: 2.613 GiB, 0.01% gc time)
+#  11.842674 seconds (172 allocations: 2.613 GiB, 0.16% gc time)
+#  12.114151 seconds (174 allocations: 2.613 GiB, 0.17% gc time)
+# Done.
 
-
-# 2. Normals ###################################################################
-
-build_normals!(GXX::Vol, GYY::Vol, GZZ::Vol, GXY::Vol, GYZ::Vol, GZX::Vol) = begin
+build_normals_steger(GXX::Vol, GYY::Vol, GZZ::Vol, GXY::Vol, GYZ::Vol, GZX::Vol) = begin
   N = Array{Float32, 4}(undef, (3, 500, 500, 500))  # 1.5G
   r = Array{Float32, 3}(undef, (500, 500, 500))
   Threads.@threads for z = 1:500
@@ -102,38 +91,39 @@ build_normals!(GXX::Vol, GYY::Vol, GZZ::Vol, GXY::Vol, GYZ::Vol, GZX::Vol) = beg
       r[y, x, z] = e.values[i]
     end
   end
-  @save "data/N.jld" N r
+  (N, r)
 end
 
-# println("Loading derivatives...")
-# @time @load "data/G.jld" GXX GYY GZZ GXY GYZ GZX  # 6 x 500M = 3G
-# 4.150267 seconds (278.91 k allocations: 2.812 GiB, 1.14% gc time, 8.66% compilation time)
-# println("Building normals...")
-# @time build_normals!(GXX, GYY, GZZ, GXY, GYZ, GZX)
-# Building normals...
-# 176.917448 seconds (1.50 G allocations: 177.048 GiB, 12.34% gc time, 8.51% compilation time)
-
-@inline clamp01(x::Float32) = clamp(x, 0f0, 1f0)
-@inline clampRGB(c::RGB{Float32}) = RGB{Float32}(clamp01(c.r),clamp01(c.g),clamp01(c.b))
-
-make_normals_gif(N::Array{Float32,4}, r::Array{Float32,3}, frames::Int) = begin
-  anim = zeros(RGB{N0f8}, size(r, 1), size(r, 3), frames)
-  for x = 1:frames
-    rx = @view r[:,div(size(r,2), frames)*x,:]
-    Nx = @view N[:, :,div(size(r,2), frames)*x,:]
-    NRGBx = colorview(RGB, 30f0 .* abs.(Nx))
-    anim[:, :, x] =  RGB{N0f8}.(clampRGB.(abs.(rx) .* NRGBx))
-  end
-  save("N.gif", anim, fps=24)
+build_cell_normals_steger(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
+  println("Loading cell...")
+  @time V = convert(Vol, load_cell(scan, jy, jx, jz))
+  println("Loading cell derivatives...")
+  @assert have_cell_derivatives(scan, jy, jx, jz) "Cell derivatives not found. Run build_cell_derivatives first."
+  @time GXX, GYY, GZZ, GXY, GYZ, GZX = load_cell_derivatives(
+    scan, jy, jx, jz, ("GXX", "GYY", "GZZ", "GXY", "GYZ", "GZX"))
+  println("Building cell normals...")
+  @time N, r = build_normals_steger(GXX, GYY, GZZ, GXY, GYZ, GZX)
+  println("Saving cell normals...")
+  @time save_cell_normals_steger(scan, jy, jx, jz, N, r)
+  println("Done.")
+  nothing
 end
 
-# @load "data/N.jld" N r
-# make_normals_gif(N, r, 50)
+# julia> build_cell_normals_steger(scroll_1_54, 7, 7, 14)
+# Loading cell...
+#   1.331782 seconds (2.21 k allocations: 1.164 GiB, 1.90% gc time)
+# Loading cell derivatives...
+#   1.238585 seconds (120.07 k allocations: 2.802 GiB, 1.51% gc time, 7.50% compilation time)
+# Building cell normals...
+# 159.981267 seconds (1.50 G allocations: 177.049 GiB, 19.82% gc time, 8.93% compilation time)
+# Saving cell normals...
+#   3.041628 seconds (826.49 k allocations: 57.629 MiB, 0.47% gc time, 10.19% compilation time)
+# Done.
 
 
 # 3. Relaxed normals ###########################################################
 
-build_normals_relaxed_step!(
+build_normals_relaxed_step(
   N::Array{Float32, 4}, r::Array{Float32, 3}, Nr::Array{Float32, 4}, rr::Array{Float32, 3},
   GXX::Vol, GYY::Vol, GZZ::Vol, GXY::Vol, GYZ::Vol, GZX::Vol
 ) = begin
@@ -159,88 +149,39 @@ build_normals_relaxed_step!(
   nothing
 end
 
-build_normals_relaxed!(N::Array{Float32,4}, r::Array{Float32,3}, GXX::Vol, GYY::Vol, GZZ::Vol, GXY::Vol, GYZ::Vol, GZX::Vol) = begin
+build_normals_relaxed(N::Array{Float32,4}, r::Array{Float32,3}, GXX::Vol, GYY::Vol, GZZ::Vol, GXY::Vol, GYZ::Vol, GZX::Vol) = begin
   Nr::Array{Float32,4} = Array{Float32,4}(undef, size(N))
   rr::Array{Float32,3} = Array{Float32,3}(undef, size(r))
   iters = 40
   for i = 1:iters
-    build_normals_relaxed_step!(N, r, Nr, rr, GXX, GYY, GZZ, GXY, GYZ, GZX)
+    build_normals_relaxed_step(N, r, Nr, rr, GXX, GYY, GZZ, GXY, GYZ, GZX)
     N, Nr = Nr, N
   end
-  @save "data/Nr.jld" Nr rr
+  Nr, rr
 end
 
-# if !@isdefined GXX
-#   println("Loading derivatives...")
-#   @time @load "data/G.jld" GXX GYY GZZ GXY GYZ GZX  # 6 x 500M = 3G
-# end
-# if !@isdefined r
-#   println("Loading normals and responses...")
-#   @load "data/N.jld" N r
-# end
-
-# println("Building relaxed normals...")
-# @time build_normals_relaxed!(N, r, GXX, GYY, GZZ, GXY, GYZ, GZX)
-# 44.390414 seconds (212.52 k allocations: 1.876 GiB, 0.03% gc time, 5.38% compilation time)
-
-
-# 3. Points ####################################################################
-
-
-build_points!(V::Vol, N::Array{Float32, 4}) = begin
-  P = Array{Float32, 4}(undef, (3, 500, 500, 500))  # 1.5G
-  kdim = div(size(G1, 1), 2)
-  Threads.@threads for z = 1+kdim:500-kdim-1
-    for x = 1+kdim:500-kdim-1, y = 1+kdim:500-kdim-1
-      if V[y, x, z] < 0.6
-        continue
-      end
-      n = SVector{3, Float32}(N[1, y, x, z], N[2, y, x, z], N[3, y, x, z])
-      if abs(n[2]) < 0.5f0  # dot product with ŷ
-        continue
-      end
-      p = SVector{3, Float32}(x - 0.5f0, y - 0.5f0, z - 0.5f0)
-      r1 = 0.0f0
-      r2 = 0.0f0
-      for j = -kdim:kdim
-        val = interpolate_trilinear(V, p + j*n)
-        r1 += G1[kdim+j+1] * val
-        r2 += G2[kdim+j+1] * val
-      end
-      if r2 > 0f0
-        continue
-      end
-      t = -r1 / r2
-      d = t * n
-      if abs(d[1] > 0.5f0) || abs(d[2] > 0.5f0) || abs(d[3] > 0.5f0)
-        continue
-      end
-      P[:, y, x, z] = p + d
-    end
-  end
-  @save "data/Py.jld" P
+build_cell_normals_relaxed(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
+  println("Loading cell derivatives...")
+  @assert have_cell_derivatives(scan, jy, jx, jz) "Cell derivatives not found. Run build_cell_derivatives first."
+  @time GXX, GYY, GZZ, GXY, GYZ, GZX = load_cell_derivatives(
+    scan, jy, jx, jz, ("GXX", "GYY", "GZZ", "GXY", "GYZ", "GZX"))
+  println("Loading cell normals...")
+  @time N, r = load_cell_normals_steger(scan, jy, jx, jz)
+  println("Building relaxed normals...")
+  @time Nr, rr = build_normals_relaxed(N, r, GXX, GYY, GZZ, GXY, GYZ, GZX)
+  println("Saving relaxed normals...")
+  @time save_cell_normals_relaxed(scan, jy, jx, jz, Nr, rr)
+  println("Done.")
 end
 
-# if !@isdefined Nr
-#   println("Loading relaxed normals...")
-#   @load "data/Nr.jld" Nr
-# end
-# println("Building points...")
-# @time build_points!(V, Nr)
+# julia> build_cell_normals_relaxed(scroll_1_54, 7,7,14)
+# Loading cell derivatives...
+#   0.742260 seconds (436.66 k allocations: 2.819 GiB, 5.36% gc time, 32.50% compilation time)
+# Loading cell normals...
+#   0.348383 seconds (14.82 k allocations: 1.864 GiB, 2.35% gc time, 9.03% compilation time)
+# Building relaxed normals...
+#  29.697322 seconds (201.15 k allocations: 1.876 GiB, 0.02% gc time, 7.22% compilation time)
+# Saving relaxed normals...
+#   3.475008 seconds (1.83 M allocations: 125.639 MiB, 0.87% gc time, 18.00% compilation time)
+# Done.
 
-
-make_points_gif(P::Array{Float32,4}, frames::Int) = begin
-  anim = zeros(Gray{N0f8}, size(r, 1), size(r, 3), frames)
-  for x = 1:frames
-    Px = @view P[:, :,div(size(r,2), frames)*x,:]
-    anim[:, :, x] = @. Gray{N0f8}(Px[1, :, :] != 0f0 || Px[2,:,:] != 0f0 || Px[3,:,:] !=  0f0)
-  end
-  save("P.gif", anim, fps=12)
-end
-
-# if !@isdefined P
-#   println("Loading points...")
-#   @load "data/P.jld" P
-# end
-# println("Making points gif...")
-# @time make_points_gif(P, 250)

@@ -15,13 +15,14 @@ Cell(scan::HerculaneumScan, j::Ints3) = begin
   L = p1[1] - p0[1]
   V = load_cell(scan, j...)
   N = nothing
-  if have_cell_normals(scan, j...)
-    N, _ = load_cell_normals(scan, j...)
+  if have_cell_normals_relaxed(scan, j...)
+    N4, _ = load_cell_normals_relaxed(scan, j...)
+    N = reinterpret(reshape, Vec3f, N4)
   end
   holes = nothing
-  if have_cell_holes(scan, j...)
-    holes = [GLMesh(m; scale=L/500f0) for m in load_cell_holes(scan, j...)]
-  end
+  # if have_cell_holes(scan, j...)
+  #   holes = [GLMesh(m; scale=L/500f0) for m in load_cell_holes(scan, j...)]
+  # end
   Cell(j, p0, L, V, N, holes, UInt32(0), UInt32(0))
 end
 
@@ -33,8 +34,6 @@ draw_holes(cell::Cell, shader::Shader) = begin
     draw(hole, shader)
   end
 end
-
-
 
 
 load_textures(cell::Cell) = begin

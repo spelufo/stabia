@@ -1,2 +1,3 @@
 include("ilastik.jl")
-include("normals_field.jl")
+include("normals_fft.jl")
+include("normals_steger.jl")
