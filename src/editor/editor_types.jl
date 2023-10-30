@@ -12,7 +12,19 @@ end
 mutable struct Perps
   perps :: Vector{Perp}
   meshes :: Vector{GLMesh}
+  add_start :: Union{Vec3f, Nothing}
+  add_mesh :: Union{GLMesh, Nothing}
+  active :: Int
 end
+
+Perps() =
+  Perps(
+    Perp[],
+    GLMesh[],
+    nothing,
+    nothing,
+    0,
+  )
 
 
 mutable struct Cell
@@ -73,19 +85,11 @@ Viewport(name::String, camera::Camera) =
     Shader("shader.glsl"), camera, false, nothing)
 
 
-struct EditorMode
-  name::String
-end
-
-const MODE_NORMAL = EditorMode("normal")
-
-
 mutable struct Editor
   doc :: Document
   scan :: HerculaneumScan
   cell :: Cell
 
-  mode :: EditorMode
   cursor :: Pose
   frame :: Int
   view_3d    :: Union{Viewport, Nothing}
@@ -98,11 +102,7 @@ mutable struct Editor
   draw_axis_zx :: Ref{Bool}
   draw_holes :: Ref{Bool}
 
-  perps :: Vector{Perp}
-  perp_meshes :: Vector{GLMesh}
-  perp_add_start :: Union{Vec3f, Nothing}
-  perp_add_mesh :: Union{GLMesh, Nothing}
-  perp_active :: Int
+  perps :: Perps
 
   # sheet sim
   sheet
@@ -114,29 +114,19 @@ mutable struct Editor
 end
 
 Editor(doc::Document) = begin
-  # TODO: At some point we should be able to start the editor without
-  # any loaded cells. For now, we load the cell at startup and make things easier
-  # for all the downstream code.
-  # cell = !isempty(doc.cells) && doc.cells[1] || nothing
   cell = doc.cells[1]
   load_textures(cell)
   ed = Editor(
-    doc, doc.scan, cell,
-    MODE_NORMAL,
+    doc,
+    doc.scan,
+    cell,
     Pose(center(cell)), # cursor
     0, # frame
     nothing, nothing, nothing, # views
     Int32(1), # style
     Ref(true), Ref(false), Ref(false), # draw_axis_*
     Ref(false), # draw_holes
-
-    # perps
-    Perp[],
-    GLMesh[],
-    nothing,
-    nothing,
-    0,
-
+    Perps(),
     # sheet sim
     nothing, # sheet
     nothing, # sheet_update!

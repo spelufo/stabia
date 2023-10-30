@@ -25,7 +25,7 @@ end
 
 do_frame_handle_keys(ed::Editor) = begin
   # TODO: Modifiers bug.
-  for (kb, f) = KEYMAP_NORMAL
+  for (kb, f) = KEYMAP
     if kb.continuous && kb.mods == 0
       if CImGui.IsKeyDown(kb.key) # && CImGui.IsKeyDown(kb.mods) # TODO: mods
         f()
@@ -91,31 +91,15 @@ do_controls(ed::Editor) = begin
   cp = ed.cursor.p
   cf = ydir(ed.cursor)
 
-  CImGui.Text("Perps")
-  for i = 1:length(ed.perps)
-    if CImGui.Button("o##$i")
-      ed.perp_active = i
-    end
-    CImGui.SameLine(); if CImGui.Button("^##$i") && i > 1
-      ed.perps[i-1], ed.perps[i] = ed.perps[i], ed.perps[i-1]
-      ed.perp_meshes[i-1], ed.perp_meshes[i] = ed.perp_meshes[i], ed.perp_meshes[i-1]
-    end
-    CImGui.SameLine(); if CImGui.Button("v##$i") && i < length(ed.perps)
-      ed.perps[i+1], ed.perps[i] = ed.perps[i], ed.perps[i+1]
-      ed.perp_meshes[i+1], ed.perp_meshes[i] = ed.perp_meshes[i], ed.perp_meshes[i+1]
-    end
-    CImGui.SameLine(); if CImGui.Button("×##$i")
-      deleteat!(ed.perps, i)
-      deleteat!(ed.perp_meshes, i)
-    end
-    CImGui.SameLine(); CImGui.Text("$i")
-  end
   # if CImGui.Button("Transition")
 
   CImGui.Separator()
   CImGui.Text("Cursor")
   CImGui.Text("Cursor p: $(cp[1]), $(cp[2]), $(cp[3])")
   CImGui.Text("Cursor y: $(cf[1]), $(cf[2]), $(cf[3])")
+
+  CImGui.Separator()
+  do_perps_controls(ed.perps)
 
   CImGui.Separator()
   CImGui.Text("Axis Planes")
@@ -172,7 +156,7 @@ const KeyMap = Dict{KeyBinding, Function}
 
 Δc = 0.015f0
 
-KEYMAP_NORMAL = KeyMap(
+KEYMAP = KeyMap(
   KeyBinding(GLFW_KEY_W, 0, true)        => () -> move_cursor!(the_editor, 0f0, +Δc, 0f0),
   KeyBinding(GLFW_KEY_S, 0, true)        => () -> move_cursor!(the_editor, 0f0, -Δc, 0f0),
   KeyBinding(GLFW_KEY_A, 0, true)        => () -> move_cursor!(the_editor, -Δc, 0f0, 0f0),
@@ -198,10 +182,8 @@ KEYMAP_NORMAL = KeyMap(
 
 on_key!(ed::Editor, window::Ptr{GLFWwindow}, key::Cint, scancode::Cint, action::Cint, mods::Cint)::Cvoid = begin
   if action == GLFW_PRESS || action == GLFW_REPEAT
-    if ed.mode == MODE_NORMAL
-      f = get(KEYMAP_NORMAL, KeyBinding(key, mods, false), nothing)
-      !isnothing(f) && f()
-    end
+    f = get(KEYMAP, KeyBinding(key, mods, false), nothing)
+    !isnothing(f) && f()
   end
   nothing
 end

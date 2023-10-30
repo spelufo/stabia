@@ -18,7 +18,7 @@ include("mesh.jl")
 @defonce the_doc = nothing
 @defonce the_editor = nothing
 @defonce the_window = nothing
-@defonce the_window_width = Int32(1200)
+@defonce the_window_width = Int32(1920)
 @defonce the_window_height = Int32(800)
 @defonce the_gpu_info = nothing
 

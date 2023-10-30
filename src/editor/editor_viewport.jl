@@ -24,7 +24,6 @@ do_view_3d(ed::Editor, view::Viewport) = begin
   BeginViewport(ed, view)
 
   do_perps_add(ed, view)
-  do_perps(ed, view)
   do_axis_planes(ed, view.shader)
   !isnothing(ed.sheet) && draw(ed.sheet, view.shader)
   !isnothing(ed.cell.holes) && ed.draw_holes[] && do_holes(ed.cell, view.shader)
@@ -39,7 +38,6 @@ do_view_top(ed::Editor, view::Viewport) = begin
   BeginViewport(ed, view)
 
   do_perps_add(ed, view)
-  do_perps(ed, view)
   do_axis_planes(ed, view.shader)
   !isnothing(ed.sheet) && draw(ed.sheet, view.shader)
 
@@ -52,16 +50,7 @@ end
 do_view_cross(ed::Editor, view::Viewport) = begin
   BeginViewport(ed, view)
 
-  if 1 <= ed.perp_active <= length(ed.perps)
-    perp = ed.perps[ed.perp_active]
-    perp_mesh = ed.perp_meshes[ed.perp_active]
-    n = perp_n(perp)
-    view.camera.p = perp.p + 2f0*n
-    view.camera.n = -n
-    set_viewport!(view.camera, view.size.x, view.size.y)
-    draw(perp_mesh, view.shader)
-  end
-
+  do_active_perp_view(ed.perps, view)
   # do_axis_planes(ed, view.shader)
   # !isnothing(ed.sheet) && draw(ed.sheet, view.shader)
 
