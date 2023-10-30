@@ -7,6 +7,6 @@ include("geom/geom.jl")
 include("core/core.jl")
 include("render/render.jl")
 include("document/document.jl")
-include("segment/segment.jl")
-include("ui/main.jl")
+# include("segment/segment.jl")
+include("editor/main.jl")
 

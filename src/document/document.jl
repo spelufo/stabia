@@ -6,7 +6,6 @@ include("cell.jl")
 include("perps.jl")
 include("sheet.jl")
 include("mesh.jl")
-include("misc.jl")
 
 
 # Document #####################################################################
