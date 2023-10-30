@@ -20,14 +20,14 @@ end
 
 # View 3d ######################################################################
 
-draw_view_3d(ed::Editor, view::Viewport) = begin
+do_view_3d(ed::Editor, view::Viewport) = begin
   BeginViewport(ed, view)
 
   do_perps_add(ed, view)
-  draw_perps(ed, view)
-  draw_axis_planes(ed, view.shader)
+  do_perps(ed, view)
+  do_axis_planes(ed, view.shader)
   !isnothing(ed.sheet) && draw(ed.sheet, view.shader)
-  !isnothing(ed.cell.holes) && ed.draw_holes[] && draw_holes(ed.cell, view.shader)
+  !isnothing(ed.cell.holes) && ed.draw_holes[] && do_holes(ed.cell, view.shader)
 
   EndViewport(ed, view)
 end
@@ -35,12 +35,12 @@ end
 
 # View Top #####################################################################
 
-draw_view_top(ed::Editor, view::Viewport) = begin
+do_view_top(ed::Editor, view::Viewport) = begin
   BeginViewport(ed, view)
 
   do_perps_add(ed, view)
-  draw_perps(ed, view)
-  draw_axis_planes(ed, view.shader)
+  do_perps(ed, view)
+  do_axis_planes(ed, view.shader)
   !isnothing(ed.sheet) && draw(ed.sheet, view.shader)
 
   EndViewport(ed, view)
@@ -49,7 +49,7 @@ end
 
 # View Cross ###################################################################
 
-draw_view_cross(ed::Editor, view::Viewport) = begin
+do_view_cross(ed::Editor, view::Viewport) = begin
   BeginViewport(ed, view)
 
   if 1 <= ed.perp_active <= length(ed.perps)
@@ -62,7 +62,7 @@ draw_view_cross(ed::Editor, view::Viewport) = begin
     draw(perp_mesh, view.shader)
   end
 
-  # draw_axis_planes(ed, view.shader)
+  # do_axis_planes(ed, view.shader)
   # !isnothing(ed.sheet) && draw(ed.sheet, view.shader)
 
   EndViewport(ed, view)
@@ -71,55 +71,6 @@ end
 
 # Common #######################################################################
 
-draw_perps(ed::Editor, view::Viewport) = begin
-  for mesh = ed.perp_meshes
-    draw(mesh, view.shader)
-  end
-end
-
-do_perps_add(ed::Editor, view::Viewport) = begin
-  mpos = CImGui.GetMousePos() - view.pos
-  if CImGui.IsWindowHovered()
-    # Start adding on click down.
-    if CImGui.IsMouseClicked(0) && !CImGui.IsMouseDragging()
-      if isnothing(ed.perp_add_start)
-        mr = mouse_ray(view, mpos)
-        hit, λ = raycast(mr, Plane(ed.cursor.p, Ez))
-        if λ >= 0 && all(ed.cell.p .<= hit .<= ed.cell.p .+ ed.cell.L)
-          ed.perp_add_start = hit
-        end
-      end
-    end
-    # Add on click release.
-    if !isnothing(ed.perp_add_start)
-      hit, λ = raycast(mouse_ray(view, mpos), Plane(ed.cursor.p, Ez))
-      if λ > 0
-        perp = Perp(ed.perp_add_start, hit)
-        ed.perp_add_mesh = GLMesh(perp, ed.cell.p, ed.cell.p .+ ed.cell.L)
-        if CImGui.IsMouseReleased(0)
-          # TODO: check it is the same view the click started. Small bug.
-          push!(ed.perps, perp)
-          push!(ed.perp_meshes, ed.perp_add_mesh)
-          ed.perp_active = length(ed.perps)
-          ed.perp_add_start = nothing
-          ed.perp_add_mesh = nothing
-        end
-      end
-    end
-  end
-  # Draw preview if adding
-  if !isnothing(ed.perp_add_mesh)
-    draw(ed.perp_add_mesh, view.shader)
-  end
-  if CImGui.IsKeyPressed(GLFW_KEY_DELETE)
-    ed.perps = []
-    ed.perp_meshes = []
-  end
-  if CImGui.IsKeyPressed(GLFW_KEY_ESCAPE)
-    ed.perp_add_start = nothing
-    ed.perp_add_mesh = nothing
-  end
-end
 
 screen_to_ndc(view::Viewport, p::ImVec2) =
   Vec2f(2f0 * p.x / view.size.x - 1f0, 1f0 - 2f0 * p.y / view.size.y)
@@ -160,3 +111,4 @@ EndViewport(ed::Editor, view::Viewport) = begin
   end
   CImGui.End()
 end
+

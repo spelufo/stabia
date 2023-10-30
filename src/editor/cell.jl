@@ -1,40 +1,11 @@
-
-mutable struct Cell
-  j :: Ints3
-  p :: Vec3f   # Position, the point with minimum coordinates.
-  L :: Float32 # Length of the side of the cell in mm.
-  V :: Array{N0f16,3}
-  N :: Union{Array{Vec3f,3}, Nothing}
-  holes :: Union{Vector{GLMesh}, Nothing}
-  texture :: UInt32
-  N_texture :: UInt32
-end
-
-Cell(scan::HerculaneumScan, j::Ints3) = begin
-  p0, p1 = cell_range_mm(scan, j...)
-  L = p1[1] - p0[1]
-  V = load_cell(scan, j...)
-  N = nothing
-  if have_cell_normals_relaxed(scan, j...)
-    N4, _ = load_cell_normals_relaxed(scan, j...)
-    N = reinterpret(reshape, Vec3f, N4)
-  end
-  holes = nothing
-  # if have_cell_holes(scan, j...)
-  #   holes = [GLMesh(m; scale=L/500f0) for m in load_cell_holes(scan, j...)]
-  # end
-  Cell(j, p0, L, V, N, holes, UInt32(0), UInt32(0))
-end
-
 center(cell::Cell) =
   cell.p + cell.L * E1 / 2f0
 
-draw_holes(cell::Cell, shader::Shader) = begin
+do_holes(cell::Cell, shader::Shader) = begin
   for hole = cell.holes
     draw(hole, shader)
   end
 end
-
 
 load_textures(cell::Cell) = begin
   if cell.texture > 0

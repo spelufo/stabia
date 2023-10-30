@@ -6,15 +6,14 @@ using CImGui.ImGuiGLFWBackend.LibGLFW
 using CImGui.ImGuiOpenGLBackend.ModernGL
 
 include("utils.jl")
-
+include("editor_types.jl")
+include("editor_commands.jl")
+include("editor_viewport.jl")
+include("editor_ui.jl")
 include("cell.jl")
 include("perps.jl")
 include("sheet.jl")
 include("mesh.jl")
-
-include("editor.jl")
-include("editor_ui.jl")
-include("viewport.jl")
 
 @defonce the_doc = nothing
 @defonce the_editor = nothing
@@ -23,7 +22,7 @@ include("viewport.jl")
 @defonce the_window_height = Int32(800)
 @defonce the_gpu_info = nothing
 
-draw_frame() = begin
+do_frame() = begin
   begin # update window size
     win_width, win_height = Ref{Cint}(0), Ref{Cint}(0)
     glfwGetFramebufferSize(the_window, win_width, win_height)
@@ -35,7 +34,7 @@ draw_frame() = begin
     glClearColor(1f0, 1f0, 1f0, 1f0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
   end
-  draw_frame(the_editor)
+  do_frame(the_editor)
 end
 
 on_key(window::Ptr{GLFWwindow}, key::Cint, scancode::Cint, action::Cint, mods::Cint)::Cvoid = begin
@@ -103,7 +102,7 @@ main() = begin
       ImGuiOpenGLBackend.new_frame(gl_ctx)
       ImGuiGLFWBackend.new_frame(glfw_ctx)
       CImGui.NewFrame()
-      Base.invokelatest(draw_frame)
+      Base.invokelatest(do_frame)
       CImGui.Render()
       ImGuiOpenGLBackend.render(gl_ctx)
       glfwSwapBuffers(the_window)

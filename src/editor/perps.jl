@@ -1,13 +1,4 @@
 
-mutable struct Perp
-  p :: Vec3f
-  θ :: Float32 # relative to the x axis
-end
-
-Perp(p::Vec3f, p2::Vec3f) = begin
-  v = normalize(Vec3f(p2[1], p2[2], p[3]) - p)
-  Perp(p, angle(Ex, v))
-end
 
 perp_n(perp::Perp) =
   Vec3f(-sin(perp.θ), cos(perp.θ), 0f0)
@@ -37,9 +28,52 @@ interpolate(λ::Float32, perp1::Perp, perp2::Perp) =
 
 
 
-mutable struct Perps
-  perps :: Vector{Perp}
-  meshes :: Vector{GLMesh}
+do_perps(ed::Editor, view::Viewport) = begin
+  for mesh = ed.perp_meshes
+    draw(mesh, view.shader)
+  end
 end
 
-
+do_perps_add(ed::Editor, view::Viewport) = begin
+  mpos = CImGui.GetMousePos() - view.pos
+  if CImGui.IsWindowHovered()
+    # Start adding on click down.
+    if CImGui.IsMouseClicked(0) && !CImGui.IsMouseDragging()
+      if isnothing(ed.perp_add_start)
+        mr = mouse_ray(view, mpos)
+        hit, λ = raycast(mr, Plane(ed.cursor.p, Ez))
+        if λ >= 0 && all(ed.cell.p .<= hit .<= ed.cell.p .+ ed.cell.L)
+          ed.perp_add_start = hit
+        end
+      end
+    end
+    # Add on click release.
+    if !isnothing(ed.perp_add_start)
+      hit, λ = raycast(mouse_ray(view, mpos), Plane(ed.cursor.p, Ez))
+      if λ > 0
+        perp = Perp(ed.perp_add_start, hit)
+        ed.perp_add_mesh = GLMesh(perp, ed.cell.p, ed.cell.p .+ ed.cell.L)
+        if CImGui.IsMouseReleased(0)
+          # TODO: check it is the same view the click started. Small bug.
+          push!(ed.perps, perp)
+          push!(ed.perp_meshes, ed.perp_add_mesh)
+          ed.perp_active = length(ed.perps)
+          ed.perp_add_start = nothing
+          ed.perp_add_mesh = nothing
+        end
+      end
+    end
+  end
+  # Draw preview if adding
+  if !isnothing(ed.perp_add_mesh)
+    draw(ed.perp_add_mesh, view.shader)
+  end
+  if CImGui.IsKeyPressed(GLFW_KEY_DELETE)
+    ed.perps = []
+    ed.perp_meshes = []
+  end
+  if CImGui.IsKeyPressed(GLFW_KEY_ESCAPE)
+    ed.perp_add_start = nothing
+    ed.perp_add_mesh = nothing
+  end
+end
