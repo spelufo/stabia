@@ -1,5 +1,5 @@
 
-mutable struct StaticMesh <: DocumentObject
+mutable struct StaticMesh
   pose :: Pose
   mesh :: GLMesh
 end

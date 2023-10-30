@@ -1,5 +1,5 @@
 
-mutable struct GridSheet <: DocumentObject
+mutable struct GridSheet
   points :: Matrix{Vec3f}
   coords :: Matrix{Vec2f}
 end

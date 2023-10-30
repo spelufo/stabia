@@ -1,7 +1,3 @@
-# Document Objects #############################################################
-
-abstract type DocumentObject end
-
 include("cell.jl")
 include("perps.jl")
 include("sheet.jl")
@@ -13,7 +9,6 @@ include("mesh.jl")
 mutable struct Document
   scan :: HerculaneumScan
   cells :: Vector{Cell}
-  objects :: Vector{DocumentObject}
 end
 
 # Called by main(), for things that need to be reset when a new window/editor is

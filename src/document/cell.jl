@@ -1,5 +1,5 @@
 
-mutable struct Cell <: DocumentObject
+mutable struct Cell
   j :: Ints3
   p :: Vec3f   # Position, the point with minimum coordinates.
   L :: Float32 # Length of the side of the cell in mm.
