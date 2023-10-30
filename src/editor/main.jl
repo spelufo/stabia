@@ -6,6 +6,12 @@ using CImGui.ImGuiGLFWBackend.LibGLFW
 using CImGui.ImGuiOpenGLBackend.ModernGL
 
 include("utils.jl")
+
+include("cell.jl")
+include("perps.jl")
+include("sheet.jl")
+include("mesh.jl")
+
 include("editor.jl")
 include("editor_ui.jl")
 include("viewport.jl")
