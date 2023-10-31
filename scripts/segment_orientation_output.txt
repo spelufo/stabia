@@ -1,0 +1,1174 @@
+flipped = check_segments_orientation(scroll_1_54)
+
+segment_id = "20230503225234"
+n_outwards = 0
+n_inwards = 100
+ori = 1.0f0
+
+segment_id = "20230504093154"
+n_outwards = 577
+n_inwards = 19449
+ori = 1.0f0
+
+segment_id = "20230504094316"
+n_outwards = 352
+n_inwards = 201
+ori = -1.0f0
+
+segment_id = "20230504125349"
+n_outwards = 1376
+n_inwards = 29
+ori = -1.0f0
+
+segment_id = "20230504171956"
+n_outwards = 7132
+n_inwards = 2
+ori = -1.0f0
+
+segment_id = "20230504223647"
+n_outwards = 0
+n_inwards = 223
+ori = 1.0f0
+
+segment_id = "20230504225948"
+n_outwards = 1
+n_inwards = 1955
+ori = 1.0f0
+
+segment_id = "20230504231922"
+n_outwards = 11
+n_inwards = 6297
+ori = 1.0f0
+
+segment_id = "20230505093556"
+n_outwards = 39
+n_inwards = 3982
+ori = 1.0f0
+
+segment_id = "20230505113642"
+n_outwards = 1
+n_inwards = 12057
+ori = 1.0f0
+
+segment_id = "20230505131816"
+n_outwards = 415
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230505135219"
+n_outwards = 361
+n_inwards = 14
+ori = -1.0f0
+
+segment_id = "20230505141722"
+n_outwards = 11558
+n_inwards = 1169
+ori = -1.0f0
+
+segment_id = "20230505164332"
+n_outwards = 9
+n_inwards = 585
+ori = 1.0f0
+
+segment_id = "20230505175240"
+n_outwards = 0
+n_inwards = 2184
+ori = 1.0f0
+
+segment_id = "20230506133355"
+n_outwards = 0
+n_inwards = 1902
+ori = 1.0f0
+
+segment_id = "20230507172452"
+n_outwards = 4
+n_inwards = 190
+ori = 1.0f0
+
+segment_id = "20230507175928"
+n_outwards = 0
+n_inwards = 132
+ori = 1.0f0
+
+segment_id = "20230508164013"
+n_outwards = 0
+n_inwards = 146
+ori = 1.0f0
+
+segment_id = "20230508220213"
+n_outwards = 930
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230509160956"
+n_outwards = 6
+n_inwards = 11017
+ori = 1.0f0
+
+segment_id = "20230509182749"
+n_outwards = 14
+n_inwards = 65869
+ori = 1.0f0
+
+segment_id = "20230510153006"
+n_outwards = 62722
+n_inwards = 267
+ori = -1.0f0
+
+segment_id = "20230510153843"
+n_outwards = 0
+n_inwards = 1291
+ori = 1.0f0
+
+segment_id = "20230510170242"
+n_outwards = 4
+n_inwards = 846
+ori = 1.0f0
+
+segment_id = "20230511085916"
+n_outwards = 0
+n_inwards = 168
+ori = 1.0f0
+
+segment_id = "20230511094040"
+n_outwards = 1
+n_inwards = 3246
+ori = 1.0f0
+
+segment_id = "20230511201612"
+n_outwards = 455
+n_inwards = 14
+ori = -1.0f0
+
+segment_id = "20230511204029"
+n_outwards = 61
+n_inwards = 1446
+ori = 1.0f0
+
+segment_id = "20230511211540"
+n_outwards = 3927
+n_inwards = 247
+ori = -1.0f0
+
+segment_id = "20230511215040"
+n_outwards = 794
+n_inwards = 40086
+ori = 1.0f0
+
+segment_id = "20230511224701"
+n_outwards = 180
+n_inwards = 1677
+ori = 1.0f0
+
+segment_id = "20230512094635"
+n_outwards = 20
+n_inwards = 671
+ori = 1.0f0
+
+segment_id = "20230512105719"
+n_outwards = 40
+n_inwards = 586
+ori = 1.0f0
+
+segment_id = "20230512111225"
+n_outwards = 49
+n_inwards = 540
+ori = 1.0f0
+
+segment_id = "20230512112647"
+n_outwards = 5579
+n_inwards = 358
+ori = -1.0f0
+
+segment_id = "20230512120728"
+n_outwards = 447
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230512123446"
+n_outwards = 370
+n_inwards = 32188
+ori = 1.0f0
+
+segment_id = "20230512123540"
+n_outwards = 2393
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230512170431"
+n_outwards = 0
+n_inwards = 981
+ori = 1.0f0
+
+segment_id = "20230513092954"
+n_outwards = 4
+n_inwards = 330
+ori = 1.0f0
+
+segment_id = "20230513095916"
+n_outwards = 28
+n_inwards = 1397
+ori = 1.0f0
+
+segment_id = "20230513164153"
+n_outwards = 12
+n_inwards = 3333
+ori = 1.0f0
+
+segment_id = "20230514173038"
+n_outwards = 0
+n_inwards = 205
+ori = 1.0f0
+
+segment_id = "20230514182829"
+n_outwards = 0
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230515162442"
+n_outwards = 42
+n_inwards = 7123
+ori = 1.0f0
+
+segment_id = "20230516112444"
+n_outwards = 2480
+n_inwards = 15
+ori = -1.0f0
+
+segment_id = "20230516114341"
+n_outwards = 10
+n_inwards = 3372
+ori = 1.0f0
+
+segment_id = "20230516115453"
+n_outwards = 33910
+n_inwards = 118
+ori = -1.0f0
+
+segment_id = "20230517021606"
+n_outwards = 435
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230517024455"
+n_outwards = 332
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230517025833"
+n_outwards = 811
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230517180019"
+n_outwards = 1429
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230517204451"
+n_outwards = 1271
+n_inwards = 3
+ori = -1.0f0
+
+segment_id = "20230517205601"
+n_outwards = 94
+n_inwards = 14859
+ori = 1.0f0
+
+segment_id = "20230518012543"
+n_outwards = 3
+n_inwards = 3516
+ori = 1.0f0
+
+segment_id = "20230518075340"
+n_outwards = 0
+n_inwards = 1327
+ori = 1.0f0
+
+segment_id = "20230518104908"
+n_outwards = 657
+n_inwards = 136
+ori = -1.0f0
+
+segment_id = "20230518130337"
+n_outwards = 146
+n_inwards = 21015
+ori = 1.0f0
+
+segment_id = "20230518135715"
+n_outwards = 0
+n_inwards = 374
+ori = 1.0f0
+
+segment_id = "20230518181521"
+n_outwards = 6900
+n_inwards = 1
+ori = -1.0f0
+
+segment_id = "20230518191548"
+n_outwards = 4914
+n_inwards = 22
+ori = -1.0f0
+
+segment_id = "20230518223227"
+n_outwards = 0
+n_inwards = 4988
+ori = 1.0f0
+
+segment_id = "20230519031042"
+n_outwards = 4
+n_inwards = 6885
+ori = 1.0f0
+
+segment_id = "20230519140147"
+n_outwards = 7
+n_inwards = 3609
+ori = 1.0f0
+
+segment_id = "20230519195952"
+n_outwards = 1
+n_inwards = 12028
+ori = 1.0f0
+
+segment_id = "20230519202000"
+n_outwards = 22
+n_inwards = 2106
+ori = 1.0f0
+
+segment_id = "20230519212155"
+n_outwards = 693
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230519213404"
+n_outwards = 2
+n_inwards = 1300
+ori = 1.0f0
+
+segment_id = "20230519215753"
+n_outwards = 17705
+n_inwards = 196
+ori = -1.0f0
+
+segment_id = "20230520132429"
+n_outwards = 26
+n_inwards = 3244
+ori = 1.0f0
+
+segment_id = "20230520175435"
+n_outwards = 284
+n_inwards = 42584
+ori = 1.0f0
+
+segment_id = "20230520191415"
+n_outwards = 21
+n_inwards = 2271
+ori = 1.0f0
+
+segment_id = "20230520192625"
+n_outwards = 3
+n_inwards = 938
+ori = 1.0f0
+
+segment_id = "20230521093501"
+n_outwards = 4400
+n_inwards = 26
+ori = -1.0f0
+
+segment_id = "20230521104548"
+n_outwards = 3033
+n_inwards = 12
+ori = -1.0f0
+
+segment_id = "20230521113334"
+n_outwards = 0
+n_inwards = 20045
+ori = 1.0f0
+
+segment_id = "20230521114306"
+n_outwards = 12255
+n_inwards = 96
+ori = -1.0f0
+
+segment_id = "20230521155616"
+n_outwards = 5
+n_inwards = 8626
+ori = 1.0f0
+
+segment_id = "20230521182226"
+n_outwards = 7221
+n_inwards = 19
+ori = -1.0f0
+
+segment_id = "20230521193032"
+n_outwards = 5685
+n_inwards = 15
+ori = -1.0f0
+
+segment_id = "20230522055405"
+n_outwards = 1
+n_inwards = 2303
+ori = 1.0f0
+
+segment_id = "20230522151031"
+n_outwards = 1596
+n_inwards = 10
+ori = -1.0f0
+
+segment_id = "20230522152820"
+n_outwards = 2
+n_inwards = 20291
+ori = 1.0f0
+
+segment_id = "20230522181603"
+n_outwards = 1129
+n_inwards = 157179
+ori = 1.0f0
+
+segment_id = "20230522210033"
+n_outwards = 4554
+n_inwards = 1
+ori = -1.0f0
+
+segment_id = "20230522215721"
+n_outwards = 48480
+n_inwards = 525
+ori = -1.0f0
+
+segment_id = "20230523002821"
+n_outwards = 25887
+n_inwards = 28
+ori = -1.0f0
+
+segment_id = "20230523020515"
+n_outwards = 0
+n_inwards = 640
+ori = 1.0f0
+
+segment_id = "20230523034033"
+n_outwards = 0
+n_inwards = 1113
+ori = 1.0f0
+
+segment_id = "20230523043449"
+n_outwards = 22
+n_inwards = 11004
+ori = 1.0f0
+
+segment_id = "20230523182629"
+n_outwards = 81
+n_inwards = 6122
+ori = 1.0f0
+
+segment_id = "20230523191325"
+n_outwards = 0
+n_inwards = 10550
+ori = 1.0f0
+
+segment_id = "20230523233708"
+n_outwards = 6835
+n_inwards = 35
+ori = -1.0f0
+
+segment_id = "20230524004853"
+n_outwards = 152
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230524005636"
+n_outwards = 4234
+n_inwards = 2
+ori = -1.0f0
+
+segment_id = "20230524092434"
+n_outwards = 0
+n_inwards = 1657
+ori = 1.0f0
+
+segment_id = "20230524163814"
+n_outwards = 0
+n_inwards = 2708
+ori = 1.0f0
+
+segment_id = "20230524173051"
+n_outwards = 10645
+n_inwards = 31
+ori = -1.0f0
+
+segment_id = "20230524200918"
+n_outwards = 6092
+n_inwards = 32
+ori = -1.0f0
+
+segment_id = "20230525051821"
+n_outwards = 1
+n_inwards = 2164
+ori = 1.0f0
+
+segment_id = "20230525115626"
+n_outwards = 862
+n_inwards = 1
+ori = -1.0f0
+
+segment_id = "20230525121901"
+n_outwards = 8148
+n_inwards = 40
+ori = -1.0f0
+
+segment_id = "20230525190724"
+n_outwards = 0
+n_inwards = 8450
+ori = 1.0f0
+
+segment_id = "20230525194033"
+n_outwards = 3
+n_inwards = 2439
+ori = 1.0f0
+
+segment_id = "20230525200512"
+n_outwards = 31
+n_inwards = 8457
+ori = 1.0f0
+
+segment_id = "20230525212209"
+n_outwards = 56
+n_inwards = 10258
+ori = 1.0f0
+
+segment_id = "20230525234349"
+n_outwards = 3500
+n_inwards = 48
+ori = -1.0f0
+
+segment_id = "20230526002441"
+n_outwards = 7961
+n_inwards = 23
+ori = -1.0f0
+
+segment_id = "20230526015925"
+n_outwards = 10763
+n_inwards = 55
+ori = -1.0f0
+
+segment_id = "20230526154635"
+n_outwards = 89
+n_inwards = 30566
+ori = 1.0f0
+
+segment_id = "20230526164930"
+n_outwards = 4914
+n_inwards = 24
+ori = -1.0f0
+
+segment_id = "20230526175622"
+n_outwards = 9141
+n_inwards = 62
+ori = -1.0f0
+
+segment_id = "20230526183725"
+n_outwards = 27232
+n_inwards = 381
+ori = -1.0f0
+
+segment_id = "20230526205020"
+n_outwards = 7910
+n_inwards = 42
+ori = -1.0f0
+
+segment_id = "20230527020406"
+n_outwards = 829
+n_inwards = 38756
+ori = 1.0f0
+
+segment_id = "20230528112855"
+n_outwards = 15364
+n_inwards = 72
+ori = -1.0f0
+
+segment_id = "20230529203721"
+n_outwards = 12436
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230530025328"
+n_outwards = 15
+n_inwards = 13655
+ori = 1.0f0
+
+segment_id = "20230530164535"
+n_outwards = 184
+n_inwards = 22974
+ori = 1.0f0
+
+segment_id = "20230530172803"
+n_outwards = 27
+n_inwards = 37721
+ori = 1.0f0
+
+segment_id = "20230530212931"
+n_outwards = 250
+n_inwards = 25171
+ori = 1.0f0
+
+segment_id = "20230531101257"
+n_outwards = 209
+n_inwards = 25459
+ori = 1.0f0
+
+segment_id = "20230531121653"
+n_outwards = 0
+n_inwards = 15356
+ori = 1.0f0
+
+segment_id = "20230531193658"
+n_outwards = 42993
+n_inwards = 36
+ori = -1.0f0
+
+segment_id = "20230531211425"
+n_outwards = 34
+n_inwards = 45297
+ori = 1.0f0
+
+segment_id = "20230601192025"
+n_outwards = 277
+n_inwards = 67556
+ori = 1.0f0
+
+segment_id = "20230601193301"
+n_outwards = 457
+n_inwards = 54516
+ori = 1.0f0
+
+segment_id = "20230601201143"
+n_outwards = 1
+n_inwards = 25142
+ori = 1.0f0
+
+segment_id = "20230601204340"
+n_outwards = 47
+n_inwards = 27753
+ori = 1.0f0
+
+segment_id = "20230602092221"
+n_outwards = 6
+n_inwards = 5248
+ori = 1.0f0
+
+segment_id = "20230602213452"
+n_outwards = 28905
+n_inwards = 29
+ori = -1.0f0
+
+segment_id = "20230603153221"
+n_outwards = 17
+n_inwards = 23067
+ori = 1.0f0
+
+segment_id = "20230604111512"
+n_outwards = 10
+n_inwards = 17530
+ori = 1.0f0
+
+segment_id = "20230604112252"
+n_outwards = 3
+n_inwards = 15790
+ori = 1.0f0
+
+segment_id = "20230604161948"
+n_outwards = 0
+n_inwards = 15206
+ori = 1.0f0
+
+segment_id = "20230605065957"
+n_outwards = 1
+n_inwards = 28775
+ori = 1.0f0
+
+segment_id = "20230606105130"
+n_outwards = 0
+n_inwards = 20494
+ori = 1.0f0
+
+segment_id = "20230606222610"
+n_outwards = 0
+n_inwards = 27739
+ori = 1.0f0
+
+segment_id = "20230608150300"
+n_outwards = 9
+n_inwards = 20575
+ori = 1.0f0
+
+segment_id = "20230608200454"
+n_outwards = 139
+n_inwards = 24080
+ori = 1.0f0
+
+segment_id = "20230608222722"
+n_outwards = 13
+n_inwards = 15472
+ori = 1.0f0
+
+segment_id = "20230609123853"
+n_outwards = 11436
+n_inwards = 2
+ori = -1.0f0
+
+segment_id = "20230611014200"
+n_outwards = 0
+n_inwards = 23815
+ori = 1.0f0
+
+segment_id = "20230611145109"
+n_outwards = 0
+n_inwards = 26986
+ori = 1.0f0
+
+segment_id = "20230612195231"
+n_outwards = 0
+n_inwards = 22401
+ori = 1.0f0
+
+segment_id = "20230613144727"
+n_outwards = 17799
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230613204956"
+n_outwards = 735
+n_inwards = 75230
+ori = 1.0f0
+
+segment_id = "20230619113941"
+n_outwards = 103
+n_inwards = 27440
+ori = 1.0f0
+
+segment_id = "20230619163051"
+n_outwards = 23327
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230620230617"
+n_outwards = 61
+n_inwards = 53435
+ori = 1.0f0
+
+segment_id = "20230620230619"
+n_outwards = 170
+n_inwards = 53064
+ori = 1.0f0
+
+segment_id = "20230621111336"
+n_outwards = 0
+n_inwards = 7637
+ori = 1.0f0
+
+segment_id = "20230621122303"
+n_outwards = 0
+n_inwards = 17664
+ori = 1.0f0
+
+segment_id = "20230621182552"
+n_outwards = 28
+n_inwards = 24585
+ori = 1.0f0
+
+segment_id = "20230623123730"
+n_outwards = 13942
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230623160629"
+n_outwards = 19166
+n_inwards = 143
+ori = -1.0f0
+
+segment_id = "20230624144604"
+n_outwards = 27064
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230624160816"
+n_outwards = 24509
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230624190349"
+n_outwards = 17444
+n_inwards = 71
+ori = -1.0f0
+
+segment_id = "20230625171244"
+n_outwards = 53659
+n_inwards = 65
+ori = -1.0f0
+
+segment_id = "20230625194752"
+n_outwards = 29
+n_inwards = 15111
+ori = 1.0f0
+
+segment_id = "20230626140105"
+n_outwards = 26147
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230626151618"
+n_outwards = 12180
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230627122904"
+n_outwards = 40504
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230627170800"
+n_outwards = 19
+n_inwards = 37629
+ori = 1.0f0
+
+segment_id = "20230627202005"
+n_outwards = 41660
+n_inwards = 46
+ori = -1.0f0
+
+segment_id = "20230629215956"
+n_outwards = 80
+n_inwards = 50732
+ori = 1.0f0
+
+segment_id = "20230701020044"
+n_outwards = 299708
+n_inwards = 1024
+ori = -1.0f0
+
+segment_id = "20230701115953"
+n_outwards = 147
+n_inwards = 32165
+ori = 1.0f0
+
+segment_id = "20230702182347"
+n_outwards = 130
+n_inwards = 24748
+ori = 1.0f0
+
+Skipping segment 20230702185753, don't have it locally.
+
+segment_id = "20230705142414"
+n_outwards = 15570
+n_inwards = 52
+ori = -1.0f0
+
+segment_id = "20230706165709"
+n_outwards = 18631
+n_inwards = 26
+ori = -1.0f0
+
+segment_id = "20230707113838"
+n_outwards = 16368
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230709211458"
+n_outwards = 22927
+n_inwards = 7
+ori = -1.0f0
+
+segment_id = "20230711201157"
+n_outwards = 34243
+n_inwards = 84
+ori = -1.0f0
+
+segment_id = "20230711210222"
+n_outwards = 6
+n_inwards = 5111
+ori = 1.0f0
+
+segment_id = "20230711222033"
+n_outwards = 21
+n_inwards = 7575
+ori = 1.0f0
+
+segment_id = "20230712124010"
+n_outwards = 25
+n_inwards = 10731
+ori = 1.0f0
+
+segment_id = "20230712210014"
+n_outwards = 0
+n_inwards = 6331
+ori = 1.0f0
+
+segment_id = "20230713152725"
+n_outwards = 54
+n_inwards = 41336
+ori = 1.0f0
+
+segment_id = "20230717092556"
+n_outwards = 17489
+n_inwards = 2
+ori = -1.0f0
+
+segment_id = "20230719103041"
+n_outwards = 11111
+n_inwards = 16
+ori = -1.0f0
+
+segment_id = "20230719214603"
+n_outwards = 9905
+n_inwards = 6
+ori = -1.0f0
+
+segment_id = "20230720215300"
+n_outwards = 2400
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230721122533"
+n_outwards = 4284
+n_inwards = 54
+ori = -1.0f0
+
+segment_id = "20230721143008"
+n_outwards = 16659
+n_inwards = 5
+ori = -1.0f0
+
+segment_id = "20230801193640"
+n_outwards = 4
+n_inwards = 12045
+ori = 1.0f0
+
+segment_id = "20230806094533"
+n_outwards = 0
+n_inwards = 9884
+ori = 1.0f0
+
+segment_id = "20230806132553"
+n_outwards = 10892
+n_inwards = 547
+ori = -1.0f0
+
+segment_id = "20230808163057"
+n_outwards = 13798
+n_inwards = 714
+ori = -1.0f0
+
+segment_id = "20230812170020"
+n_outwards = 20446
+n_inwards = 6
+ori = -1.0f0
+
+segment_id = "20230819093803"
+n_outwards = 0
+n_inwards = 19327
+ori = 1.0f0
+
+segment_id = "20230819210052"
+n_outwards = 12
+n_inwards = 21790
+ori = 1.0f0
+
+segment_id = "20230820091651"
+n_outwards = 18938
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230820174948"
+n_outwards = 33300
+n_inwards = 276
+ori = -1.0f0
+
+segment_id = "20230820203112"
+n_outwards = 95
+n_inwards = 53493
+ori = 1.0f0
+
+segment_id = "20230826135043"
+n_outwards = 28839
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230826170124"
+n_outwards = 0
+n_inwards = 45275
+ori = 1.0f0
+
+segment_id = "20230826211400"
+n_outwards = 744
+n_inwards = 53635
+ori = 1.0f0
+
+segment_id = "20230827161847"
+n_outwards = 37
+n_inwards = 105816
+ori = 1.0f0
+
+segment_id = "20230828154913"
+n_outwards = 40
+n_inwards = 23836
+ori = 1.0f0
+
+segment_id = "20230901184804"
+n_outwards = 57352
+n_inwards = 12
+ori = -1.0f0
+
+segment_id = "20230901234823"
+n_outwards = 72664
+n_inwards = 8
+ori = -1.0f0
+
+segment_id = "20230902141231"
+n_outwards = 2
+n_inwards = 39560
+ori = 1.0f0
+
+segment_id = "20230903193206"
+n_outwards = 18
+n_inwards = 91368
+ori = 1.0f0
+
+segment_id = "20230904020426"
+n_outwards = 0
+n_inwards = 76526
+ori = 1.0f0
+
+segment_id = "20230904135535"
+n_outwards = 12
+n_inwards = 54264
+ori = 1.0f0
+
+segment_id = "20230905134255"
+n_outwards = 4
+n_inwards = 70001
+ori = 1.0f0
+
+segment_id = "20230909121925"
+n_outwards = 19
+n_inwards = 68447
+ori = 1.0f0
+
+segment_id = "20230918021838"
+n_outwards = 0
+n_inwards = 5256
+ori = 1.0f0
+
+segment_id = "20230918022237"
+n_outwards = 0
+n_inwards = 5336
+ori = 1.0f0
+
+segment_id = "20230918023430"
+n_outwards = 0
+n_inwards = 5380
+ori = 1.0f0
+
+segment_id = "20230918024753"
+n_outwards = 0
+n_inwards = 5390
+ori = 1.0f0
+
+segment_id = "20230918140728"
+n_outwards = 0
+n_inwards = 5382
+ori = 1.0f0
+
+segment_id = "20230918143910"
+n_outwards = 0
+n_inwards = 5398
+ori = 1.0f0
+
+segment_id = "20230918145743"
+n_outwards = 0
+n_inwards = 5449
+ori = 1.0f0
+
+segment_id = "20230919113918"
+n_outwards = 54258
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230922174128"
+n_outwards = 103706
+n_inwards = 7
+ori = -1.0f0
+
+segment_id = "20230925002745"
+n_outwards = 133959
+n_inwards = 14
+ori = -1.0f0
+
+segment_id = "20230925090314"
+n_outwards = 0
+n_inwards = 131974
+ori = 1.0f0
+
+segment_id = "20230926164631"
+n_outwards = 5
+n_inwards = 74347
+ori = 1.0f0
+
+segment_id = "20230926164853"
+n_outwards = 69669
+n_inwards = 0
+ori = -1.0f0
+
+segment_id = "20230929220924"
+n_outwards = 295
+n_inwards = 320438
+ori = 1.0f0
+
+segment_id = "20231001164029"
+n_outwards = 92
+n_inwards = 109744
+ori = 1.0f0
+
+segment_id = "20231004222109"
+n_outwards = 14
+n_inwards = 84380
+ori = 1.0f0
+
+segment_id = "20231005123333"
+n_outwards = 429624
+n_inwards = 194
+ori = -1.0f0
+
+segment_id = "20231007101615"
+n_outwards = 394543
+n_inwards = 36
+ori = -1.0f0
+
+segment_id = "20231011111857"
+n_outwards = 442
+n_inwards = 79016
+ori = 1.0f0
+
+segment_id = "20231011144857"
+n_outwards = 76693
+n_inwards = 249
+ori = -1.0f0
+
+segment_id = "20231012085431"
+n_outwards = 1093
+n_inwards = 195021
+ori = 1.0f0
+
+Skipping segment 20231012173610, don't have it locally.
+
+segment_id = "20231012184420"
+n_outwards = 261
+n_inwards = 269788
+ori = 1.0f0
+
+segment_id = "20231016151000"
+n_outwards = 243678
+n_inwards = 223
+ori = -1.0f0
+
+Skipping segment 20231022170900, don't have it locally.
+
+Skipping segment 20231024093300, don't have it locally.

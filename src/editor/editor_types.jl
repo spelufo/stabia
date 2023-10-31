@@ -43,9 +43,14 @@ Cell(scan::HerculaneumScan, j::Ints3) = begin
   L = p1[1] - p0[1]
   V = load_cell(scan, j...)
   N = nothing
-  if have_cell_normals_relaxed(scan, j...)
-    N4, _ = load_cell_normals_relaxed(scan, j...)
-    N = reinterpret(reshape, Vec3f, N4)
+  # if have_cell_normals_steger(scan, j...)
+  #   N4, rr = load_cell_normals_steger(scan, j...)
+  #   N = reinterpret(reshape, Vec3f, N4)
+  #   N .*= rr
+  # end
+  if have_cell_normals_fft(scan, j...)
+    N, r = load_cell_normals_fft(scan, j...)
+    N .*= r
   end
   holes = nothing
   # if have_cell_holes(scan, j...)

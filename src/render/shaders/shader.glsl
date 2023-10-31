@@ -86,8 +86,13 @@ float meas(vec3 p) {
   return max(0, pow((v - c)/(1.0 - c), g));
 }
 
+float cell_mm = 3.9550002;
+float steger_offset = cell_mm*17.5/500.0;
+
 vec3 measure_normal(vec3 p) {
-  return texture(CellN, ((p-cellp0)/(cellp1 - cellp0)).yxz).rgb;
+  vec3 p0 = cellp0 + steger_offset;
+  vec3 p1 = cellp1 + steger_offset;
+  return texture(CellN, ((p - p0)/(p1 - p0)).yxz).rgb;
 }
 
 vec3 meas_normal(vec3 p) {
@@ -101,19 +106,10 @@ vec3 meas_normal(vec3 p) {
 }
 
 void main() {
-  if (style == 1) {
+  if (style == 0) {
     vis(meas(P));
 
-  } else if (style == 2) {
-    vec3 N = measure_normal(P);
-    float a = meas(P);
-    if (a < 0.05) {
-      vis(a);
-    } else {
-      vis(0.5*vec3(a) + vec3(a) * N);
-    }
-
-  } else if (style == 3) {
+  } else if (style == 1) {
     vec3 A = vec3(0);
     vec3 N = -normalize(Ray);
     float value = 0;
@@ -126,6 +122,15 @@ void main() {
     value += meas(P - (offset + 2*nmerge_step)*N);
     A.b = value/3;
     vis(A);
+
+  } else if (style == 2) {
+    vec3 N = measure_normal(P);
+    vis(300*vec3(abs(N)));
+
+  } else if (style == 3) {
+    vec3 N = measure_normal(P);
+    float a = meas(P);
+    vis(0.3 + a*1000*abs(N));
 
   } else {
     vis(vec3(1,0,1));

@@ -139,7 +139,9 @@ list_server_segments(scan::HerculaneumScan; hari=false) = begin
   buffer = IOBuffer()
   download_file_to_out(dir, buffer)
   dirstr = String(take!(buffer))
-  extract_server_dir_links(dirstr)
+  filter(extract_server_dir_links(dirstr)) do segment_id
+    !isnothing(match(r"^\d+$", segment_id))
+  end
 end
 
 """
@@ -149,9 +151,9 @@ List all the new (not found locally) segments from the server.
 """
 get_new_server_segments(scan::HerculaneumScan) = begin
   new_segments = []
-  for segment_id = list_server_segments(scan, hari=true)
-    if !have_segment(scan, segment_id) push!(new_segments, segment_id) end
-  end
+  # for segment_id = list_server_segments(scan, hari=true)
+  #   if !have_segment(scan, segment_id) push!(new_segments, segment_id) end
+  # end
   for segment_id = list_server_segments(scan, hari=false)
     if !have_segment(scan, segment_id) push!(new_segments, segment_id) end
   end
@@ -164,9 +166,9 @@ end
 Download all segments obj files.
 """
 download_segment_objs(scan::HerculaneumScan) = begin
-  for segment_id = list_server_segments(scan, hari=true)
-    download_segment_obj(scan, segment_id; hari=true, quiet=false)
-  end
+  # for segment_id = list_server_segments(scan, hari=true)
+  #   download_segment_obj(scan, segment_id; hari=true, quiet=false)
+  # end
   for segment_id = list_server_segments(scan, hari=false)
     download_segment_obj(scan, segment_id; hari=false, quiet=false)
   end
