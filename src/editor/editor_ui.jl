@@ -45,12 +45,12 @@ do_axis_planes(ed::Editor, shader::Shader) = begin
 end
 
 # TODO: Currently unused.
-update_cursor_camera!(ed::Editor) = begin
-  f = ydir(ed.cursor)
-  ed.view_cross.camera.p = ed.cursor.p + 2f0*f
-  ed.view_cross.camera.n = -f
-  nothing
-end
+# update_cursor_camera!(ed::Editor) = begin
+#   f = ydir(ed.cursor)
+#   ed.view_cross.camera.p = ed.cursor.p + 2f0*f
+#   ed.view_cross.camera.n = -f
+#   nothing
+# end
 
 
 
@@ -99,7 +99,7 @@ do_controls(ed::Editor) = begin
   CImGui.Text("Cursor y: $(cf[1]), $(cf[2]), $(cf[3])")
 
   CImGui.Separator()
-  do_perps_controls(ed.perps)
+  do_perps_controls(ed, ed.perps)
 
   CImGui.Separator()
   CImGui.Text("Axis Planes")

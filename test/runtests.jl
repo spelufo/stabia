@@ -64,3 +64,26 @@ end
 #   0.577   0.577    0.577    -1.732;
 #   0.0     0.0      0.0       1.0]
 
+
+@testset "Curve normal to planes" begin
+  p0 = Vec3f(0.5f0, 0f0, 0f0)
+  n0 = Ey
+  n1 = Ey
+  π1 = Ey
+  γ, p1 = curve_normal_to_planes(p0, n0, π1, n1)
+  # @show γ
+  @test p1 ≈ Vec3f(0.5f0, 1f0, 0f0)
+end
+
+@testset "Perps walk" begin
+  p0 = Vec3f(0.5f0, 0f0, 0f0)
+  perps = Perp[
+    Perp(p0, 0f0),
+    Perp(Ey, 0f0),
+  ]
+  walk = perps_walk(perps, p0, 1f0)
+  @test walk[1].p ≈ p0
+  @test walk[1].θ ≈ 0f0
+  @test walk[2].p ≈ Vec3f(0.5f0, 1f0, 0f0)
+  @test walk[2].θ ≈ 0f0
+end

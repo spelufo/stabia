@@ -15,6 +15,10 @@ mutable struct Perps
   add_start :: Union{Vec3f, Nothing}
   add_mesh :: Union{GLMesh, Nothing}
   active :: Int
+  walk :: Matrix{Float32}
+  animating :: Bool
+  animation_speed :: Float32  # "t/s"
+  t :: Float32
 end
 
 Perps() =
@@ -24,6 +28,10 @@ Perps() =
     nothing,
     nothing,
     0,
+    zeros(Float32, 0, 3),
+    false,
+    0.2f0,
+    0f0,
   )
 
 
