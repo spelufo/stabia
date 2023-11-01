@@ -23,10 +23,11 @@ end
 do_view_3d(ed::Editor, view::Viewport) = begin
   BeginViewport(ed, view)
 
+  draw_perps(ed, view)
   do_perps_add(ed, view)
   do_axis_planes(ed, view.shader)
-  !isnothing(ed.sheet) && draw(ed.sheet, view.shader)
-  !isnothing(ed.cell.holes) && ed.draw_holes[] && do_holes(ed.cell, view.shader)
+  # !isnothing(ed.sheet) && draw(ed.sheet, view.shader)
+  # !isnothing(ed.cell.holes) && ed.draw_holes[] && do_holes(ed.cell, view.shader)
 
   EndViewport(ed, view)
 end
@@ -37,9 +38,10 @@ end
 do_view_top(ed::Editor, view::Viewport) = begin
   BeginViewport(ed, view)
 
+  draw_perps(ed, view)
   do_perps_add(ed, view)
   do_axis_planes(ed, view.shader)
-  !isnothing(ed.sheet) && draw(ed.sheet, view.shader)
+  # !isnothing(ed.sheet) && draw(ed.sheet, view.shader)
 
   EndViewport(ed, view)
 end
@@ -49,19 +51,7 @@ end
 
 do_view_cross(ed::Editor, view::Viewport) = begin
   BeginViewport(ed, view)
-
-  if !ed.perps.animating
-    do_active_perp_view(ed.perps, view)
-  else
-    # TODO: Clean this up.
-    perp = perps_walk_eval_perp(ed.perps.walk, ed.perps.t)
-    mesh = GLMesh(perp, ed.cell.p, ed.cell.p .+ ed.cell.L)
-    n = perp_n(perp)
-    view.camera.p = perp.p + 2f0*n
-    view.camera.n = -n
-    draw(mesh, view.shader)
-  end
-
+  draw_perps_cross_view(ed, view)
   EndViewport(ed, view)
 end
 

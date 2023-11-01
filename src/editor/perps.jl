@@ -57,32 +57,101 @@ perps_walk_eval_perp(walk::Matrix{Float32}, t::Float32) = begin
   Perp(p, angle(Ey, n))
 end
 
+perps_walk_length(perps::Perps) =
+  size(perps.walk, 1)/3f0
 
 ################################################################################
 
-draw_perps(ed::Editor, perps::Perps, view::Viewport) = begin
-  if !perps.animating
+
+draw_perps(ed::Editor, view::Viewport) = begin
+  perps = ed.perps
+  if perps.state != :editing
+    if !isnothing(perps.focus_mesh)
+      draw(perps.focus_mesh, view.shader)
+    end
+  else
     for mesh = perps.meshes
       draw(mesh, view.shader)
     end
+  end
+end
+
+
+draw_perps_cross_view(ed::Editor, view::Viewport) = begin
+  perps = ed.perps
+  if perps.state != :editing && !isnothing(perps.focus)
+    perp = perps.focus
+    n = perp_n(perp)
+    view.camera.p = perp.p + 2f0*n
+    view.camera.n = -n
+    draw(perps.focus_mesh, view.shader)
+  end
+end
+
+update_perps(ed::Editor, perps::Perps) = begin
+  if perps.state != :editing
+    perps.t += perps.dt
+    if perps.t > perps_walk_length(perps)
+      perps.t = 0f0
+    elseif perps.t < 0f0
+      perps.t = perps_walk_length(perps)
+    end
+
+    perp = perps_walk_eval_perp(perps.walk, perps.t)
+    perps.focus = perp
+    perps.focus_mesh = GLMesh(perp, ed.cell.p, ed.cell.p .+ ed.cell.L)
+  end
+end
+
+do_perps_controls(ed::Editor, perps::Perps) = begin
+  CImGui.Text("Perps")
+  if perps.state != :editing
+    if CImGui.Button("Edit")  perps.state = :editing  end
   else
-    k = div(size(perps.walk, 1), 3)
-    if k > 0
-      if perps.t >= k
-        perps.t = 0f0
+    guides = perps.guides
+    if length(guides) < 2
+      CImGui.Text("Click on 3d view to add guide perps.")
+    else
+      if CImGui.Button("Done")
+        perps.state = :stable
+        perps.walk = perps_walk(guides, guides[1].p)
       end
-      perp = perps_walk_eval_perp(perps.walk, perps.t)
-      # TODO: Handle perp.p out of bounds, somehow.
-      mesh = GLMesh(perp, ed.cell.p, ed.cell.p .+ ed.cell.L)
-      draw(mesh, view.shader)
-      dt = 1f0/60f0
-      perps.t += perps.animation_speed*dt
+    end
+  end
+  if perps.state != :editing
+    tref = Ref(perps.t)
+    CImGui.SliderFloat("t", tref, 0.0f0, perps_walk_length(perps))
+    perps.t = tref[]
+
+    speed = Ref(60f0*perps.dt)
+    CImGui.SliderFloat("Speed", speed, -1f0, 1f0)
+    perps.dt = speed[]/60f0
+
+    if CImGui.Button("Stop")  perps.dt = 0f0  end
+    if CImGui.Button("Play")  perps.dt = 0.05f0/60f0  end
+    if CImGui.Button("Back")  perps.dt = -0.05f0/60f0  end
+  else
+    for i = 1:length(perps.guides)
+      if CImGui.Button("^##$i") && i > 1
+        perps.guides[i-1], perps.guides[i] = perps.guides[i], perps.guides[i-1]
+        perps.meshes[i-1], perps.meshes[i] = perps.meshes[i], perps.meshes[i-1]
+      end
+      CImGui.SameLine(); if CImGui.Button("v##$i") && i < length(perps.guides)
+        perps.guides[i+1], perps.guides[i] = perps.guides[i], perps.guides[i+1]
+        perps.meshes[i+1], perps.meshes[i] = perps.meshes[i], perps.meshes[i+1]
+      end
+      CImGui.SameLine(); if CImGui.Button("×##$i")
+        deleteat!(perps.guides, i)
+        deleteat!(perps.meshes, i)
+      end
+      CImGui.SameLine(); CImGui.Text("$i")
     end
   end
 end
 
 do_perps_add(ed::Editor, view::Viewport) = begin
   perps = ed.perps
+  perps.state == :editing || return nothing
   mpos = CImGui.GetMousePos() - view.pos
   if CImGui.IsWindowHovered()
     # Start adding on click down.
@@ -103,9 +172,8 @@ do_perps_add(ed::Editor, view::Viewport) = begin
         perps.add_mesh = GLMesh(perp, ed.cell.p, ed.cell.p .+ ed.cell.L)
         if CImGui.IsMouseReleased(0)
           # TODO: check it is the same view the click started. Small bug.
-          push!(perps.perps, perp)
+          push!(perps.guides, perp)
           push!(perps.meshes, perps.add_mesh)
-          perps.active = length(perps.perps)
           perps.add_start = nothing
           perps.add_mesh = nothing
         end
@@ -117,73 +185,12 @@ do_perps_add(ed::Editor, view::Viewport) = begin
     draw(perps.add_mesh, view.shader)
   end
   if CImGui.IsKeyPressed(GLFW_KEY_DELETE)
-    perps.perps = []
+    perps.guides = []
     perps.meshes = []
   end
   if CImGui.IsKeyPressed(GLFW_KEY_ESCAPE)
     perps.add_start = nothing
     perps.add_mesh = nothing
   end
-
-  draw_perps(ed, perps, view)
 end
 
-do_active_perp_view(perps::Perps, view::Viewport) = begin
-  if 1 <= perps.active <= length(perps.perps)
-    perp = perps.perps[perps.active]
-    perp_mesh = perps.meshes[perps.active]
-    n = perp_n(perp)
-    view.camera.p = perp.p + 2f0*n
-    view.camera.n = -n
-    set_viewport!(view.camera, view.size.x, view.size.y)
-    draw(perp_mesh, view.shader)
-  end
-end
-
-do_perps_controls(ed::Editor, perps::Perps) = begin
-  CImGui.Text("Perps")
-
-  # Animate
-  animspeed = Ref(ed.perps.animation_speed)
-  CImGui.SliderFloat("Animation Speed", animspeed, 0.1f0, 2f0)
-  ed.perps.animation_speed = animspeed[]
-  if CImGui.Button("Animate")
-    if length(perps.perps) >= 2
-      p0 = perps.perps[1].p
-      perps.animating = !perps.animating
-      perps.walk = perps_walk(perps.perps, p0)
-    else
-      perps.animating = false
-      perps.walk = zeros(Float32, 0, 3)
-    end
-    # @show perps.walk
-    # println("Perps:")
-    # for perp = perps.perps
-    #   println(perp.p, " ", perp.θ, " π: ", normalize(Vec4f(perp_n(perp)..., dot(perp_n(perp), perp.p))))
-    # end
-    # println("Perps walk:")
-    # for perp = perps.walk
-    #   println(perp.p, " ", perp.θ, " π: ", normalize(Vec4f(perp_n(perp)..., dot(perp_n(perp), perp.p))))
-    # end
-  end
-
-  # List
-  for i = 1:length(perps.perps)
-    if CImGui.Button("o##$i")
-      perps.active = i
-    end
-    CImGui.SameLine(); if CImGui.Button("^##$i") && i > 1
-      perps.perps[i-1], perps.perps[i] = perps.perps[i], perps.perps[i-1]
-      perps.meshes[i-1], perps.meshes[i] = perps.meshes[i], perps.meshes[i-1]
-    end
-    CImGui.SameLine(); if CImGui.Button("v##$i") && i < length(perps.perps)
-      perps.perps[i+1], perps.perps[i] = perps.perps[i], perps.perps[i+1]
-      perps.meshes[i+1], perps.meshes[i] = perps.meshes[i], perps.meshes[i+1]
-    end
-    CImGui.SameLine(); if CImGui.Button("×##$i")
-      deleteat!(perps.perps, i)
-      deleteat!(perps.meshes, i)
-    end
-    CImGui.SameLine(); CImGui.Text("$i")
-  end
-end

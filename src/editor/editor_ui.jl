@@ -4,6 +4,8 @@ do_frame(ed::Editor) = begin
   do_frame_reload_shaders(ed)
   do_frame_handle_keys(ed)
 
+  update_perps(ed, ed.perps)
+
   do_dockspace(ed)
   do_menu_bar(ed)
   do_info(ed)
@@ -88,12 +90,10 @@ end
 
 do_controls(ed::Editor) = begin
   CImGui.Begin("Controls")
-  cp = ed.cursor.p
-  cf = ydir(ed.cursor)
-
-  # if CImGui.Button("Transition")
 
   CImGui.Separator()
+  cp = ed.cursor.p
+  cf = ydir(ed.cursor)
   CImGui.Text("Cursor")
   CImGui.Text("Cursor p: $(cp[1]), $(cp[2]), $(cp[3])")
   CImGui.Text("Cursor y: $(cf[1]), $(cf[2]), $(cf[3])")

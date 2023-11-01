@@ -10,27 +10,29 @@ end
 
 
 mutable struct Perps
-  perps :: Vector{Perp}
+  state :: Symbol
+  guides :: Vector{Perp}
   meshes :: Vector{GLMesh}
   add_start :: Union{Vec3f, Nothing}
   add_mesh :: Union{GLMesh, Nothing}
-  active :: Int
   walk :: Matrix{Float32}
-  animating :: Bool
-  animation_speed :: Float32  # "t/s"
+  focus :: Union{Perp, Nothing}
+  focus_mesh :: Union{GLMesh, Nothing}
   t :: Float32
+  dt :: Float32
 end
 
 Perps() =
   Perps(
+    :editing,
     Perp[],
     GLMesh[],
     nothing,
     nothing,
-    0,
     zeros(Float32, 0, 3),
-    false,
-    0.2f0,
+    nothing,
+    nothing,
+    0f0,
     0f0,
   )
 
