@@ -46,17 +46,6 @@ do_axis_planes(ed::Editor, shader::Shader) = begin
   nothing
 end
 
-# TODO: Currently unused.
-# update_cursor_camera!(ed::Editor) = begin
-#   f = ydir(ed.cursor)
-#   ed.view_cross.camera.p = ed.cursor.p + 2f0*f
-#   ed.view_cross.camera.n = -f
-#   nothing
-# end
-
-
-
-
 do_dockspace(ed::Editor) =
   LibCImGui.igDockSpaceOverViewport(C_NULL, ImGuiDockNodeFlags_PassthruCentralNode, C_NULL)
 
@@ -92,53 +81,57 @@ do_controls(ed::Editor) = begin
   CImGui.Begin("Controls")
 
   CImGui.Separator()
-  cp = ed.cursor.p
-  cf = ydir(ed.cursor)
-  CImGui.Text("Cursor")
-  CImGui.Text("Cursor p: $(cp[1]), $(cp[2]), $(cp[3])")
-  CImGui.Text("Cursor y: $(cf[1]), $(cf[2]), $(cf[3])")
-
-  CImGui.Separator()
-  do_perps_controls(ed, ed.perps)
-
-  CImGui.Separator()
   CImGui.Text("Axis Planes")
   CImGui.Checkbox("XY", ed.draw_axis_xy)
   CImGui.Checkbox("YZ", ed.draw_axis_yz)
   CImGui.Checkbox("ZX", ed.draw_axis_zx)
 
   CImGui.Separator()
-  CImGui.Checkbox("Holes Meshes", ed.draw_holes)
+  cp = ed.cursor.p
+  cf = ydir(ed.cursor)
+  CImGui.Text("Cursor:")
+  CImGui.Text("Pos: $(cp[1]), $(cp[2]), $(cp[3])")
+  CImGui.Text("Ywd: $(cf[1]), $(cf[2]), $(cf[3])")
 
   CImGui.Separator()
+  do_perps_controls(ed, ed.perps)
+
+  # CImGui.Separator()
+  # CImGui.Checkbox("Holes Meshes", ed.draw_holes)
+
+  # CImGui.Separator()
+  # do_sheet_sim_controls(ed, ed.sheet_sim)
+
+  CImGui.End()
+end
+
+do_sheet_sim_controls(ed::Editor, sim::SheetSim) = begin
   CImGui.Text("Normals Equipotential")
   if CImGui.Button("Initialize")
     cell = ed.cell
     p = ed.cursor.p
-    ed.sheet, ed.sheet_update! = normal_equipotential_mesh_init(ed.scan, cell.j, cell.N, p)
+    sim.sheet, sim.sheet_update! = normal_equipotential_mesh_init(ed.scan, cell.j, cell.N, p)
   end
 
-  if !isnothing(ed.sheet_update!)
-    CImGui.SliderFloat("δ", ed.δ, ed.cell.L/500f0, ed.cell.L/10f0)
-    CImGui.SliderFloat("k_s", ed.k_s, 0.1f0, 10f0)
-    CImGui.SliderFloat("k_n", ed.k_n, 0.1f0, 10f0)
-    if ed.equipot_running 
-      ed.sheet_update!(ed.δ[], ed.k_s[], ed.k_n[], 1)
+  if !isnothing(sim.sheet_update!)
+    CImGui.SliderFloat("δ", sim.δ, ed.cell.L/500f0, ed.cell.L/10f0)
+    CImGui.SliderFloat("k_s", sim.k_s, 0.1f0, 10f0)
+    CImGui.SliderFloat("k_n", sim.k_n, 0.1f0, 10f0)
+    if sim.equipot_running 
+      sim.sheet_update!(sim.δ[], sim.k_s[], sim.k_n[], 1)
       if CImGui.Button("Stop")
-        ed.equipot_running = false
+        sim.equipot_running = false
       end
     else
       if CImGui.Button("Simulate")
-        ed.equipot_running = true
+        sim.equipot_running = true
       end
       if CImGui.Button("Step")
-        ed.sheet_update!(ed.δ[], ed.k_s[], ed.k_n[], 5)
+        sim.sheet_update!(sim.δ[], sim.k_s[], sim.k_n[], 5)
       end
     end
   end
-  CImGui.End()
 end
-
 
 
 # Key bindings #################################################################

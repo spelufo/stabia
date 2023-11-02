@@ -6,6 +6,9 @@ perp_n(perp::Perp) =
 perp_u(perp::Perp) =
   Vec3f(cos(perp.θ), sin(perp.θ), 0f0)
 
+perp_plane(perp::Perp) =
+  Plane(perp.p, perp_n(perp))
+
 GLMesh(perp::Perp, p0::Vec3f, p1::Vec3f) = begin
   @assert all(p0 .<= perp.p .<= p1) "out of bounds: expected $p0 <= $(perp.p) <= $p1"
   a = Plane(p0,  Ex)
@@ -60,7 +63,8 @@ end
 perps_walk_length(perps::Perps) =
   size(perps.walk, 1)/3f0
 
-################################################################################
+
+# UI ###########################################################################
 
 
 draw_perps(ed::Editor, view::Viewport) = begin
@@ -157,8 +161,8 @@ do_perps_add(ed::Editor, view::Viewport) = begin
     # Start adding on click down.
     if CImGui.IsMouseClicked(0) && !CImGui.IsMouseDragging()
       if isnothing(perps.add_start)
-        mr = mouse_ray(view, mpos)
-        hit, λ = raycast(mr, Plane(ed.cursor.p, Ez))
+        mray = mouse_ray(view, mpos)
+        hit, λ = raycast(mray, Plane(ed.cursor.p, Ez))
         if λ >= 0 && all(ed.cell.p .<= hit .<= ed.cell.p .+ ed.cell.L)
           perps.add_start = hit
         end

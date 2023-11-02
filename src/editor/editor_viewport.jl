@@ -26,7 +26,7 @@ do_view_3d(ed::Editor, view::Viewport) = begin
   draw_perps(ed, view)
   do_perps_add(ed, view)
   do_axis_planes(ed, view.shader)
-  # !isnothing(ed.sheet) && draw(ed.sheet, view.shader)
+  # !isnothing(ed.sim.sheet) && draw(ed.sim.sheet, view.shader)
   # !isnothing(ed.cell.holes) && ed.draw_holes[] && do_holes(ed.cell, view.shader)
 
   EndViewport(ed, view)
@@ -52,6 +52,14 @@ end
 do_view_cross(ed::Editor, view::Viewport) = begin
   BeginViewport(ed, view)
   draw_perps_cross_view(ed, view)
+  if ed.perps.state == :stable
+    ed.brush.state = :editing
+  else
+    ed.brush.state = :stable
+  end
+  do_brush(ed, view, ed.brush)
+  draw_brush_traces(ed, view)
+
   EndViewport(ed, view)
 end
 

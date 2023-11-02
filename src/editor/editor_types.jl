@@ -37,6 +37,37 @@ Perps() =
   )
 
 
+mutable struct Brush
+  state :: Symbol
+  trace :: Union{Vector{Vec3f}, Nothing}
+  traces :: Vector{Vector{Vec3f}}
+end
+
+Brush() =
+  Brush(:stable, nothing, Vector{Vec3f}[])
+
+
+mutable struct SheetSim
+  sheet
+  sheet_update! :: Union{Function, Nothing}
+  δ :: Ref{Float32}
+  k_s :: Ref{Float32}
+  k_n :: Ref{Float32}
+  equipot_running :: Bool
+end
+
+SheetSim() =
+  SheetSim(
+    # sheet sim
+    nothing, # sheet
+    nothing, # sheet_update!
+    Ref(cell_mm(scroll_1_54)/500f0), # δ
+    Ref(1f0), # k_s
+    Ref(1f0), # k_n
+    false,
+  )
+
+
 mutable struct Cell
   j :: Ints3
   p :: Vec3f   # Position, the point with minimum coordinates.
@@ -118,14 +149,8 @@ mutable struct Editor
   draw_holes :: Ref{Bool}
 
   perps :: Perps
-
-  # sheet sim
-  sheet
-  sheet_update! :: Union{Function, Nothing}
-  δ :: Ref{Float32}
-  k_s :: Ref{Float32}
-  k_n :: Ref{Float32}
-  equipot_running :: Bool
+  brush :: Brush
+  sheet_sim :: SheetSim
 end
 
 Editor(doc::Document) = begin
@@ -142,16 +167,9 @@ Editor(doc::Document) = begin
     Ref(true), Ref(false), Ref(false), # draw_axis_*
     Ref(false), # draw_holes
     Perps(),
-    # sheet sim
-    nothing, # sheet
-    nothing, # sheet_update!
-    Ref(cell.L/500f0), # δ
-    Ref(1f0), # k_s
-    Ref(1f0), # k_n
-    false,
+    Brush(),
+    SheetSim(),
   )
   reset_views!(ed)
   ed
 end
-
-

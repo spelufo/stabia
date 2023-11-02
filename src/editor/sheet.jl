@@ -1,4 +1,45 @@
 
+
+
+
+# struct Probe
+#   f :: Vec3f
+#   b :: Vec3f
+#   v :: Vec3f
+# end
+
+
+
+# probe_step(V::Array{Float32,3}, probe::Probe, δv::Float32) = begin
+#   d = normalize(f - b)
+#   fmax = f + δ*v + 0.7f0*δ*d
+#   bmin = b + δ*v - 0.7f0*δ*d
+#   # extract strip of pixels between fmax and bmin
+#   # find rising and falling edges
+#   # under certain conditions (1rising 1falling), extend
+# end
+
+
+
+
+################################################################################
+
+# const SHEET_MAX_NEIGHS = 8
+
+# mutable struct Sheet
+#   points :: Vector{Vec3f}
+#   coords :: Vector{Vec2f}
+#   neighs :: Vector{Int32}  # length(neighs) == SHEET_MAX_NEIGHS * length(points)
+#   boundary :: Vector{Int32}
+# end
+
+
+
+
+
+
+################################################################################
+
 mutable struct GridSheet
   points :: Matrix{Vec3f}
   coords :: Matrix{Vec2f}
@@ -42,14 +83,6 @@ end
   ix + 1 < size(s.points, 2) && push!(neighs, (iy, ix+1))
   neighs
 end
-
-# const MAX_NEIGHS = 6
-# mutable struct Sheet
-#   points :: Vector{Vec3f}
-#   coords :: Vector{Vec2f}
-#   neighs :: Vector{Int32}
-# end
-
 
 
 draw(gs::GridSheet, shader::Shader) = begin
