@@ -132,6 +132,9 @@ void main() {
     float a = meas(P);
     vis(0.3 + a*1000*abs(N));
 
+  } else if (style == 9) {
+    vis(vec3(0,1,0));
+
   } else {
     vis(vec3(1,0,1));
 

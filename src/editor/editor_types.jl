@@ -73,6 +73,7 @@ mutable struct Cell
   p :: Vec3f   # Position, the point with minimum coordinates.
   L :: Float32 # Length of the side of the cell in mm.
   V :: Array{N0f16,3}
+  W
   N :: Union{Array{Vec3f,3}, Nothing}
   holes :: Union{Vector{GLMesh}, Nothing}
   texture :: UInt32
@@ -83,6 +84,7 @@ Cell(scan::HerculaneumScan, j::Ints3) = begin
   p0, p1 = cell_range_mm(scan, j...)
   L = p1[1] - p0[1]
   V = load_cell(scan, j...)
+  W = extrapolate(interpolate(V, BSpline(Linear())), 0f0)
   N = nothing
   # if have_cell_normals_steger(scan, j...)
   #   N4, rr = load_cell_normals_steger(scan, j...)
@@ -97,7 +99,7 @@ Cell(scan::HerculaneumScan, j::Ints3) = begin
   # if have_cell_holes(scan, j...)
   #   holes = [GLMesh(m; scale=L/500f0) for m in load_cell_holes(scan, j...)]
   # end
-  Cell(j, p0, L, V, N, holes, UInt32(0), UInt32(0))
+  Cell(j, p0, L, V, W, N, holes, UInt32(0), UInt32(0))
 end
 
 

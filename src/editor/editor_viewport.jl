@@ -58,7 +58,7 @@ do_view_cross(ed::Editor, view::Viewport) = begin
     ed.brush.state = :stable
   end
   do_brush(ed, view, ed.brush)
-  draw_brush_traces(ed, view)
+  draw_brush_traces(ed, view, ed.brush)
 
   EndViewport(ed, view)
 end

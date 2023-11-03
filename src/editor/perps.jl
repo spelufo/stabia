@@ -9,7 +9,20 @@ perp_u(perp::Perp) =
 perp_plane(perp::Perp) =
   Plane(perp.p, perp_n(perp))
 
-GLMesh(perp::Perp, p0::Vec3f, p1::Vec3f) = begin
+perp_slice(cell::Cell, perp::Perp, p0::Vec3f, wl::Int, wr::Int) = begin
+  S = zeros(Gray{Float32}, 500, wr + wl + 1)
+  p0_px = 500f0 * (p0 - cell.p) / cell.L
+  p0_px = Vec3f(p0_px[1], p0_px[2], 0f0)
+  udir = perp_u(perp)
+  vdir = Ez
+  for u = 1:size(S, 2), v = 1:size(S, 1)
+    p = p0_px + (u - wl)*udir + (501 - v)*vdir
+    S[v, u] = cell.W(p...)
+  end
+  S
+end
+
+perp_box_bounds(perp::Perp, p0::Vec3f, p1::Vec3f) = begin
   @assert all(p0 .<= perp.p .<= p1) "out of bounds: expected $p0 <= $(perp.p) <= $p1"
   a = Plane(p0,  Ex)
   b = Plane(p0,  Ey)
@@ -18,7 +31,7 @@ GLMesh(perp::Perp, p0::Vec3f, p1::Vec3f) = begin
   r = Ray(perp.p,  perp_u(perp))
   pos_hit, pos_λ, neg_hit, neg_λ = raycast(r, Plane[a, b, c, d])
 
-  GLQuadMesh(
+  (
     Vec3f(pos_hit[1], pos_hit[2], p0[3]),
     Vec3f(pos_hit[1], pos_hit[2], p1[3]),
     Vec3f(neg_hit[1], neg_hit[2], p1[3]),
@@ -26,9 +39,8 @@ GLMesh(perp::Perp, p0::Vec3f, p1::Vec3f) = begin
   )
 end
 
-# interpolate(λ::Float32, perp1::Perp, perp2::Perp) =
-#   Perp(λ*perp1.p + (1f0-λ)*perp2.p, λ*perp1.θ + (1f0-λ)*perp2.θ)
-
+GLMesh(perp::Perp, p0::Vec3f, p1::Vec3f) =
+  GLQuadMesh(perp_box_bounds(perp, p0, p1)...)
 
 perps_walk(perps::Vector{Perp}, p0::Vec3f) = begin
   k = length(perps)
