@@ -9,19 +9,6 @@ perp_u(perp::Perp) =
 perp_plane(perp::Perp) =
   Plane(perp.p, perp_n(perp))
 
-perp_slice(cell::Cell, perp::Perp, p0::Vec3f, wl::Int, wr::Int) = begin
-  S = zeros(Gray{Float32}, 500, wr + wl + 1)
-  p0_px = 500f0 * (p0 - cell.p) / cell.L
-  p0_px = Vec3f(p0_px[1], p0_px[2], 0f0)
-  udir = perp_u(perp)
-  vdir = Ez
-  for u = 1:size(S, 2), v = 1:size(S, 1)
-    p = p0_px + (u - wl)*udir + (501 - v)*vdir
-    S[v, u] = cell.W(p...)
-  end
-  S
-end
-
 perp_box_bounds(perp::Perp, p0::Vec3f, p1::Vec3f) = begin
   @assert all(p0 .<= perp.p .<= p1) "out of bounds: expected $p0 <= $(perp.p) <= $p1"
   a = Plane(p0,  Ex)

@@ -34,6 +34,7 @@ end
 
 
 estimate_layer(layer_jz::Int) = begin
+  println("\nLayer $layer_jz:")
   _, have, total, lack = layer_coverage(layer_jz)
   space_req_gb = round(Int, lack * 244216 / 1024 / 1024)
   time_est = (space_req_gb / 0.030) / 60

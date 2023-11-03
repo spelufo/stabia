@@ -1,5 +1,11 @@
-center(cell::Cell) =
+@inline center(cell::Cell) =
   cell.p + cell.L * E1 / 2f0
+
+@inline world_to_cell_px(cell::Cell, p::Vec3f) =
+  CELL_SIZE * (p - cell.p) / cell.L
+
+@inline cell_px_to_world(cell::Cell, p::Vec3f) =
+  cell.p + cell.L * p / CELL_SIZE
 
 do_holes(cell::Cell, shader::Shader) = begin
   for hole = cell.holes

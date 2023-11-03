@@ -33,6 +33,13 @@ do_brush(ed::Editor, view::Viewport, brush::Brush) = begin
     push!(brush.traces, brush.trace)
     brush.trace = nothing
   end
+
+  if CImGui.IsKeyPressed(GLFW_KEY_SPACE)
+    append!(brush.traces, [
+      extend_trace_with_flow(ed.cell, ed.perps, trace, ed.perps.t)
+      for trace = brush.traces ])
+    ed.perps.t += ed.perps.slices_dt
+  end
 end
 
 
