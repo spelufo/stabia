@@ -62,6 +62,15 @@ do_menu_bar(ed::Editor) = begin
     CImGui.MenuItem("Edit")
     CImGui.EndMenu()
   end
+  if CImGui.BeginMenu("Cell")
+    if CImGui.MenuItem("Load Perps")
+      ed.perps = load_stabia_cell_perps(the_doc.scan, ed.cell.j...)
+    end
+    if CImGui.MenuItem("Save Perps")
+      save_stabia_cell_perps(the_doc.scan, ed.cell.j..., ed.perps)
+    end
+    CImGui.EndMenu()
+  end
   if CImGui.BeginMenu("Help")
     CImGui.MenuItem("Help")
     CImGui.EndMenu()

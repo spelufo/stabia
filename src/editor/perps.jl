@@ -10,12 +10,21 @@ perp_plane(perp::Perp) =
   Plane(perp.p, perp_n(perp))
 
 perp_box_bounds(perp::Perp, p0::Vec3f, p1::Vec3f) = begin
-  @assert all(p0 .<= perp.p .<= p1) "out of bounds: expected $p0 <= $(perp.p) <= $p1"
   a = Plane(p0,  Ex)
   b = Plane(p0,  Ey)
   c = Plane(p1, -Ex)
   d = Plane(p1, -Ey)
   r = Ray(perp.p,  perp_u(perp))
+  if !all(p0 .<= perp.p .<= p1)
+    pos_hit, pos_λ, neg_hit, neg_λ = raycast(r, Plane[a, b, c, d])
+    if isfinite(pos_λ)
+      r = Ray(pos_hit + 0.001*r.v, r.v)
+    elseif isfinite(neg_λ)
+      r = Ray(pos_neg - 0.001*r.v, r.v)
+    else
+      @assert false "perp doesn't intersect with p0-p1 box"
+    end
+  end
   pos_hit, pos_λ, neg_hit, neg_λ = raycast(r, Plane[a, b, c, d])
 
   (
@@ -118,6 +127,14 @@ do_perps_controls(ed::Editor, perps::Perps) = begin
       if CImGui.Button("Done")
         perps.state = :stable
         perps.walk = perps_walk(guides, guides[1].p)
+        if size(perps.slices, 3) == 0
+          println("Building perps slices, this will take a minute...")
+          @time build_perp_slices!(ed.cell, perps)
+        end
+        if size(perps.flow, 3) == 0
+          println("Building perps flow, this will take a minute...")
+          @time build_perp_flow!(ed.cell, perps)
+        end
       end
     end
   end
