@@ -1,5 +1,7 @@
-@inline cell_px_to_perp_px(cell::Cell, perp::Perp, p::Vec3f) =
-  Vec2f(dot(p - world_to_cell_px(cell, perp.p), perp_u(perp)), dot(p - perp.p, Ez))
+@inline cell_px_to_perp_px(cell::Cell, perp::Perp, p::Vec3f) = begin
+  perp_p_px = world_to_cell_px(cell, perp.p)
+  Vec2f(dot(p - perp_p_px, perp_u(perp)), dot(p - perp_p_px, Ez))
+end
 
 @inline perp_px_to_cell_px(cell::Cell, perp::Perp, p::Vec2f) =
   world_to_cell_px(cell, perp.p) + p[1]*perp_u(perp) + p[2]*Ez
@@ -50,15 +52,15 @@ end
 
 
 build_perp_flow!(cell::Cell, perps::Perps) = begin
-  perps.flow = zeros(SVector{2, Float64}, size(perps.slices))
+  perps.flow = zeros(Vec2f, size(perps.slices))
   for i = 1:size(perps.slices, 3)-1
     S0 = @view perps.slices[:,:,i]
     S1 = @view perps.slices[:,:,i+1]
     # TODO: Tune Farneback params.
-    perps.flow[:,:,i] .= optical_flow(
+    perps.flow[:,:,i] .= Vec2f.(optical_flow(
       S0, S1,
       Farneback( 3, estimation_window = 7, σ_estimation_window = 4.0,
-                    expansion_window  = 6, σ_expansion_window  = 5.0 ))
+                    expansion_window  = 6, σ_expansion_window  = 5.0 )))
   end
   nothing
 end
@@ -76,7 +78,9 @@ extend_trace_with_flow(cell::Cell, perps::Perps, trace::Vector{Vec3f}, t::Float3
   for (i, p) = enumerate(trace)
     p_perp_px = world_to_perp_px(cell, perp, p)
     iy, ix = perp_px_to_perp_slice(perp, p_perp_px)
-    p_perp_px += perps.flow[iy, ix, iz]
+    if all(1 .<= (iy, ix, iz) .<= size(perps.flow))
+      p_perp_px += perps.flow[iy, ix, iz]
+    end
     p_next = perp_px_to_world(cell, perp_next, p_perp_px)
     trace_next[i] = p_next  # TODO: return a new trace instead?
   end

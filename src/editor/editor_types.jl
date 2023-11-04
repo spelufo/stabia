@@ -22,7 +22,7 @@ mutable struct Perps
   dt :: Float32
   slices_dt :: Float32
   slices :: Array{Gray{Float32}, 3}
-  flow :: Array{SVector{2, Float64}, 3}
+  flow :: Array{Vec2f, 3}
 end
 
 Perps() =
@@ -39,7 +39,7 @@ Perps() =
     0f0,
     0.02f0,
     zeros(Gray{Float32}, 0, 0, 0),
-    zeros(SVector{2, Float64}, 0, 0, 0),
+    zeros(Vec2f, 0, 0, 0),
   )
 
 

@@ -29,7 +29,7 @@ do_brush(ed::Editor, view::Viewport, brush::Brush) = begin
   end
 
   # Mouse released, end trace.
-  if CImGui.IsMouseReleased(0)
+  if CImGui.IsMouseReleased(0) && !isnothing(brush.trace)
     push!(brush.traces, brush.trace)
     brush.trace = nothing
   end

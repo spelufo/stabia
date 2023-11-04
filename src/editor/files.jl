@@ -11,7 +11,7 @@ struct PerpsSaved
   walk :: Matrix{Float32}
   slices_dt :: Float32
   slices :: Array{Gray{Float32}, 3}
-  flow :: Array{SVector{2, Float64}, 3}
+  flow :: Array{Vec2f, 3}
 end
 
 JLD2.writeas(::Type{Perps}) = PerpsSaved
