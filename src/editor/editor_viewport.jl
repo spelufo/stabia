@@ -26,6 +26,7 @@ do_view_3d(ed::Editor, view::Viewport) = begin
   draw_perps(ed, view)
   do_perps_add(ed, view)
   do_axis_planes(ed, view.shader)
+  draw_brush_traces(ed, view, ed.brush)
   # !isnothing(ed.sim.sheet) && draw(ed.sim.sheet, view.shader)
   # !isnothing(ed.cell.holes) && ed.draw_holes[] && do_holes(ed.cell, view.shader)
 

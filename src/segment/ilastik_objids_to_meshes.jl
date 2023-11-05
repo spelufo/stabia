@@ -24,6 +24,11 @@ mesh_and_save_hole!(M::Array{UInt32, 3}, i::UInt32, pos::Point3f, filename::Stri
   else
     msh = MarchingCubes.makemesh(GeometryBasics, mc)
     msh.position .*= Float32(divs)
+    # TODO: There's a little delta that's missing and must be added here. When
+    # imported into blender the meshes don't reach the full cell bounds on the
+    # three "p1" faces. They need to be moved by 0.06 blender units (6 px here)
+    # to align fully. After that the mesh has equal padding of 0.06 from all
+    # faces of the cell.
     msh.position .+= pos
     save(filename, msh)
   end

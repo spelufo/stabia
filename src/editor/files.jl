@@ -21,7 +21,7 @@ Base.convert(::Type{PerpsSaved}, perps::Perps) =
 
 Base.convert(::Type{Perps}, ps::PerpsSaved) =
   Perps(
-    :editing,
+    :stable,
     ps.guides,
     GLMesh[],
     nothing,

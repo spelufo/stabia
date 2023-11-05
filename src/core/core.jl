@@ -1,4 +1,4 @@
-using GeometryBasics
+using GeometryBasics, Images, HDF5
 
 include("utils.jl")
 include("scan.jl")

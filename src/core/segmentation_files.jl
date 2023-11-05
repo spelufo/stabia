@@ -19,8 +19,10 @@ load_cell_probabilities(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begi
   P
 end
 
-
 # Holes
+
+cell_hole_ids_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  joinpath(cell_segmentation_dir(scan, jy, jx, jz), "$(cell_name(jy, jx, jz))_hole_ids.h5")
 
 cell_holes_dir(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
   joinpath(cell_segmentation_dir(scan, jy, jx, jz), "holes")

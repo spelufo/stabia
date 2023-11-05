@@ -59,8 +59,8 @@ build_perp_flow!(cell::Cell, perps::Perps) = begin
     # TODO: Tune Farneback params.
     perps.flow[:,:,i] .= Vec2f.(optical_flow(
       S0, S1,
-      Farneback( 3, estimation_window = 7, σ_estimation_window = 4.0,
-                    expansion_window  = 6, σ_expansion_window  = 5.0 )))
+      Farneback( 7, estimation_window = 27, σ_estimation_window = 14.0,
+                    expansion_window  = 26, σ_expansion_window  = 15.0 )))
   end
   nothing
 end
@@ -73,13 +73,14 @@ end
 extend_trace_with_flow(cell::Cell, perps::Perps, trace::Vector{Vec3f}, t::Float32) = begin
   perp = perps_walk_eval_perp(perps.walk, t)
   perp_next = perps_walk_eval_perp(perps.walk, t + perps.slices_dt)
+  f = cos(perp.θ - perp_next.θ)
   iz = floor(Int, t/perps.slices_dt) + 1
   trace_next = zeros(Vec3f, length(trace))
   for (i, p) = enumerate(trace)
     p_perp_px = world_to_perp_px(cell, perp, p)
     iy, ix = perp_px_to_perp_slice(perp, p_perp_px)
     if all(1 .<= (iy, ix, iz) .<= size(perps.flow))
-      p_perp_px += perps.flow[iy, ix, iz]
+      p_perp_px += f*perps.flow[iy, ix, iz]
     end
     p_next = perp_px_to_world(cell, perp_next, p_perp_px)
     trace_next[i] = p_next  # TODO: return a new trace instead?

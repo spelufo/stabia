@@ -191,6 +191,10 @@ cells_wrong_5752_run = [
   (9, 5, 9),
 ]
 
+cells = [
+  (11, 7, 22),
+]
+
 
 run_convert_to_h5() = begin
   for (jy, jx, jz) in cells
@@ -220,20 +224,18 @@ end
 
 
 
-include("../src/Stabia.jl")
-include("../src/segmentation/ilastik_objids_to_meshes.jl")
+include("../src/stabia.jl")
+include("../src/segment/ilastik.jl")
+include("../src/segment/ilastik_objids_to_meshes.jl")
 
 const CELLS_DIR = "../data/full-scrolls/Scroll1.volpkg/volume_grids/20230205180739"
 const SEGDATA_DIR = "../data/full-scrolls/Scroll1.volpkg/segmentation"
 # isdir(SEGDATA_DIR) || mkdir(SEGDATA_DIR)
 
-cell_filename(cell_jy::Int, cell_jx::Int, cell_jz::Int) =
-  "cell_yxz_$(zpad(cell_jy, 3))_$(zpad(cell_jx, 3))_$(zpad(cell_jz, 3))"
-
 
 top_pipeline(cell_jy::Int, cell_jx::Int, cell_jz::Int) = begin
   # 0. Setup.
-  cell_name = cell_filename(cell_jy, cell_jx, cell_jz)
+  cell_name = cell_name(cell_jy, cell_jx, cell_jz)
   cell_dir = "$SEGDATA_DIR/$cell_name"
   isdir(cell_dir) || mkdir(cell_dir)
   cell_h5_file = cell_h5_path(scroll_1_54, cell_jy, cell_jx, cell_jz)

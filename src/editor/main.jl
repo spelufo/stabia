@@ -86,7 +86,7 @@ main() = begin
 
   global the_doc
   if isnothing(the_doc)
-    the_doc = Document(scroll_1_54, [Cell(scroll_1_54, (7,7,14))])
+    the_doc = Document(scroll_1_54, [Cell(scroll_1_54, (11,7,22))])
   end
   reload!(the_doc)
   println("Document initialized.")

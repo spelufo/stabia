@@ -12,7 +12,7 @@ do_brush(ed::Editor, view::Viewport, brush::Brush) = begin
     mray = mouse_ray(view, mpos)
     hit, λ = raycast(mray, perp_plane(ed.perps.focus))
     # TODO: I would have expected needing -= here instead of +=. Why +=?
-    hit += trace_offset_from_plane*normalize(mray.v) # hack to avoid z-fighting
+    # hit += trace_offset_from_plane*normalize(mray.v) # hack to avoid z-fighting
 
     # Mouse just pressed down, start tracing.
     if CImGui.IsMouseClicked(0)
@@ -34,10 +34,8 @@ do_brush(ed::Editor, view::Viewport, brush::Brush) = begin
     brush.trace = nothing
   end
 
-  if CImGui.IsKeyPressed(GLFW_KEY_SPACE)
-    append!(brush.traces, [
-      extend_trace_with_flow(ed.cell, ed.perps, trace, ed.perps.t)
-      for trace = brush.traces ])
+  if CImGui.IsKeyPressed(GLFW_KEY_SPACE) && length(brush.traces) > 0
+    push!(brush.traces, extend_trace_with_flow(ed.cell, ed.perps, brush.traces[end], ed.perps.t))
     ed.perps.t += ed.perps.slices_dt
   end
 end
