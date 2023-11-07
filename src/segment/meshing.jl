@@ -1,7 +1,7 @@
 using LinearAlgebra, GeometryBasics, MarchingCubes, JLD2
 
 
-mesh_and_save_hole!(M::Array{UInt32, 3}, i::UInt32, pos::Point3f, filename::String) = begin
+mesh_and_save_id!(M::Array{UInt32, 3}, i::UInt32, pos::Point3f, filename::String) = begin
   divs = 8
   samples = Float32(divs^3)
   sx, sy, sz = div.(size(M), divs)
@@ -43,7 +43,7 @@ hole_ids_to_meshes(hole_ids_file::String, file_prefix::String, pos::Point3f) = b
   close(f)
   for id = 1:n
     println("Building mesh for hole $id / $n ... ")
-    mesh_and_save_hole!(M, UInt32(id), pos, "$(file_prefix)$(id).stl")
+    mesh_and_save_id!(M, UInt32(id), pos, "$(file_prefix)$(id).stl")
   end
 end
 
@@ -57,3 +57,17 @@ end
 # for i, (y, name) in enumerate(sorted(holes)):
 #   obj = bpy.data.collections["Holes"].objects[name]
 #   obj.name = f"hole_{i}_was_{name}"
+
+
+
+potential_to_meshes(hole_ids_file::String, file_prefix::String, pos::Point3f) = begin
+  # WIP
+  # f = h5open(hole_ids_file)
+  # M = f["exported_data"][1, :, :, :, 1]
+  # n = maximum(M)
+  # close(f)
+  # for id = 1:n
+  #   println("Building mesh for hole $id / $n ... ")
+  #   mesh_and_save_id!(M, UInt32(id), pos, "$(file_prefix)$(id).stl")
+  # end
+end

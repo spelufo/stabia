@@ -226,7 +226,6 @@ end
 
 include("../src/stabia.jl")
 include("../src/segment/ilastik.jl")
-include("../src/segment/ilastik_objids_to_meshes.jl")
 
 const CELLS_DIR = "../data/full-scrolls/Scroll1.volpkg/volume_grids/20230205180739"
 const SEGDATA_DIR = "../data/full-scrolls/Scroll1.volpkg/segmentation"

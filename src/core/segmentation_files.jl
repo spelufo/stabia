@@ -63,6 +63,20 @@ load_cell_labels(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
 end
 
 
+# Potential
+
+cell_potential_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  joinpath(cell_segmentation_dir(scan, jy, jx, jz), "$(cell_name(jy, jx, jz))_potential.jld2")
+
+have_cell_potential(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  isfile(cell_potential_path(scan, jy, jx, jz))
+
+load_cell_potential(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  load(cell_potential_path(scan, jy, jx, jz), "ϕ", "S")
+
+save_cell_potential(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int, ϕ, S) =
+  save(cell_potential_path(scan, jy, jx, jz), "ϕ", ϕ, "S", S)
+
 
 # Normals (FFT)
 

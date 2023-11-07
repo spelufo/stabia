@@ -1,91 +1,30 @@
 # TODO, issues:
 #
-# - The rasterization has problems, there are artifacts. It being a little off
-#   shouldn't hurt us but these big lines where there should be none are an issue.
-#   I think it should be the code but I guess it could be the meshes too.
-#
-# - Computing it SDF style for each pixel might be better. Can change the
-#   thickness and it won't leave holes. Also, the triangles are from MC which
-#   makes them small, so O(l^3) per triangle might not be so bad.
-#
-# - If constraining relaxation to the probabilities mask I got the impresion that
-#   one side of the sheets lies outside the section classified as sheet so its
-#   potential doesn't propagate. Use dilate on S, or P, or both, to get them to
-#   overlap. Dilate on S makes sense even without this issue, sounds desirable.
-#
 # - The outer boundary needs some special handling, otherwise it is a ϕ = 0 that
 #   leaks into the rest of the volume through relaxation. We would like to fill
 #   the cell with the nearest sheet potential instead. Maybe do a prepass around
 #   the boundary extending the non zero values from S to the border. We'll also
 #   need to run relaxation on the boundary, which I elided to simplify things.
-#
-# - Mesh the result with marching squares and see how it does in blender.
 
-
-
-rasterize_line!(V::AbstractArray{Float32, 2}, a::Vec2f, b::Vec2f, value::Float32) = begin
-  # Bresenham's... Let's hope chatgpt gets it right.
-  x0, y0 = Int(round(a[1])), Int(round(a[2]))
-  x1, y1 = Int(round(b[1])), Int(round(b[2]))
-  dx = abs(x1 - x0)
-  dy = -abs(y1 - y0)
-  sx = x0 < x1 ? 1 : -1
-  sy = y0 < y1 ? 1 : -1
-  err = dx + dy  # error value
-  while true
-    if x0 >= 1 && y0 >= 1 && x0 <= size(V, 2) && y0 <= size(V, 1)
-      V[y0, x0] = value
-    end
-    if x0 == x1 && y0 == y1
-      break
-    end
-    e2 = 2 * err
-    if e2 >= dy  # e_xy+e_x > 0
-      err += dy
-      x0 += sx
-    end
-    if e2 <= dx  # e_xy+e_y < 0
-      err += dx
-      y0 += sy
-    end
-  end
-  nothing
-end
 
 rasterize_triangle!(V::Array{Float32, 3}, v1, v2, v3, value) = begin
-  # TODO: The right thing would be to clip. But we should be in bounds for our
-  # current use case.
-  if !all(0f0 .<= v1 .<= size(V)) return end
-  if !all(0f0 .<= v2 .<= size(V)) return end
-  if !all(0f0 .<= v3 .<= size(V)) return end
-
-  # Bubble sort by z, so that v1[3] <= v2[3] <= v3[3].
-  if v3[3] < v2[3]  v2, v3 = v3, v2  end
-  if v2[3] < v1[3]  v1, v2 = v2, v1  end
-  if v3[3] < v2[3]  v2, v3 = v3, v2  end
-
-  a = b = Vec2f(v1[1], v1[2])
-  if v3[3] == v1[3]  # All three on the same Z.
-    @warn "rasterize_triangle! all z case (not implemented), skipping."
-    # rasterize_triangle!(@view V[:,:,iz], v1[1:2], v2[1:2], v3[1:2])
-    return
-  end
-  db = (Vec2f(v3[1], v3[2]) - b) / (v3[3] - v1[3])
-  if v1[3] < v2[3]
-    da = (Vec2f(v2[1], v2[2]) - a) / (v2[3] - v1[3])
-    for iz = round(Int, v1[3]):round(Int, v2[3])
-      rasterize_line!((@view V[:,:,iz]), a, b, value)
-      a += da
-      b += db
-    end
-  end
-  if v2[3] < v3[3]
-    a = Vec2f(v2[1], v2[2])
-    da = (Vec2f(v3[1], v3[2]) - a) / (v3[3] - v2[3])
-    for iz = round(Int, v2[3]):round(Int, v3[3])
-      rasterize_line!((@view V[:,:,iz]), a, b, value)
-      a += da
-      b += db
+  # TODO: Clipping. But we should be in bounds for our current use case.
+  if !all(1 .<= v1 .<= size(V).-1) return end
+  if !all(1 .<= v2 .<= size(V).-1) return end
+  if !all(1 .<= v3 .<= size(V).-1) return end
+  bbox_min = floor.(Int, min.(v1, v2, v3))
+  bbox_max = ceil.(Int, max.(v1, v2, v3))
+  e1 = v2 - v1;  e2 = v3 - v2;  e3 = v1 - v3
+  n = normalize(cross(e1, -e3))
+  @inbounds for iz = bbox_min[3]:bbox_max[3], ix = bbox_min[1]:bbox_max[1], iy = bbox_min[2]:bbox_max[2]
+    p = Vec3f(ix + 0.5f0, iy + 0.5f0, iz + 0.5f0)
+    w1 = v1 - p;  w2 = v2 - p;  w3 = v3 - p
+    if abs(dot(w1, n)) < 3f0  # Within thickness from triangle plane.
+      c1 = cross(e1, w1); c2 = cross(e2, w2); c3 = cross(e3, w3)
+      if dot(c1, c2) > 0f0 && dot(c2, c3) > 0f0
+        # All cross products in the same direction -> we're inside triangle.
+        V[iy, ix, iz] = value
+      end
     end
   end
   nothing
@@ -100,12 +39,13 @@ rasterize_mesh!(V::Array{Float32, 3}, mesh::GeometryBasics.Mesh, value::Float32,
   nothing
 end
 
-
 potential_from_filename(filename::String) = begin
   m = match(r"s(\d\d)\.([ab])\.stl", filename)
   sheet_number = parse(Float32, m.captures[1])
   a_or_b = m.captures[2]
-  2f0 * sheet_number + (if a_or_b == "a" 0 else 1 end) - 1f0
+  # For the a sides the potential is the sheet number. The b sides have the
+  # same potential as the next sheet, which they might be touching.
+  sheet_number + (if a_or_b == "b" 1 else 0 end)
 end
 
 
@@ -115,13 +55,15 @@ init_potential(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
     ϕ = potential_from_filename(filename)
     rasterize_mesh!(S, mesh, ϕ, jy, jx, jz)
   end
-  S
+  dilate(S)
 end
 
 relax_potential_step!(ϕ::Array{Float32, 3}, S::Array{Float32, 3}, P::Array{Float32, 3}) = begin
   Threads.@threads for iz = 2:CELL_SIZE-1
     @inbounds for ix = 2:CELL_SIZE-1, iy = 2:CELL_SIZE-1
-      if S[iy, ix, iz] > 0.0f0 # || P[iy, ix, iz] < 0.5f0
+      # We could also skip voxels with `P[iy, ix, iz] < 0.5f0`, but I think
+      # filling all the holes with potential should yield better results.
+      if S[iy, ix, iz] > 0.0f0 || P[iy, ix, iz] < 0.3f0
         continue
       end
       v = 0f0
@@ -137,12 +79,84 @@ relax_potential_step!(ϕ::Array{Float32, 3}, S::Array{Float32, 3}, P::Array{Floa
   end
 end
 
-relax_potential(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
+relax_potential_2d_step!(ϕ, S, P) = begin
+  Threads.@threads for ix = 2:CELL_SIZE-1
+    @inbounds for iy = 2:CELL_SIZE-1
+      if S[iy, ix] > 0.0f0 || P[iy, ix] < 0.3f0
+        continue
+      end
+      v = 0f0
+      v += ϕ[iy, ix]
+      v += ϕ[iy-1, ix]
+      v += ϕ[iy+1, ix]
+      v += ϕ[iy, ix-1]
+      v += ϕ[iy, ix+1]
+      ϕ[iy, ix] = v / 5f0
+    end
+  end
+end
+
+relax_potential_init(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
   P = load_cell_probabilities(scan, jy, jx, jz)
   S = init_potential(scan, jy, jx, jz)
   ϕ = copy(S)
-  for i = 1:2000 # 269.346500 seconds (165.78 k allocations: 14.488 MiB, 0.11% compilation time)
+  ϕ, S, P
+end
+
+relax_potential!(ϕ::Array{Float32, 3}, S::Array{Float32, 3}, P::Array{Float32, 3}, n_iters::Int = 5000) = begin
+  # When n_iters = 2000: 269.346500 seconds (165.78 k allocations: 14.488 MiB, 0.11% compilation time)
+  for i = 1:n_iters
     relax_potential_step!(ϕ, S, P)
   end
-  ϕ
+  nothing
+end
+
+relax_potential_2d_boundary!(ϕ::Array{Float32, 3}, S::Array{Float32, 3}, P::Array{Float32, 3}, n_iters::Int = 5000) = begin
+  ϕ_2d = @view ϕ[:,:,6]; S_2d = @view S[:,:,6] ; P_2d = @view P[:,:,6]
+  for i = 1:n_iters  relax_potential_2d_step!(ϕ_2d, S_2d, P_2d)  end
+  for iz = 1:6  S[:,:,iz] .= ϕ_2d  end
+
+  ϕ_2d = @view ϕ[:,:,493]; S_2d = @view S[:,:,493] ; P_2d = @view P[:,:,493]
+  for i = 1:n_iters  relax_potential_2d_step!(ϕ_2d, S_2d, P_2d)  end
+  for iz = 493:500  S[:,:,iz] .= ϕ_2d  end
+
+  ϕ_2d = @view ϕ[6,:,:]; S_2d = @view S[6,:,:] ; P_2d = @view P[6,:,:]
+  for i = 1:n_iters  relax_potential_2d_step!(ϕ_2d, S_2d, P_2d)  end
+  for iy = 1:6  S[iy,:,:] .= ϕ_2d  end
+
+  ϕ_2d = @view ϕ[493,:,:]; S_2d = @view S[493,:,:] ; P_2d = @view P[493,:,:]
+  for i = 1:n_iters  relax_potential_2d_step!(ϕ_2d, S_2d, P_2d)  end
+  for iy = 493:500  S[iy,:,:] .= ϕ_2d  end
+
+  ϕ_2d = @view ϕ[:,6,:]; S_2d = @view S[:,6,:] ; P_2d = @view P[:,6,:]
+  for i = 1:n_iters  relax_potential_2d_step!(ϕ_2d, S_2d, P_2d)  end
+  for ix = 1:6  S[:,ix,:] .= ϕ_2d  end
+
+  ϕ_2d = @view ϕ[:,493,:]; S_2d = @view S[:,493,:] ; P_2d = @view P[:,493,:]
+  for i = 1:n_iters  relax_potential_2d_step!(ϕ_2d, S_2d, P_2d)  end
+  for ix = 493:500  S[:,ix,:] .= ϕ_2d  end
+
+  nothing
+end
+
+build_relax_potential(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
+  ϕ, S, P = relax_potential_init(scan, jy, jx, jz)
+  relax_potential_2d_boundary!(ϕ, S, P)
+  relax_potential!(ϕ, S, P)
+  save_cell_potential(scan, jy, jx, jz, ϕ, S)
+  ϕ, S, P
+end
+
+
+vis_distinguishable_colors(ϕ::Array{Float32, 3}, colors = distinguishable_colors(40)) = begin
+  V = zeros(eltype(colors), size(ϕ))
+  map!(V, ϕ) do v
+    i = floor(Int, v)
+    if 1 <= i <= length(colors)
+      colors[i]
+    else
+      zero(eltype(colors))
+    end
+  end
+  V, colors
 end

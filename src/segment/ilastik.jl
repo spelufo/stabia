@@ -1,5 +1,5 @@
 include("../core/core.jl")
-include("ilastik_objids_to_meshes.jl")
+include("meshing.jl")
 
 ILASTIK_PROJECT_PC = "/mnt/phil/vesuvius/ilastik/PixelClassification_06_08_17.ilp"
 ILASTIK_PROJECT_OC = "/mnt/phil/vesuvius/ilastik/ObjectClassification_06_08_17.ilp"
