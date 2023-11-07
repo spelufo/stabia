@@ -19,6 +19,7 @@ load_cell_probabilities(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begi
   P
 end
 
+
 # Holes
 
 cell_hole_ids_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
@@ -32,7 +33,7 @@ have_cell_holes(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
 
 load_cell_holes(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
   holes = []
-  holes_dir = cell_holes_dir(scroll_1_54, 7, 7, 14)
+  holes_dir = cell_holes_dir(scroll_1_54, jy, jx, jz)
   for hole_filename = readdir(holes_dir)
     endswith(hole_filename, ".stl") || continue
     hole_path = joinpath(holes_dir, hole_filename)
@@ -40,6 +41,27 @@ load_cell_holes(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
   end
   holes
 end
+
+
+# Labels
+
+cell_labels_dir(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  joinpath(cell_segmentation_dir(scan, jy, jx, jz), "labels")
+
+have_cell_labels(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  isdir(cell_labels_dir(scan, jy, jx, jz))
+
+load_cell_labels(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
+  labels = []
+  labels_dir = cell_labels_dir(scan, jy, jx, jz)
+  for label_filename = readdir(cell_labels_dir(scan, jy, jx, jz))
+    endswith(label_filename, ".stl") || continue
+    label_path = joinpath(labels_dir, label_filename)
+    push!(labels, (label_filename, load(label_path)))
+  end
+  labels
+end
+
 
 
 # Normals (FFT)
