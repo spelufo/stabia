@@ -77,6 +77,9 @@ load_cell_potential(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
 save_cell_potential(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int, ϕ, S) =
   save(cell_potential_path(scan, jy, jx, jz), "ϕ", ϕ, "S", S)
 
+potential_sheet_dir(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  joinpath(cell_segmentation_dir(scan, jy, jx, jz), "sheets")
+
 
 # Normals (FFT)
 

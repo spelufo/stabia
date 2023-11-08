@@ -1,8 +1,8 @@
 using LinearAlgebra, GeometryBasics, MarchingCubes, JLD2
 
 
-mesh_and_save_id!(M::Array{UInt32, 3}, i::UInt32, pos::Point3f, filename::String) = begin
-  divs = 8
+mesh_and_save_id!(M::Array{UInt32, 3}, i::UInt32, pos::Point3f, filename::String; holes::Bool = false) = begin
+  divs = holes ? 8 : 4
   samples = Float32(divs^3)
   sx, sy, sz = div.(size(M), divs)
   vol = zeros(Float32, (sx, sy, sz))
@@ -12,7 +12,11 @@ mesh_and_save_id!(M::Array{UInt32, 3}, i::UInt32, pos::Point3f, filename::String
       inobj = M[divs*(ix-1)+kx, divs*(iy-1)+ky, divs*(iz-1)+kz] == i
       val += Float32(inobj) / samples
     end
-    vol[ix, iy, iz] = val - 0.5f0
+    if holes
+      vol[ix, iy, iz] = val - 0.5f0
+    else
+      vol[iy, ix, iz] = 0.5f0 - val
+    end
   end
   mc = MC(vol)
   # mc = MC(Float32(0.5) .- Float32.(M .== i))
@@ -24,13 +28,7 @@ mesh_and_save_id!(M::Array{UInt32, 3}, i::UInt32, pos::Point3f, filename::String
   else
     msh = MarchingCubes.makemesh(GeometryBasics, mc)
     msh.position .*= Float32(divs)
-    msh.position .+= pos
-    # TODO: There's a little delta that's missing and must be added here. When
-    # imported into blender the meshes don't reach the full cell bounds on the
-    # three "p1" faces. They need to be moved by 0.06 blender units (6 px here)
-    # to align fully. After that the mesh has equal padding of 0.06 from all
-    # faces of the cell. Why 6px? Not sure. 
-    msh.position .+= Vec3f(6f0)
+    msh.position .+= pos + Vec3f(divs - 2)
     save(filename, msh)
   end
   nothing
@@ -43,7 +41,7 @@ hole_ids_to_meshes(hole_ids_file::String, file_prefix::String, pos::Point3f) = b
   close(f)
   for id = 1:n
     println("Building mesh for hole $id / $n ... ")
-    mesh_and_save_id!(M, UInt32(id), pos, "$(file_prefix)$(id).stl")
+    mesh_and_save_id!(M, UInt32(id), pos, "$(file_prefix)$(id).stl"; holes = true)
   end
 end
 
@@ -59,15 +57,19 @@ end
 #   obj.name = f"hole_{i}_was_{name}"
 
 
-
-potential_to_meshes(hole_ids_file::String, file_prefix::String, pos::Point3f) = begin
-  # WIP
-  # f = h5open(hole_ids_file)
-  # M = f["exported_data"][1, :, :, :, 1]
-  # n = maximum(M)
-  # close(f)
-  # for id = 1:n
-  #   println("Building mesh for hole $id / $n ... ")
-  #   mesh_and_save_id!(M, UInt32(id), pos, "$(file_prefix)$(id).stl")
-  # end
+potential_to_meshes(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
+  sheet_dir = potential_sheet_dir(scan, jy, jx, jz)
+  if !isdir(sheet_dir)
+    mkdir(sheet_dir)
+    file_prefix = "$sheet_dir/$(cell_name(jy, jx, jz))_sheet_"
+    pos = Point3f(500f0 * (jx-1), 500f0 * (jy-1), 500f0 * (jz-1))
+    P = load_cell_probabilities(scan, jy, jx, jz)
+    ϕ, S = load_cell_potential(scan, jy, jx, jz)
+    M = floor.(UInt32, ϕ .* (P .> 0.5f0))
+    n = maximum(M)
+    for id = 1:n
+      println("Building mesh for sheet $id / $n ... ")
+      mesh_and_save_id!(M, UInt32(id), pos, "$(file_prefix)$(id).stl")
+    end
+  end
 end
