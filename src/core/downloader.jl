@@ -110,7 +110,7 @@ end
 Download the scan's small (low resolution) volume from the vesuvius data server.
 """
 download_small_volume(scan::HerculaneumScan) =
-  download_file(small_volume_path(scan))
+  download_file(small_volume_server_path(scan))
 
 
 """

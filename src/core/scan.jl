@@ -108,7 +108,7 @@ cell_containing(p) = begin
   (jy, jx, jz)
 end
 
-mesh_cells(mesh) = begin
+mesh_cells(scan::HerculaneumScan, mesh) = begin
   cells = Set()
   for p = mesh.position
     push!(cells, cell_containing(p))
@@ -116,13 +116,16 @@ mesh_cells(mesh) = begin
   cells
 end
 
+segment_cells(scan::HerculaneumScan, segment_id) =
+  mesh_cells(load_segment_mesh(scan, segment_id))
+
 print_blender_add_cells_code(cells) = begin
   println("cells = [")
   for (jy, jx, jz) = cells  println("  ($(jx-1), $(jy-1), $(jz-1)),") end
   println("]")
   println("from vesuvius import vesuvius")
   println("from importlib import reload; reload(vesuvius)")
-  println("vesuvius.add_cells(cells)")
+  println("vesuvius.add_grid_cells(cells)")
 end
 
 @inline cell_origin(jy::Int, jx::Int, jz::Int) =

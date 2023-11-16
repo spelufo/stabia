@@ -7,6 +7,8 @@ const fragment_2_54 = HerculaneumScan("fragments/Frag2.volpkg", "20230216174557"
 const fragment_2_88 = HerculaneumScan("fragments/Frag2.volpkg", "20230226143835", 3.24f0, 88f0, 10035, 2112, 14144)
 const fragment_3_54 = HerculaneumScan("fragments/Frag3.volpkg", "20230215142309", 3.24f0, 54f0, 6312, 1440, 6656)
 const fragment_3_88 = HerculaneumScan("fragments/Frag3.volpkg", "20230212182547", 3.24f0, 88f0, 6108, 1644, 6650)
+const pherc_0332_53 = HerculaneumScan("full-scrolls/PHerc0332.volpkg", "20231027191953", 3.24f0, 53f0, 9414, 9414, 22941)
+const pherc_1667_88 = HerculaneumScan("full-scrolls/PHerc1667.volpkg", "20231107190228", 3.24f0, 88f0, 8120, 7960, 26391)
 
 @inline from_blender(p::Vec3f) =
   cell_mm(scroll_1_54)*p/5f0

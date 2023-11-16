@@ -80,6 +80,19 @@ save_cell_potential(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int, ϕ, S) =
 potential_sheet_dir(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
   joinpath(cell_segmentation_dir(scan, jy, jx, jz), "sheets")
 
+# Normals (Heat diffusion)
+
+cell_normals_heat_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  joinpath(cell_segmentation_dir(scan, jy, jx, jz), "$(cell_name(jy, jx, jz))_normals_heat.jld2")
+
+have_cell_normals_heat(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  isfile(cell_normals_heat_path(scan, jy, jx, jz))
+
+load_cell_normals_heat(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  load(cell_normals_heat_path(scan, jy, jx, jz), "N")
+
+save_cell_normals_heat(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int, N) =
+  save(cell_normals_heat_path(scan, jy, jx, jz), "N", N)
 
 # Normals (FFT)
 
