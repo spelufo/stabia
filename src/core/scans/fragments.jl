@@ -1,0 +1,6 @@
+const fragment_1_54 = HerculaneumScan("fragments/Frag1.volpkg", "20230205142449", 3.24f0, 54f0, 7198, 1399, 7219)
+const fragment_1_88 = HerculaneumScan("fragments/Frag1.volpkg", "20230213100222", 3.24f0, 88f0, 7332, 1608, 7229)
+const fragment_2_54 = HerculaneumScan("fragments/Frag2.volpkg", "20230216174557", 3.24f0, 54f0, 9984, 2288, 14111)
+const fragment_2_88 = HerculaneumScan("fragments/Frag2.volpkg", "20230226143835", 3.24f0, 88f0, 10035, 2112, 14144)
+const fragment_3_54 = HerculaneumScan("fragments/Frag3.volpkg", "20230215142309", 3.24f0, 54f0, 6312, 1440, 6656)
+const fragment_3_88 = HerculaneumScan("fragments/Frag3.volpkg", "20230212182547", 3.24f0, 88f0, 6108, 1644, 6650)

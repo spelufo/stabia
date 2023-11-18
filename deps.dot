@@ -1,0 +1,27 @@
+digraph deps {
+  node [shape=rectangle];
+
+  slices_tif [color=green4]
+  segment_obj [color=green4]
+
+  # vesuvius_build
+  slices_tif -> cell_tif
+  slices_tif -> small_tif
+
+  # ilastik
+  cell_tif -> cell_h5
+  cell_h5 -> probabilities_h5
+  cell_h5 -> obj_ids_h5
+  probabilities_h5 -> holes_stl
+  obj_ids_h5 -> holes_stl
+
+  # blender
+  holes_stl -> layer_holes_blend
+  layer_holes_blend -> layer_patches_blend [color="orange", label="split_holes (slow)"]
+  layer_patches_blend -> segment_patches_blend [label="build_segment_patches.py"]
+  segment_obj -> segment_patches_blend
+
+  # patch potential labeling + potential diffusion segmentation method
+  holes_stl -> patch_potential_labels [color="red", label="manual"]
+  patch_potential_labels -> sheets_stl
+}

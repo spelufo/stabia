@@ -32,6 +32,9 @@ scan_position_mm(scan::HerculaneumScan, iy::Real, ix::Real, iz::Real) =
 cell_position_mm(scan::HerculaneumScan, jy::Real, jx::Real, jz::Real) =
   cell_mm(scan) * Vec3f(jx-1, jy-1, jz-1)
 
+cell_position_px(scan::HerculaneumScan, jy::Real, jx::Real, jz::Real) =
+  500f0 * Vec3f(jx-1, jy-1, jz-1)
+
 cell_range_mm(scan::HerculaneumScan, jy::Real, jx::Real, jz::Real) =
   (cell_position_mm(scan, jy, jx, jz), cell_position_mm(scan, jy+1, jx+1, jz+1))
 
@@ -41,8 +44,12 @@ cell_center_mm(scan::HerculaneumScan, jy::Real, jx::Real, jz::Real) = begin
 end
 
 scroll_radius_dir(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
-  @assert scan == scroll_1_54 "Only scroll_1_54 supported for now."
-  o = scroll_1_54_core[jz]
+  core = nothing
+  if     scan == scroll_1_54    core = scroll_1_54_core_mm
+  elseif scan == pherc_1667_88  core = pherc_1667_88_core_mm
+  end
+  @assert !isnothing(core) "Scan doesn't have core data."
+  o = core[jz]
   p = cell_center_mm(scan, jy, jx, jz)
   @assert abs(p[3] - o[3]) < 0.1f0 "Expected core and cell points to be at the same z coordinate."
   normalize(p - o)
@@ -130,3 +137,9 @@ end
 
 @inline cell_origin(jy::Int, jx::Int, jz::Int) =
   Point3f(500f0 * (jx-1), 500f0 * (jy-1), 500f0 * (jz-1))
+
+@inline blender_to_mm(scan::HerculaneumScan, p::Vec3f) =
+  cell_mm(scan)*p/5f0
+
+@inline blender_to_px(scan::HerculaneumScan, p::Vec3f) =
+  CELL_SIZE*p/5f0

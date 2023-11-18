@@ -3,3 +3,5 @@ attic
 *.so
 *.jld2
 imgui.ini
+
+src/python

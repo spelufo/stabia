@@ -33,7 +33,7 @@ have_cell_holes(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
 
 load_cell_holes(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
   holes = []
-  holes_dir = cell_holes_dir(scroll_1_54, jy, jx, jz)
+  holes_dir = cell_holes_dir(scan, jy, jx, jz)
   for hole_filename = readdir(holes_dir)
     endswith(hole_filename, ".stl") || continue
     hole_path = joinpath(holes_dir, hole_filename)
@@ -42,8 +42,27 @@ load_cell_holes(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
   holes
 end
 
+# Patches
+
+layer_patches_dir(scan::HerculaneumScan) =
+  joinpath(DATA_DIR, scan.volpkg_path, "patches")
+
+layer_patches_path(scan::HerculaneumScan, jz::Int) =
+  joinpath(layer_patches_dir(scan), "patches_z$(zpad(jz,2)).stl")
+
+have_layer_patches(scan::HerculaneumScan, jz::Int) =
+  isfile(layer_patches_path(scan, jz))
+
+load_layer_patches(scan::HerculaneumScan, jz::Int) =
+  load(layer_patches_path(scan, jz))
 
 # Labels
+
+# TODO: Might deprecate or rename this, since the name collides with ink labels
+# and it is very time consuming to label the potential of the split hole sheet
+# faces (which I'm starting to call patches, a better name). I only did this
+# for cell (11, 7, 22). This plus the potential method is how I got the best
+# results so far, but it is too time consuming.
 
 cell_labels_dir(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
   joinpath(cell_segmentation_dir(scan, jy, jx, jz), "labels")

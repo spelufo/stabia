@@ -87,7 +87,7 @@ Download grid cell files from the vesuvius data server. (uses Threads.@threads)
 download_cells(scan::HerculaneumScan, cells; quiet=false) = begin
   Threads.@threads for (jy, jx, jz) = cells
     quiet || println("Downloading grid cell ($jy, $jx, $jz)")
-    download_cell(scroll_1_54, jy, jx, jz)
+    download_cell(scan, jy, jx, jz)
   end
 end
 
@@ -175,8 +175,8 @@ download_segment_objs(scan::HerculaneumScan) = begin
 end
 
 
-download_mesh_cells(segment_id) = begin
-  mesh = load_segment_mesh(scroll_1_54, segment_id)
+download_mesh_cells(scan, segment_id) = begin
+  mesh = load_segment_mesh(scan, segment_id)
   cells = mesh_cells_missing(mesh)
-  download_cells(scroll_1_54, cells)
+  download_cells(scan, cells)
 end

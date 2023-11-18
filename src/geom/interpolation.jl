@@ -15,6 +15,9 @@
   c
 end
 
+@inline interpolate_trilinear(V::Array{E, 3}, p::Point{3, F}) where {E, F} = begin
+  interpolate_trilinear(V, Vec{3, F}(p[1], p[2], p[3]))
+end
 
 """
 Find a cuadratic curve γ(t) = (ax*t^2 + bx*t + p0x, ..., az*t^2 + bz*t + p0z)
