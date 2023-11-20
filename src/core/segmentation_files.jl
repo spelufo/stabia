@@ -42,7 +42,27 @@ load_cell_holes(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
   holes
 end
 
-# Patches
+# Patches (delete backfaces method)
+
+cell_patches_dir(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  joinpath(cell_segmentation_dir(scan, jy, jx, jz), "patches")
+
+have_cell_patches(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  isdir(cell_patches_dir(scan, jy, jx, jz))
+
+load_cell_patches(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
+  patches = []
+  patches_dir = cell_patches_dir(scan, jy, jx, jz)
+  for patch_filename = readdir(patches_dir)
+    endswith(patch_filename, ".stl") || continue
+    patch_path = joinpath(patches_dir, patch_filename)
+    push!(patches, load(patch_path))
+  end
+  patches
+end
+
+
+# Patches (blender split holes method)
 
 layer_patches_dir(scan::HerculaneumScan) =
   joinpath(DATA_DIR, scan.volpkg_path, "patches")
