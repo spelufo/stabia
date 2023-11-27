@@ -15,6 +15,25 @@ const Ints1 = NTuple{1, Int}
 const Ints2 = NTuple{2, Int}
 const Ints3 = NTuple{3, Int}
 
+scroll_core(scan::HerculaneumScan) = begin
+  core = nothing
+  if     scan == scroll_1_54    core = scroll_1_54_core_mm
+  elseif scan == pherc_1667_88  core = pherc_1667_88_core_mm
+  end
+end
+
+scan_mask(scan::HerculaneumScan) = begin
+  mask = nothing
+  if     scan == scroll_1_54    mask = scroll_1_54_mask
+  elseif scan == pherc_1667_88  mask = pherc_1667_88_mask
+  elseif scan == pherc_0332_53  mask = pherc_0332_53_mask
+  end
+end
+
+layer_cells(scan::HerculaneumScan, jz::Int) =
+  map(Tuple, filter(c -> c[3] == jz, eachrow(scan_mask(scan))))
+
+
 # Measures
 
 @inline px_mm(scan::HerculaneumScan) =
@@ -44,10 +63,7 @@ cell_center_mm(scan::HerculaneumScan, jy::Real, jx::Real, jz::Real) = begin
 end
 
 scroll_radius_dir(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
-  core = nothing
-  if     scan == scroll_1_54    core = scroll_1_54_core_mm
-  elseif scan == pherc_1667_88  core = pherc_1667_88_core_mm
-  end
+  core = scroll_core(scan)
   @assert !isnothing(core) "Scan doesn't have core data."
   o = core[jz]
   p = cell_center_mm(scan, jy, jx, jz)
@@ -124,7 +140,7 @@ mesh_cells(scan::HerculaneumScan, mesh) = begin
 end
 
 segment_cells(scan::HerculaneumScan, segment_id) =
-  mesh_cells(load_segment_mesh(scan, segment_id))
+  mesh_cells(scan, load_segment_mesh(scan, segment_id))
 
 print_blender_add_cells_code(cells) = begin
   println("cells = [")

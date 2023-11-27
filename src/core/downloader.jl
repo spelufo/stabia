@@ -105,6 +105,25 @@ download_cells_range(scan::HerculaneumScan, jys, jxs, jzs; quiet=false) = begin
 end
 
 """
+  download_cells_layer(scan::HerculaneumScan, jz)
+
+Download a layer of grid cells from the vesuvius data server. Masked to cells with data.
+"""
+download_cells_layer(scan::HerculaneumScan, layer_jz::Int) = begin
+  # Either this is kind of buggy or pherc_1667's mask has some holes.
+  mask = scan_mask(scan)
+  Threads.@threads for thread_jy in 1:ceil(Int, scan.height / CELL_SIZE)
+    for r = 1:size(mask, 1)
+      jy, jx, jz = mask[r, :]
+      if jz == layer_jz && jy == thread_jy
+        download_cell(scan, jy, jx, jz)
+        println("downloaded $jy $jx $jz")
+      end
+    end
+  end
+end
+
+"""
   download_small_volume(scan::HerculaneumScan)
 
 Download the scan's small (low resolution) volume from the vesuvius data server.
@@ -180,3 +199,54 @@ download_mesh_cells(scan, segment_id) = begin
   cells = mesh_cells_missing(mesh)
   download_cells(scan, cells)
 end
+
+
+
+# Coverage #####################################################################
+
+layer_coverage(scan::HerculaneumScan, layer_jz::Int) = begin
+  mask = scan_mask(scan)
+  have = 0
+  total = 0
+  for r = 1:size(mask, 1)
+    jy, jx, jz = mask[r, :]
+    if jz == layer_jz
+      total += 1
+      if have_cell(scan, jy, jx, jz)
+        have += 1
+      end
+    end
+  end
+  frac = have/total
+  println("$have / $total  ($frac)")
+  frac, have, total, total - have
+end
+
+grid_coverage(scan::HerculaneumScan) = begin
+  mask = scan_mask(scan)
+  have = 0
+  total = size(mask, 1)
+  for r = 1:total
+    jy, jx, jz = mask[r, :]
+    if have_cell(scan, jy, jx, jz)
+      have += 1
+    end
+  end
+  frac = have/total
+  println("$have / $total  ($frac)")
+  frac, have, total, total - have
+end
+
+
+
+estimate_layer(scan::HerculaneumScan, layer_jz::Int) = begin
+  println("\nLayer $layer_jz:")
+  _, have, total, lack = layer_coverage(scan, layer_jz)
+  space_req_gb = round(Int, lack * 244220 / 1024 / 1024)
+  time_est = (space_req_gb / 0.030) / 60
+  println("space required: $space_req_gb G  ($time_est min @ 30M/s)")
+  space_req_gb
+end
+
+estimate_required_space_by_layer_gb(scan::HerculaneumScan) =
+  [estimate_layer(scan, jz) for jz in 1:ceil(Int, div(scan.slices, CELL_SIZE))]

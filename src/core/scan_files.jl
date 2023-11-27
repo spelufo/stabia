@@ -60,8 +60,14 @@ load_slice(scan::HerculaneumScan, iz::Int) =
 cell_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int)::String =
   joinpath(DATA_DIR, cell_server_path(scan, jy, jx, jz))
 
-have_cell(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
-  isfile(cell_path(scan, jy, jx, jz))
+have_cell(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
+  if isfile(cell_path(scan, jy, jx, jz))
+    return true
+  end
+  # Temporary hack. Storage issues... have the data split in two disks...
+  altpath = replace(cell_path(scan, jy, jx, jz), DATA_DIR => "/mnt/disk/Docs/pro/hercules/data")
+  isfile(altpath)
+end
 
 load_cell(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
   TiffImages.load(cell_path(scan, jy, jx, jz))
@@ -112,3 +118,17 @@ have_segment(scan::HerculaneumScan, segment_id::AbstractString) =
 
 load_segment_mesh(scan::HerculaneumScan, segment_id::AbstractString) =
   load(joinpath(segment_path(scan, segment_id), "$segment_id.obj"))
+
+
+# Build mask
+
+print_mask_code(scan::HerculaneumScan, mask_mesh_path::String) = begin
+  mesh = load(mask_mesh_path)
+  cells = sort(collect(mesh_cells(scan, mesh)); by= c -> (c[3], c[1], c[2]))
+  println("_mask = [")
+  for (jy, jx, jz) in cells
+    println("  $(spad(jy, 2)) $(spad(jx, 2)) $(spad(jz, 2)) ;")
+  end
+  println("]")
+  nothing
+end

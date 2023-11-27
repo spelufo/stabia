@@ -141,7 +141,7 @@ run_ilastik_mesh_holes(scan::HerculaneumScan, cells) = begin
     sleep(3)
     i += 1
     if i % 20 == 0
-      sleep(20)
+      sleep(120)
     end
   end
 end
