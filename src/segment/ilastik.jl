@@ -1,6 +1,6 @@
 # include("meshing.jl")
 
-ILASTIK_DIR = "/mnt/phil/vesuvius/ilastik"
+ILASTIK_DIR = joinpath(dirname(DATA_DIR), "ilastik")
 
 ILASTIK_PROJECTS_PC = Dict{String,String}(
   scroll_1_54.id   => joinpath(ILASTIK_DIR, "PixelClassification_06_08_17.ilp"),

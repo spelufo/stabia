@@ -1,16 +1,16 @@
-# stabia
+# Stabia
 
-Stabia is an editor for the [vesuvius challenge](https://scrollprize.org) scroll scans.
+This repo, together with [vesuvius-blender](https://github.com/spelufo/vesuvius-blender) has code related to the [vesuvius challenge](https://scrollprize.org).
 
+The workflow is usually to start a julia repl with `./dev.sh`, then
+`include("src/stabia.jl")` and go from there. Re-include to reload code.
 
-## Notes
+The `src/core` folder has the base utility library to manage the scan data.
 
-- The unit of the world coordinate system is the millimeter.
-- The scan occupies the octant with all positive dimensions (3d quadrant).
-- Use Vec3f for vectors and positions.
-- There are multiple layers of data with different lifetimes:
-  - Scan raw data: Lots of it, read parts of it from disk on demand.
-  - Scan derived data: Stuff like normals, expensive to compute, cached on disk.
-  - The scene data: User's data, e.g segmentation meshes. Persists across reloads.
-  - The editor state: Shares lifetime of the window. The most transient.
+The `src/editor` folder was an effort to build a custom editor, which I ended up
+leaving aside in favor of building functionality into vesuvius-blender. The entry
+point for this is `main.jl`, `start_stabia!`.
 
+The `src/segment` folder has a few different attempts and ideas for automatic
+segmentation. The function `run_ilastik_mesh_holes` in `ilastik.jl` is the
+entry point to the process that generates holes meshes from cells of scan data.
