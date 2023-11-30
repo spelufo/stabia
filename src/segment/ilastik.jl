@@ -1,5 +1,4 @@
-include("../core/core.jl")
-include("meshing.jl")
+# include("meshing.jl")
 
 ILASTIK_DIR = "/mnt/phil/vesuvius/ilastik"
 

@@ -2,7 +2,8 @@
 
 set -e
 
-export VESUVIUS_DATA_DIR="$(pwd)/../data"
+# export VESUVIUS_DATA_DIR="$(pwd)/../data"
+export VESUVIUS_DATA_DIR="/mnt/vesuvius/data"
 export VESUVIUS_SERVER_AUTH='registeredusers:only'
 export MODERNGL_DEBUGGING=true
 
