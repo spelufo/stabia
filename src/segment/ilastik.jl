@@ -1,7 +1,10 @@
 # include("meshing.jl")
 
-ILASTIK_DIR = joinpath(dirname(DATA_DIR), "ilastik")
-
+ILASTIK_DIR = ENV["VESUVIUS_ILASTIK_DIR"]
+ILASTIK_TRAIN_CELL = Dict{String,Ints3}(
+  scroll_1_54.id   => (6, 8, 17),
+  pherc_1667_88.id => (9, 11, 23),
+)
 ILASTIK_PROJECTS_PC = Dict{String,String}(
   scroll_1_54.id   => joinpath(ILASTIK_DIR, "PixelClassification_06_08_17.ilp"),
   pherc_1667_88.id => joinpath(ILASTIK_DIR, "PixelClassification_pherc_1667_09_11_23.ilp"),
@@ -120,6 +123,15 @@ end
 
 
 run_ilastik_mesh_holes(scan::HerculaneumScan, cells) = begin
+  # Ilastik fails if it doesn't find the files the project refers to: the cell's
+  # h5 for pixel classification and the probabilities for object classification.
+  # Even in batch mode the classifier isn't decoupled from the data used to
+  # train it. So we must make sure these exists where ilastik wants them.
+  j_train = ILASTIK_TRAIN_CELL[scan.id]
+  if !have_cell_h5(scan, j_train...) || !have_cell_probabilities(scan, j_train...)
+    run_ilastik_classification(scan, j_train...)
+  end
+
   n_total = length(cells)
   remaining_cells = filter(c -> !have_cell_holes(scan, c...), cells)
   n_remaining = length(remaining_cells)
@@ -131,11 +143,11 @@ run_ilastik_mesh_holes(scan::HerculaneumScan, cells) = begin
     run_ilastik_mesh_holes(scan, jy, jx, jz)
     println("Done running ilastik_mesh_holes on cell $((jy, jx, jz)).\n\n")
     GC.gc()
-    space = parse(Int, split(read(`df --output=avail /mnt/phil/`, String), "\n")[2])
-    if space < 10*1024*1024
-      println("Too little space left on drive, aborting.")
-      break
-    end
+    # space = parse(Int, split(read(`df --output=avail /mnt/vesuvius/`, String), "\n")[2])
+    # if space < 10*1024*1024
+    #   println("Too little space left on drive, aborting.")
+    #   break
+    # end
     println()
     sleep(3)
     i += 1
@@ -143,9 +155,23 @@ run_ilastik_mesh_holes(scan::HerculaneumScan, cells) = begin
       sleep(120)
     end
   end
+  nothing
 end
 
+run_ilastik_mesh_holes_layer(scan::HerculaneumScan, jz::Int) =
+  run_ilastik_mesh_holes(scan, layer_cells(scan, jz))
 
+run_ilastik_mesh_holes(scan::HerculaneumScan) = begin
+  for jz=1:grid_size(scan, 3)
+    run_ilastik_mesh_holes(scan, layer_cells(scan, jz))
+  end
+end
+
+run_ilastik_mesh_holes_threads(scan::HerculaneumScan) = begin
+  Threads.@threads for jz=1:grid_size(scan, 3)
+    run_ilastik_mesh_holes(scan, layer_cells(scan, jz))
+  end
+end
 
 # Chunk pherc_1667_88 small for ilastik.
 # build_pherc_1667_88_h5_chunks() = begin

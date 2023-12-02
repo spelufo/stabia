@@ -60,20 +60,17 @@ load_slice(scan::HerculaneumScan, iz::Int) =
 cell_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int)::String =
   joinpath(DATA_DIR, cell_server_path(scan, jy, jx, jz))
 
-have_cell(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
-  if isfile(cell_path(scan, jy, jx, jz))
-    return true
-  end
-  # Temporary hack. Storage issues... have the data split in two disks...
-  altpath = replace(cell_path(scan, jy, jx, jz), DATA_DIR => "/mnt/disk/Docs/pro/hercules/data")
-  isfile(altpath)
-end
+have_cell(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  isfile(cell_path(scan, jy, jx, jz))
 
 load_cell(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
   TiffImages.load(cell_path(scan, jy, jx, jz))
 
 cell_h5_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int)::String =
   joinpath(DATA_DIR, cell_h5_server_path(scan, jy, jx, jz))
+
+have_cell_h5(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  isfile(cell_h5_path(scan, jy, jx, jz))
 
 missing_cells(scan::HerculaneumScan, q_cells) = begin
   cells = []

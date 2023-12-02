@@ -12,6 +12,9 @@ cell_segmentation_dir(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
 cell_probabilities_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
   joinpath(cell_segmentation_dir(scan, jy, jx, jz), "$(cell_name(jy, jx, jz))_probabilities.h5")
 
+have_cell_probabilities(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
+  isfile(cell_probabilities_path(scan, jy, jx, jz))
+
 load_cell_probabilities(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
   fid = h5open(cell_probabilities_path(scan, jy, jx, jz))
   P = permutedims(read(fid, "exported_data")[1,:,:,:,1], (2, 1, 3))

@@ -1,7 +1,7 @@
 using Downloads, Base64, FileIO
 
 const DATA_URL = "http://dl.ash2txt.org"
-const DATA_AUTH = "registeredusers:only" # ENV["VESUVIUS_SERVER_AUTH"]
+const DATA_AUTH = ENV["VESUVIUS_SERVER_AUTH"]
 
 
 download_file_to_out(path::String, out) = begin
@@ -170,9 +170,6 @@ List all the new (not found locally) segments from the server.
 """
 get_new_server_segments(scan::HerculaneumScan) = begin
   new_segments = []
-  # for segment_id = list_server_segments(scan, hari=true)
-  #   if !have_segment(scan, segment_id) push!(new_segments, segment_id) end
-  # end
   for segment_id = list_server_segments(scan, hari=false)
     if !have_segment(scan, segment_id) push!(new_segments, segment_id) end
   end
@@ -185,9 +182,6 @@ end
 Download all segments obj files.
 """
 download_segment_objs(scan::HerculaneumScan) = begin
-  # for segment_id = list_server_segments(scan, hari=true)
-  #   download_segment_obj(scan, segment_id; hari=true, quiet=false)
-  # end
   for segment_id = list_server_segments(scan, hari=false)
     download_segment_obj(scan, segment_id; hari=false, quiet=false)
   end
