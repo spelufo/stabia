@@ -41,8 +41,10 @@ end
 
 cell_to_h5(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
   h5_path = cell_h5_path(scan, jy, jx, jz)
-  if !isdir(dirname(h5_path))
+  if !isdir(dirname(dirname(h5_path)))
     mkdir(dirname(dirname(h5_path)))
+  end
+  if !isdir(dirname(h5_path))
     mkdir(dirname(h5_path))
   end
   cell_to_h5(

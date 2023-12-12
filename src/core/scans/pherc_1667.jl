@@ -1,5 +1,7 @@
 const pherc_1667_88 = HerculaneumScan("full-scrolls/PHerc1667.volpkg", "20231107190228", 3.24f0, 88f0, 8120, 7960, 26391)
 
+const pherc_1667_88_791 = HerculaneumScan("full-scrolls/PHerc1667.volpkg", "20231117161658", 7.91f0, 53f0, 3440, 3340, 11174)
+
 pherc_1667_88_core_mm = [
   blender_to_mm(pherc_1667_88, Vec3f(31.8100, 43.9298, 2.5000)),
   blender_to_mm(pherc_1667_88, Vec3f(38.7932, 39.8972, 7.5000)),
