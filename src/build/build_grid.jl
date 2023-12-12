@@ -78,13 +78,10 @@ from the data server.
 
 This takes a long time and requires a lot of memory and disk space (~4TB/scroll).
 We did this on the data server so you don't have to. It took about a day to run.
-
-If you are sure that you still want to run it, comment out the @assert. Also,
-you might want to tune the `sx` and `sy` variables in `build_grid_layer` to use
+You might want to tune the `sx` and `sy` variables in `build_grid_layer` to use
 as much RAM as you can spend on the job, which will speed it up.
 """
 build_grid(scan::HerculaneumScan) = begin
-  @assert false "See ?build_grid. Are you sure you want to run this?"
   _, _, jzs = grid_size(scan)
   for jz in 1:jzs
     build_grid_layer(scan, jz)
