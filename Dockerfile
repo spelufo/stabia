@@ -14,16 +14,18 @@ COPY --from=ilastik /opt/ilastik-1.4.0-Linux /opt/ilastik
 
 # Install stabia
 
-COPY --chown=1000:1000 . /opt/stabia
-RUN mkdir -p /mnt/vesuvius && chown -R 1000:1000 /mnt/vesuvius
-
-USER stabia
-RUN mkdir /mnt/vesuvius/data /mnt/vesuvius/ilastik
 ENV VESUVIUS_DATA_DIR=/mnt/vesuvius/data
 ENV VESUVIUS_ILASTIK_DIR=/mnt/vesuvius/ilastik
-COPY ilastik/* /mnt/vesuvius/ilastik/
+RUN mkdir -p /mnt/vesuvius/{data,ilastik} && chown -R 1000:1000 /mnt/vesuvius
+COPY --chown=1000:1000 ilastik/* /mnt/vesuvius/ilastik/
 
+RUN mkdir -p /opt/stabia && chown -R 1000:1000 /opt/stabia
+COPY --chown=1000:1000 dev.sh Project.toml Manifest.toml LICENSE /opt/stabia/
+
+USER stabia
 WORKDIR /opt/stabia
 RUN julia --project=. -e 'using Pkg; Pkg.instantiate()'
+
+COPY --chown=1000:1000 src /opt/stabia/src
 
 ENTRYPOINT ["julia", "--project=."]

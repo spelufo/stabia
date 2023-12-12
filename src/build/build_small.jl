@@ -62,7 +62,10 @@ resolution version of the scroll saved as a 3D tif file.
 
 You must first run `build_small` to build the files this uses as input.
 """
-build_small_volume(scan::HerculaneumScan) = begin
+build_small_volume(scan::HerculaneumScan; from=:server) = begin
+  if !isfile(small_slice_path(scan, 1))
+    build_small(scan; from=from)
+  end
   vol = Array{Gray{N0f16}}(undef, small_size(scan))
   for (i, iz) in enumerate(1:SMALLER_BY:scan.slices)
     vol[:,:, i] = TiffImages.load(small_slice_path(scan, iz))
