@@ -24,6 +24,13 @@ download_file(path::String) = begin
   out
 end
 
+download_volpkg_scan_meta(volpkg_path::String, scan_id::String) = begin
+  meta_path = "$volpkg_path/volumes/$scan_id/meta.json"
+  scan_path = joinpath(DATA_DIR, volpkg_path, "volumes", scan_id)
+  isdir(scan_path) || mkpath(scan_path)
+  download_file(meta_path)
+end
+
 """
   load_tiff_from_server(path::String)
 
@@ -150,15 +157,62 @@ download_segment_obj(scan::HerculaneumScan, segment_id::AbstractString; hari=fal
   out
 end
 
-extract_server_dir_links(s) =
-  [match(r"href=\"([^\"]*)/\"", l).captures[1] for l = split(s, "\n") if startswith(l, "<a ")]
+extract_server_dir_links(s) = begin
+  links = []
+  for l = split(s, "\n")
+    if startswith(l, "<a ")
+      m = match(r"href=\"([^\"]*)/\"", l)
+      if !isnothing(m)
+        push!(links, m.captures[1])
+      end
+    end
+  end
+  links
+end
+
+get_server_dir_links(path) = begin
+  buffer = IOBuffer()
+  download_file_to_out(path, buffer)
+  extract_server_dir_links(String(take!(buffer)))
+end
+
+list_scans(path) = begin
+  volpkgs = get_server_dir_links(path)
+  scans = Dict{String, Vector{String}}()
+  for volpkg in volpkgs
+    scans[volpkg] = get_server_dir_links("$path/$volpkg/volumes")
+  end
+  scans
+end
+
+list_scroll_scans() =
+  list_scans("full-scrolls")
+
+list_fragment_scans() =
+  list_scans("fragments")
+
+download_scan_metas(path) = begin
+  scans = []
+  for (volpkg, scan_ids) in list_scans(path)
+    for scan_id in scan_ids
+      volpkg_path = "$path/$volpkg"
+      download_volpkg_scan_meta(volpkg_path, scan_id)
+      push!(scans, scan_from_volpkg(volpkg_path, scan_id))
+    end
+  end
+  scans
+end
+
+download_scroll_scan_metas() =
+  download_scan_metas("full-scrolls")
+
+download_fragment_scan_metas() =
+  download_scan_metas("fragments")
 
 list_server_segments(scan::HerculaneumScan; hari=false) = begin
   dir = segments_server_path(scan; hari=hari)
-  buffer = IOBuffer()
-  download_file_to_out(dir, buffer)
-  dirstr = String(take!(buffer))
-  filter(extract_server_dir_links(dirstr)) do segment_id
+  links = get_server_dir_links(dir)
+  filter(links) do segment_id
     !isnothing(match(r"^\d+$", segment_id))
   end
 end

@@ -19,7 +19,7 @@ end
 
 scan_from_volpkg(volpkg_path, id) = begin
   meta_path = joinpath(DATA_DIR, volpkg_path, "volumes", id, "meta.json")
-  scan_from_meta(meta_path, volpkg_path, id)
+  scan_from_meta(meta_path, volpkg_path)
 end
 
 const Ints1 = NTuple{1, Int}
@@ -31,6 +31,7 @@ scroll_core(scan::HerculaneumScan) = begin
   if     scan == scroll_1_54    core = scroll_1_54_core_mm
   elseif scan == pherc_1667_88  core = pherc_1667_88_core_mm
   end
+  core
 end
 
 scan_mask(scan::HerculaneumScan) = begin
@@ -39,6 +40,7 @@ scan_mask(scan::HerculaneumScan) = begin
   elseif scan == pherc_1667_88  mask = pherc_1667_88_mask
   elseif scan == pherc_0332_53  mask = pherc_0332_53_mask
   end
+  mask
 end
 
 layer_cells(scan::HerculaneumScan, jz::Int) =

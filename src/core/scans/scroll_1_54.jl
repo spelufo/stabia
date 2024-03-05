@@ -1,4 +1,4 @@
-const scroll_1_54 = HerculaneumScan("full-scrolls/Scroll1.volpkg", "20230205180739", 7.91f0, 54f0, 8096, 7888, 14376)
+# const scroll_1_54 = HerculaneumScan("full-scrolls/Scroll1.volpkg", "20230205180739", 7.91f0, 54f0, 8096, 7888, 14376)
 
 scroll_1_54_core_mm = [
   blender_to_mm(scroll_1_54, Vec3f(40.7893, 24.4325, 2.5000)),
