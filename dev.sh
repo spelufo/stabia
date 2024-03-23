@@ -26,8 +26,36 @@ test() {
 }
 
 repl() {
+  build
   julia
 }
+
+build_snic() {
+  cc -Wall -O3 -DNDEBUG -fPIC src/segment/snic.c -shared -o snic.so
+  # cc -Wall -O3 -fPIC src/segment/snic.c -shared -o snic.so
+  nm -D --defined-only snic.so
+
+  # TODO: Adapt slic too, and compare performance.
+  # cc -Wall -O3 -fPIC src/segment/slic.c -shared -o slic.so
+  # nm -D --defined-only slic.so
+}
+
+build() {
+  build_snic
+}
+
+# run_gdb() {
+#   build && command gdb -ex "break __assert_fail" -ex run  --args ./main "$tif"
+# }
+
+# run_valgr() {
+#   build && valgrind ./main "$tif"
+# }
+
+# build_wasm() {
+#   clang --target=wasm32 -nostdlib -Wl,--no-entry -Wl,--allow-undefined -Wl,--export-all -o public/main.wasm src/main.c
+# }
+
 
 cmd="${1:-repl}"
 shift || true

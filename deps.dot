@@ -8,6 +8,10 @@ digraph deps {
   slices_tif -> cell_tif
   slices_tif -> small_tif
 
+  # manual core and mask
+  small_tif -> core [color="orange", label="manual trace core in blender"]
+  small_tif -> mask [color="orange", label="manual build mask in blender"]
+
   # ilastik
   cell_tif -> cell_h5
   cell_h5 -> probabilities_h5
