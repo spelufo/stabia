@@ -86,6 +86,10 @@ HeapNode heap_pop(Heap *heap) {
 
 // SNIC ////////////////////////////////////////////////////////////////////////
 
+// This is based on the paper and the code from:
+// - https://www.epfl.ch/labs/ivrl/research/snic-superpixels/
+// - https://github.com/achanta/SNIC/
+
 // There isn't a theoretical maximum for SNIC neighbors. The neighbors of a cube
 // would be 26, so if compactness is high we shouldn't exceed that by too much.
 // 56 results in sizeof(Superpixel) == 4*8*8 (4 64B cachelines).

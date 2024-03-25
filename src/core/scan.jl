@@ -26,9 +26,10 @@ const Ints1 = NTuple{1, Int}
 const Ints2 = NTuple{2, Int}
 const Ints3 = NTuple{3, Int}
 
-scroll_core(scan::HerculaneumScan) = begin
+scroll_core_mm(scan::HerculaneumScan) = begin
   core = nothing
   if     scan == scroll_1_54    core = scroll_1_54_core_mm
+  elseif scan == scroll_2_54    core = scroll_2_54_core_mm
   elseif scan == pherc_1667_88  core = pherc_1667_88_core_mm
   end
   core
@@ -76,7 +77,7 @@ cell_center_mm(scan::HerculaneumScan, jy::Real, jx::Real, jz::Real) = begin
 end
 
 scroll_radius_dir(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
-  core = scroll_core(scan)
+  core = scroll_core_mm(scan)
   @assert !isnothing(core) "Scan doesn't have core data."
   o = core[jz]
   p = cell_center_mm(scan, jy, jx, jz)
@@ -172,3 +173,14 @@ end
 
 @inline blender_to_px(scan::HerculaneumScan, p::Vec3f) =
   CELL_SIZE*p/5f0
+
+print_thaumato_umbilicus_txt(core_scan::HerculaneumScan, scan791::HerculaneumScan = core_scan) = begin
+  # Get the scroll core in mm, and convert it to pixels of scan791 coords.
+  # Thaumato assumes 7.91um scans, but I have the scroll 4 umbilicus for the 3.24 scan.
+  # This way I'm scaling it from 3.24 to 7.91, which I think should be legal
+  # because the data_scrolls page says "All volumes will be aligned to the canonical volume".
+  for p = scroll_core_mm(core_scan)
+    x, y, z = round.(Int, p / px_mm(scan791))
+    println("$(y+500), $(z+500), $(x+500)")
+  end
+end

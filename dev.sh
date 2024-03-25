@@ -31,8 +31,7 @@ repl() {
 }
 
 build_snic() {
-  cc -Wall -O3 -DNDEBUG -fPIC src/segment/snic.c -shared -o snic.so
-  # cc -Wall -O3 -fPIC src/segment/snic.c -shared -o snic.so
+  cc -Wall -O3 -fPIC src/segment/snic.c -shared -o snic.so
   nm -D --defined-only snic.so
 
   # TODO: Adapt slic too, and compare performance.
