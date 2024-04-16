@@ -3,6 +3,9 @@ from pathlib import Path
 import sys
 import vtk
 
+def mkdir(path):
+  if not Path(path).is_dir():
+    os.mkdir(path)
 
 def mesh_is_empty(mesh):
   return mesh.GetNumberOfCells() == 0 or mesh.GetNumberOfPoints() == 0
@@ -63,13 +66,12 @@ def split_components(mesh):
   return res
 
 
-def splitter(filename, dest_dir):
-  assert dest_dir.is_dir(), "DEST_DIR must be a directory"
-  segid = Path(filename).stem
+def split_segment(segment_obj, segmentation_dir):
+  segid = Path(segment_obj).stem
 
   # print("Loading...")
   reader = vtk.vtkOBJReader()
-  reader.SetFileName(filename)
+  reader.SetFileName(segment_obj)
   reader.Update()
   mesh = reader.GetOutput()
 
@@ -79,17 +81,47 @@ def splitter(filename, dest_dir):
   # print("Saving components...")
   for (jx, jy, jz), mesh in meshes:
     cell_name = f"cell_yxz_{jy:03d}_{jx:03d}_{jz:03d}"
-    cell_dir = dest_dir / cell_name
-    if not cell_dir.is_dir(): os.mkdir(cell_dir)
+    cell_dir = segmentation_dir / cell_name
+    mkdir(cell_dir)
+    splits_dir = cell_dir / "splits"
+    mkdir(splits_dir)
     for (i, component) in split_components(mesh):
       writer = vtk.vtkSTLWriter()
-      writer.SetFileName(cell_dir / f"{cell_name}_{segid}_{i:02d}.stl")
+      writer.SetFileName(splits_dir / f"{cell_name}_split_{segid}_{i:02d}.stl")
       writer.SetInputData(component)
       writer.Write()
 
+def split_segments(volpkg_dir, segment_ids):
+  assert volpkg_dir.is_dir(), "VOLPKG_DIR must be a directory"
+  segmentation_dir = volpkg_dir / "segmentation"
+  mkdir(segmentation_dir)
+  for segid in segment_ids:
+    print("Splitting segment ", segid)
+    split_segment(volpkg_dir / "paths" / segid / f"{segid}.obj", segmentation_dir)
+
+def main(volpkg_dir):
+  # We could do something like this to get all of them, but some are old versions,
+  # we'll need a whitelist of some sort.
+  # segment_ids = os.listdir(volpkg_dir / "paths")
+  # For now hardcoding the gp segments.
+  gp_segments = [
+    "20230929220926",
+    "20231005123336",
+    "20231007101619",
+    "20231210121321",
+    "20231012184424",
+    "20231022170901",
+    "20231221180251",
+    "20231106155351",
+    "20231031143852",
+    "20230702185753",
+    "20231016151002",
+  ]
+  split_segments(volpkg_dir, gp_segments)
+
 
 if __name__ == "__main__":
-  if len(sys.argv) != 3:
-    print("Usage:", sys.argv[0], "SEGMENT_OBJ DEST_DIR")
+  if len(sys.argv) != 2:
+    print("Usage:", sys.argv[0], "VOLPKG_DIR")
     exit(1)
-  splitter(sys.argv[1], Path(sys.argv[2]))
+  main(Path(sys.argv[1]))
