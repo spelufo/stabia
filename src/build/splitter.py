@@ -91,9 +91,9 @@ def split_segment(segment_obj, segmentation_dir, umbilicus):
     cell_name = f"cell_yxz_{jy:03d}_{jx:03d}_{jz:03d}"
     cell_dir = segmentation_dir / cell_name
     mkdir(cell_dir)
-    splits_dir = cell_dir / "splits"
-    mkdir(splits_dir)
-    save_mesh_stl(mesh, splits_dir / f"{cell_name}_split_{segid}_{ihalf}_{i:02d}.stl")
+    chunks_dir = cell_dir / "chunks"
+    mkdir(chunks_dir)
+    save_mesh_stl(mesh, chunks_dir / f"{cell_name}_chunk_{segid}_{ihalf}_{i:02d}.stl")
 
   # print("Splitting...")
   # 1. Split on z grid.
