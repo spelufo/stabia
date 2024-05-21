@@ -64,7 +64,7 @@ have_cell(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
   isfile(cell_path(scan, jy, jx, jz))
 
 load_cell(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
-  TiffImages.load(cell_path(scan, jy, jx, jz))
+  TiffImages.load(cell_path(scan, jy, jx, jz); verbose=false)
 
 cell_h5_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int)::String =
   joinpath(DATA_DIR, cell_h5_server_path(scan, jy, jx, jz))
@@ -107,6 +107,9 @@ load_small_slice(scan::HerculaneumScan, jz::Int) =
 
 # Segments
 
+segments_path(scan::HerculaneumScan) =
+  joinpath(DATA_DIR, scan.volpkg_path, "paths")
+
 segment_path(scan::HerculaneumScan, segment_id::AbstractString) =
   joinpath(DATA_DIR, segment_server_path(scan, segment_id))
 
@@ -116,6 +119,21 @@ have_segment(scan::HerculaneumScan, segment_id::AbstractString) =
 load_segment_mesh(scan::HerculaneumScan, segment_id::AbstractString) =
   load(joinpath(segment_path(scan, segment_id), "$segment_id.obj"))
 
+coallesce_segment_versions(segments) = begin
+  segs_by_minute = Dict{String,Vector{String}}()
+  for seg_id = segments
+    if isnothing(match(r"^\d{14}$", seg_id))
+      println("skipping segment with non-standard id $seg_id")
+      continue
+    end
+    seg_id_minute = seg_id[1:12]
+    if !haskey(segs_by_minute, seg_id_minute)
+      segs_by_minute[seg_id_minute] = []
+    end
+    push!(segs_by_minute[seg_id_minute], seg_id)
+  end
+  map(maximum, values(segs_by_minute))
+end
 
 # Build mask
 

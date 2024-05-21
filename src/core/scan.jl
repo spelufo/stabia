@@ -35,6 +35,9 @@ scroll_core_mm(scan::HerculaneumScan) = begin
   core
 end
 
+scroll_core_px(scan::HerculaneumScan) =
+  map(p -> round.(Int, p / px_mm(scan)), scroll_core_mm(scan))
+
 scan_mask(scan::HerculaneumScan) = begin
   mask = nothing
   if     scan == scroll_1_54    mask = scroll_1_54_mask
@@ -145,6 +148,14 @@ cell_containing(p) = begin
   (jy, jx, jz)
 end
 
+cent_containing(p) = begin
+  kx, ky, kz = Int.(div.(p, 100)) .+ 1
+  (ky, kx, kz)
+end
+
+cent_cell(cell::Tuple{Int,Int,Int}) =
+  div.(cell.-1, 5).+1
+
 mesh_cells(scan::HerculaneumScan, mesh) = begin
   cells = Set()
   for p = mesh.position
@@ -153,8 +164,39 @@ mesh_cells(scan::HerculaneumScan, mesh) = begin
   cells
 end
 
+mesh_cents(scan::HerculaneumScan, mesh) = begin
+  cents = Set()
+  for p = mesh.position
+    push!(cents, cent_containing(p))
+  end
+  cents
+end
+
 segment_cells(scan::HerculaneumScan, segment_id) =
   mesh_cells(scan, load_segment_mesh(scan, segment_id))
+
+segment_cents(scan::HerculaneumScan, segment_id) =
+  mesh_cents(scan, load_segment_mesh(scan, segment_id))
+
+scroll_1_gp_segments_cents() = begin
+  cents = Set{Tuple{Int,Int,Int}}()
+  for segment_id = scroll_1_gp_segments
+    union!(cents, segment_cents(scroll_1_54, segment_id))
+  end
+  cents
+end
+
+scroll_1_gp_cells_with_cent_counts() = begin
+  cents = scroll_1_gp_segments_cents()
+  cents_cells = map(cent_cell, collect(cents))
+  cells_with_cent_count = counter(cents_cells)
+  cells_with_cent_count
+end
+
+segment_quality(scan::HerculaneumScan, segment_id) = begin
+  @assert scan == scroll_1_54 "unsupported scan"
+  maximum(k for (k,ss) = scroll_1_54_segments_by_quality if segment_id in ss; init=-1)
+end
 
 print_blender_add_cells_code(cells) = begin
   println("cells = [")
@@ -165,8 +207,17 @@ print_blender_add_cells_code(cells) = begin
   println("vesuvius.add_grid_cells(cells)")
 end
 
-@inline cell_origin(jy::Int, jx::Int, jz::Int) =
-  Point3f(500f0 * (jx-1), 500f0 * (jy-1), 500f0 * (jz-1))
+print_blender_add_segments_code(segments) = begin
+  println("segments = [")
+  for s = segments  println("  $(repr(s)),") end
+  println("]")
+  println("from vesuvius import vesuvius")
+  println("from importlib import reload; reload(vesuvius)")
+  println("vesuvius.add_segments(segments)")
+end
+
+@inline cell_origin_px(jy::Int, jx::Int, jz::Int) =
+  CELL_SIZE*Vec3f(jx-1, jy-1, jz-1)
 
 @inline blender_to_mm(scan::HerculaneumScan, p::Vec3f) =
   cell_mm(scan)*p/5f0
@@ -183,4 +234,30 @@ print_thaumato_umbilicus_txt(core_scan::HerculaneumScan, scan791::HerculaneumSca
     x, y, z = round.(Int, p / px_mm(scan791))
     println("$(y+500), $(z+500), $(x+500)")
   end
+end
+
+group_layers_by_oj(scroll::HerculaneumScan) = begin
+  ly, lx, lz = grid_size(scroll)
+  groups = []
+  ojs = []
+  jz = 1
+  while jz <= lz
+    o = scroll_core_px(scroll)[jz]
+    oj1 = (round(Int, o[1]/500f0), round(Int, o[2]/500f0))
+    group = [jz]
+    push!(groups, group)
+    push!(ojs, oj1)
+    jz += 1
+    while jz <= lz
+      o = scroll_core_px(scroll)[jz]
+      oj = (round(Int, o[1]/500f0), round(Int, o[2]/500f0))
+      if oj == oj1
+        push!(group, jz)
+        jz += 1
+      else
+        break
+      end
+    end
+  end
+  groups, ojs
 end

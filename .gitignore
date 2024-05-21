@@ -1,6 +1,7 @@
 env.sh
 
 *.so
+*.log
 *.jld2
 imgui.ini
 
@@ -8,3 +9,6 @@ TODO.md
 src/attic
 src/python
 /ilastik
+*.nrrd
+__pycache__
+/logs

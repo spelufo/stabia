@@ -95,7 +95,7 @@ normal_equipotential_mesh_init(scan::HerculaneumScan, j::Ints3, N::Array{Vec3f, 
     do_point(iy::Int, ix::Int) = begin
       p = s.points[iy, ix]
       F = Vec3f(0f0)
-      for (jy, jx) = neighbors(s, (iy, ix))
+      for (jy, jx) = gs_neighbors(s, (iy, ix))
         q = s.points[jy, jx]
         # F += k_s * (q - p)
         if in_bounds(q)

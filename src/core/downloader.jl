@@ -1,6 +1,6 @@
 using Downloads, Base64, FileIO
 
-const DATA_URL = "http://dl.ash2txt.org"
+const DATA_URL = "https://dl.ash2txt.org"
 const DATA_AUTH = ENV["VESUVIUS_SERVER_AUTH"]
 
 
@@ -22,6 +22,13 @@ download_file(path::String) = begin
     download_file_to_out(path, out)
   end
   out
+end
+
+
+download_file_to_string(path) = begin
+  buffer = IOBuffer()
+  download_file_to_out(path, buffer)
+  String(take!(buffer))
 end
 
 download_volpkg_scan_meta(volpkg_path::String, scan_id::String) = begin
@@ -170,11 +177,8 @@ extract_server_dir_links(s) = begin
   links
 end
 
-get_server_dir_links(path) = begin
-  buffer = IOBuffer()
-  download_file_to_out(path, buffer)
-  extract_server_dir_links(String(take!(buffer)))
-end
+get_server_dir_links(path) =
+  extract_server_dir_links(download_file_to_string(path))
 
 list_scans(path) = begin
   volpkgs = get_server_dir_links(path)

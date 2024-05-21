@@ -37,6 +37,7 @@ scroll_scans = [
 ]
 
 include("scroll_1_54.jl")
+include("scroll_1_54_segments.jl")
 include("scroll_2_54.jl")
 include("scroll_2_88.jl")
 include("pherc_0332_53.jl")
@@ -44,3 +45,4 @@ include("pherc_0332_53_791.jl")
 include("pherc_0332_70.jl")
 include("pherc_1667_88.jl")
 include("pherc_1667_53.jl")
+

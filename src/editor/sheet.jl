@@ -74,7 +74,7 @@ GridSheetFromCenter(c::Vec3f, n::Vec3f, v::Vec3f, l::Float32, ny::Int, nx::Int; 
   GridSheet(o, u, v, l, ny, nx; o2 = o2 - Vec2f(hx, hy))
 end
 
-@inline neighbors(s::GridSheet, i::Tuple{Int, Int}) = begin
+@inline gs_neighbors(s::GridSheet, i::Tuple{Int, Int}) = begin
   iy, ix = i
   neighs = []
   iy - 1 > 0                 && push!(neighs, (iy-1, ix))

@@ -2,13 +2,16 @@ import os
 from pathlib import Path
 import sys
 import vtk
-
-def mkdir(path):
-  if not Path(path).is_dir():
-    os.mkdir(path)
+from stabia.core import *
 
 def mesh_is_empty(mesh):
   return mesh.GetNumberOfCells() == 0 or mesh.GetNumberOfPoints() == 0
+
+def load_obj(path):
+  reader = vtk.vtkOBJReader()
+  reader.SetFileName(path)
+  reader.Update()
+  return reader.GetOutput()
 
 def split_components(mesh):
   res = []
@@ -76,26 +79,20 @@ def save_mesh_stl(mesh, path):
   writer.SetInputData(mesh)
   writer.Write()
 
-def split_segment(segment_obj, segmentation_dir, umbilicus):
+def split_segment_into_cell_chunks(segment_obj, segmentation_dir, umbilicus):
   segid = Path(segment_obj).stem
-
-  # print("Loading...")
-  reader = vtk.vtkOBJReader()
-  reader.SetFileName(segment_obj)
-  reader.Update()
-  mesh = reader.GetOutput()
+  mesh = load_obj(segment_obj)
   dx = dy = dz = 500
   lx = ly = lz = 50
 
-  def save_split_mesh(mesh, jx, jy, jz, ihalf, i):
+  def save_split_chunk(chunk, jx, jy, jz, ihalf, i):
     cell_name = f"cell_yxz_{jy:03d}_{jx:03d}_{jz:03d}"
     cell_dir = segmentation_dir / cell_name
     mkdir(cell_dir)
     chunks_dir = cell_dir / "chunks"
     mkdir(chunks_dir)
-    save_mesh_stl(mesh, chunks_dir / f"{cell_name}_chunk_{segid}_{ihalf}_{i:02d}.stl")
+    save_mesh_stl(chunk, chunks_dir / f"{cell_name}_chunk_{segid}_{ihalf}_{i:02d}.stl")
 
-  # print("Splitting...")
   # 1. Split on z grid.
   # 2. Split each layer on x at grid boundary closest to umbilicus(jz).
   # 3. Separate components. Will result in one component per half winding.
@@ -109,78 +106,60 @@ def split_segment(segment_obj, segmentation_dir, umbilicus):
     px = lx_half*dz
     layer_half_0, layer_half_1 = split_mesh(layer, px, py, pz, dx, 0, 0)
     for (i, component) in split_components(layer_half_0):
-      for (jx, jy, _), mesh in split_mesh_through_xy_grid_planes(component, 0, 0, pz, lx_half, ly, dx, dy, jz):
-        save_split_mesh(mesh, jx, jy, jz, 0, i)
+      for (jx, jy, _), chunk in split_mesh_through_xy_grid_planes(component, 0, 0, pz, lx_half, ly, dx, dy, jz):
+        save_split_chunk(chunk, jx, jy, jz, 0, i)
     for (i, component) in split_components(layer_half_1):
-      for (jx, jy, _), mesh in split_mesh_through_xy_grid_planes(component, px, 0, pz, lx - lx_half, ly, dx, dy, jz):
-        save_split_mesh(mesh, jx + lx_half, jy, jz, 1, i)
+      for (jx, jy, _), chunk in split_mesh_through_xy_grid_planes(component, px, 0, pz, lx - lx_half, ly, dx, dy, jz):
+        save_split_chunk(chunk, jx + lx_half, jy, jz, 1, i)
 
 
-def split_segments(volpkg_dir, segment_ids, umbilicus):
+def split_segment_into_layer_rings(segment_obj, rings_dir, umbilicus):
+  segid = Path(segment_obj).stem
+  mesh = load_obj(segment_obj)
+  dx = dy = dz = 500
+  lx = ly = lz = 50
+
+  def save_split_ring(ring, jz, ihalf, i):
+    layer = f"layer_jz_{jz:03d}"
+    layer_dir = rings_dir / layer
+    mkdir(layer_dir)
+    save_mesh_stl(ring, layer_dir / f"{layer}_ring_{segid}_{ihalf}_{i:02d}.stl")
+
+  for jz, layer in split_mesh_through_parallel_planes(mesh, 0, 0, 0, 0, 0, dz, lz+1):
+    if jz < 1 or jz > len(umbilicus):
+      print("jz oob", jz)
+      continue
+    px, py, pz = umbilicus[jz-1]
+    lx_half = round(px/dz)
+    px = lx_half*dz
+    layer_half_0, layer_half_1 = split_mesh(layer, px, py, pz, dx, 0, 0)
+    # TODO: It would be best to sort the components by winding number.
+    # How? UVs? Raycast would work, but too much work / too expensive?
+    for (i, ring) in split_components(layer_half_0):
+      save_split_ring(ring, jz, 0, i)
+    for (i, ring) in split_components(layer_half_1):
+      save_split_ring(ring, jz, 1, i)
+
+def split_segments_into_cell_chunks(volpkg_dir, segment_ids, umbilicus):
   assert volpkg_dir.is_dir(), "VOLPKG_DIR must be a directory"
   segmentation_dir = volpkg_dir / "segmentation"
   mkdir(segmentation_dir)
   for segid in segment_ids:
     print("Splitting segment ", segid)
-    split_segment(volpkg_dir / "paths" / segid / f"{segid}.obj", segmentation_dir, umbilicus)
+    split_segment_into_cell_chunks(volpkg_dir / "paths" / segid / f"{segid}.obj", segmentation_dir, umbilicus)
 
-
-################################################################################
-
-gp_segments = [
-  "20230929220926",
-  "20231005123336",
-  "20231007101619",
-  "20231210121321",
-  "20231012184424",
-  "20231022170901",
-  "20231221180251",
-  "20231106155351",
-  "20231031143852",
-  "20230702185753",
-  "20231016151002",
-]
-
-umbilicus = [
-  (4079, 2443, 250),
-  (4070, 2367, 750),
-  (4081, 2327, 1250),
-  (4038, 2300, 1750),
-  (3978, 2240, 2250),
-  (3853, 2181, 2750),
-  (3730, 2196, 3250),
-  (3803, 2211, 3750),
-  (3827, 2247, 4250),
-  (3785, 2377, 4750),
-  (3795, 2551, 5250),
-  (3852, 2868, 5750),
-  (3884, 3282, 6250),
-  (3776, 3485, 6750),
-  (3721, 3535, 7250),
-  (3649, 3524, 7750),
-  (3547, 3498, 8250),
-  (3471, 3490, 8750),
-  (3393, 3480, 9250),
-  (3365, 3596, 9750),
-  (3288, 3690, 10250),
-  (3199, 3782, 10750),
-  (3085, 3917, 11250),
-  (2976, 4017, 11750),
-  (2978, 4185, 12250),
-  (2963, 4387, 12750),
-  (2879, 4627, 13250),
-  (2879, 4627, 13750),
-]
+def split_segments_into_layer_rings(volpkg_dir, segment_ids, umbilicus):
+  assert volpkg_dir.is_dir(), "VOLPKG_DIR must be a directory"
+  rings_dir = volpkg_dir / "rings"
+  mkdir(rings_dir)
+  for segid in segment_ids:
+    print("Splitting segment ", segid)
+    split_segment_into_layer_rings(volpkg_dir / "paths" / segid / f"{segid}.obj", rings_dir, umbilicus)
 
 def main(volpkg_dir):
   # We could do something like this to get all of them, but some are old versions,
   # we'll need a whitelist of some sort.
   # segment_ids = os.listdir(volpkg_dir / "paths")
   # For now hardcoding the gp segments.
-  split_segments(volpkg_dir, gp_segments, umbilicus)
-
-if __name__ == "__main__":
-  if len(sys.argv) != 2:
-    print("Usage:", sys.argv[0], "VOLPKG_DIR")
-    exit(1)
-  main(Path(sys.argv[1]))
+  split_segments_into_cell_chunks(volpkg_dir, gp_segments, scroll_1_umbilicus)
+  # split_segments_into_layer_rings(volpkg_dir, gp_segments, scroll_1_umbilicus)

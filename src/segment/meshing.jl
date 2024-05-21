@@ -62,7 +62,7 @@ potential_to_meshes(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
   if !isdir(sheet_dir)
     mkdir(sheet_dir)
     file_prefix = "$sheet_dir/$(cell_name(jy, jx, jz))_sheet_"
-    pos = Point3f(500f0 * (jx-1), 500f0 * (jy-1), 500f0 * (jz-1))
+    pos = Point3f(cell_origin_px(jy, jx, jz))
     P = load_cell_probabilities(scan, jy, jx, jz)
     ϕ, S = load_cell_potential(scan, jy, jx, jz)
     M = floor.(UInt32, ϕ .* (P .> 0.5f0))

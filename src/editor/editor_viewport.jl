@@ -81,7 +81,7 @@ BeginViewport(ed::Editor, view::Viewport) = begin
   height = floor(Int, view.size.y)
   view.visible = width > 0 && height > 0
   if view.visible
-    resize!(view.fb, width, height)
+    resize_fb!(view.fb, width, height)
     set_viewport!(view.camera, width, height)
 
     glBindFramebuffer(GL_FRAMEBUFFER, view.fb.id)

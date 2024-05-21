@@ -7,7 +7,7 @@ scroll_1_54_core_mm = [
   blender_to_mm(scroll_1_54, Vec3f(40.3812, 22.9994, 17.5000)),
   blender_to_mm(scroll_1_54, Vec3f(39.7798, 22.4042, 22.5000)),
   blender_to_mm(scroll_1_54, Vec3f(38.5250, 21.8075, 27.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(37.2981, 21.9632, 32.5000)),
+  blender_to_mm(scroll_1_54, Vec3f(38.2981, 21.9632, 32.5000)),
   blender_to_mm(scroll_1_54, Vec3f(38.0322, 22.1108, 37.5000)),
   blender_to_mm(scroll_1_54, Vec3f(38.2727, 22.4664, 42.5000)),
   blender_to_mm(scroll_1_54, Vec3f(37.8478, 23.7743, 47.5000)),
@@ -28,6 +28,8 @@ scroll_1_54_core_mm = [
   blender_to_mm(scroll_1_54, Vec3f(29.7758, 41.8506, 122.5000)),
   blender_to_mm(scroll_1_54, Vec3f(29.6297, 43.8699, 127.5000)),
   blender_to_mm(scroll_1_54, Vec3f(28.7917, 46.2693, 132.5000)),
+  blender_to_mm(scroll_1_54, Vec3f(28.7917, 46.2693, 137.5000)),
+  blender_to_mm(scroll_1_54, Vec3f(28.7917, 46.2693, 142.5000)),
 ]
 
 scroll_1_54_mask = [
@@ -3717,7 +3719,7 @@ scroll_1_54_mask = [
 
 
 scroll_1_54_gp_mask = [
-4 7 1 ;
+  4 7 1 ;
   4 8 1 ;
   4 9 1 ;
   4 10 1 ;

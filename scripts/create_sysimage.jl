@@ -2,25 +2,27 @@ using PackageCompiler
 
 packages = [
   "Base64",
+  "JSON",
   "Downloads",
   "LinearAlgebra",
-  "StaticArrays",
+  "Random",
   "Quaternions",
+  "StaticArrays",
   "GeometryBasics",
   "FFTW",
-  "Interpolations",
-  "Images",
-  "ImageFiltering",
-  "ImageTracking",
+
+  "MarchingCubes",
+  "DataStructures",
+  "Graphs", "SimpleWeightedGraphs",
+
   "FileIO",
-  "TiffImages",
-  "JLD2",
+  "Interpolations",
+  "Images", "ImageFiltering", "ImageTracking", "TiffImages",
+  "HDF5",
+  "JLD2", "CodecZlib",
 ]
 
 println("Creating sysimage...")
 PackageCompiler.create_sysimage(
-  packages;
-  sysimage_path=joinpath(dirname(@__DIR__), "stabia_sysimage.so"),
-  # precompile_execution_file=joinpath(@__DIR__, "create_sysimage_precompile.jl")
-  )
+  packages; sysimage_path=joinpath(dirname(@__DIR__), "stabia_sysimage.so"))
 println("Done.")

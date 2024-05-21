@@ -21,3 +21,8 @@ end
 "Project a to axis."
 @inline project(a::Vec3{F}, axis::Vec3{F}) where F <: AbstractFloat =
   dot(a, axis)*normalize(axis)
+
+
+@inline cot_angle(v::Vec3{F}, w::Vec3{F}) where F <: AbstractFloat = begin
+  dot(v, w)/norm(cross(v, w))
+end

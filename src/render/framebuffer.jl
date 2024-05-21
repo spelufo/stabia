@@ -17,7 +17,7 @@ Framebuffer(width::Int, height::Int) = begin
   fb
 end
 
-resize!(fb::Framebuffer, width::Int, height::Int) = begin
+resize_fb!(fb::Framebuffer, width::Int, height::Int) = begin
   if fb.id > 0 && width == fb.width && height == fb.height
     return false
   end
