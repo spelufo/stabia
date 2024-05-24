@@ -72,6 +72,29 @@ end
 Base.isempty(pc::PointCloud) = isempty(pc.points)
 Base.length(pc::PointCloud) = length(pc.points)
 
+# I arrived at this by looking at the parts of the svg that don't belong to the
+# spiral. I then imported all the potentially problematic cell front_sadjs into
+# blender, to see why they cause problems. Took 10 or 20 minutes. A few are
+# just reversed. Most are cells that contain the umbilicus so have sheets facing
+# each other grouped together. Reversing these doesn't solve the problem, though
+# one orientation could be better than the other.
+reversed_cells = [
+  (5,8,6),
+  (5,8,7),
+  (5,8,8),
+  (6,8,12),
+  (5,7,16),
+  (5,7,17),
+  (5,7,18),
+  (5,7,19),
+  (7,7,18),
+]
+skipped_cells = [
+  (7,5,26),
+  (8,4,26),
+  (9,4,26),
+]
+
 build_fronts_graph(scroll::HerculaneumScan, jzs::Vector{Int}, threshold::Float32) = begin
   ly, lx, lz = grid_size(scroll)
   front_ids = FrontId[]
@@ -93,6 +116,8 @@ build_fronts_graph(scroll::HerculaneumScan, jzs::Vector{Int}, threshold::Float32
     if have_cell_fronts(scroll, jy, jx, jz)
       lasti = nothing; lastid = nothing
       cell_fronts = load_cell_fronts(scroll, jy, jx, jz)
+      (jy,jx,jz) in skipped_cells && continue
+      (jy,jx,jz) in reversed_cells && reverse!(cell_fronts)
       for (i, front_id, mesh) = cell_fronts
         push!(front_is, i)
         push!(front_ids, front_id)
@@ -200,43 +225,49 @@ turns_to_assembly(turns::Vector{Int}, front_ids::Vector{FrontId}) = begin
   assembly
 end
 
-assembler_break_cycles!(g::SimpleWeightedDiGraph{Int64, Float32}, front_ids::Vector{FrontId}, max_cycle_length::Int, max_cycle_breaking_iters::Int) = begin
-  cycles = badcycles_limited_length(g, max_cycle_length)
-  qedges = PriorityQueue{Tuple{Int,Int}, Int}()
-  for cycle = cycles
-    src = cycle[end]
-    for dst = cycle
-      e = (src, dst)
-      if !haskey(qedges, e)  qedges[e] = 0  end
-      qedges[e] -= 1
-      src = dst
-    end
-  end
+assembler_break_cycles!(g::SimpleWeightedDiGraph{T, Float32}, orig_ids::Vector{<:Integer}, max_cycle_length::Int, max_cycle_breaking_iters::Int) where {T<:Integer} = begin
   edges_broken = []
-  while !isempty(qedges)
-    _, prio = peek(qedges)
-    src, dst = dequeue!(qedges)
-    rem_edge!(g, src, dst)
-    push!(edges_broken, (front_ids[src], front_ids[dst], get_weight(g, src, dst)))
+  # For assembly, this only runs a single iteration, but that's not a given.
+  for _ = 1:max_cycle_breaking_iters
+    cycles = badcycles_limited_length(g, max_cycle_length)
     n_cycles = length(cycles)
-    filter!(cycles) do cycle
-      cycle_has_edge(cycle, src, dst) || return true
-      # Update the priorities of the edges from solved cycles.
-      s = cycle[end]
-      for d = cycle
-        if haskey(qedges, (s, d))  qedges[(s, d)] += 1  end
-        s = d
+    @show n_cycles
+    n_cycles > 0 || break
+    qedges = PriorityQueue{Tuple{T,T}, Int}()
+    for cycle = cycles
+      src = cycle[end]
+      for dst = cycle
+        e = (src, dst)
+        if !haskey(qedges, e)  qedges[e] = 0  end
+        qedges[e] -= 1
+        src = dst
       end
-      false
     end
-    n_broken_cycles = n_cycles - length(cycles)
-    println("$(front_ids[src]) -> $(front_ids[dst]), $(-prio), n_broken_cycles = $n_broken_cycles")
-    length(cycles) > 0 || break
+    while !isempty(qedges)
+      _, prio = peek(qedges)
+      src, dst = dequeue!(qedges)
+      rem_edge!(g, src, dst)
+      push!(edges_broken, (orig_ids[src], orig_ids[dst], get_weight(g, src, dst)))
+      n_cycles = length(cycles)
+      filter!(cycles) do cycle
+        cycle_has_edge(cycle, src, dst) || return true
+        # Update the priorities of the edges from solved cycles.
+        s = cycle[end]
+        for d = cycle
+          if haskey(qedges, (s, d))  qedges[(s, d)] += 1  end
+          s = d
+        end
+        false
+      end
+      n_broken_cycles = n_cycles - length(cycles)
+      println("$(orig_ids[src]) -> $(orig_ids[dst]), $(-prio), n_broken_cycles = $n_broken_cycles")
+      length(cycles) > 0 || break
+    end
   end
   edges_broken
 end
 
-cycle_has_edge(cycle::Vector{Int64}, esrc::Int64, edst::Int64) = begin
+cycle_has_edge(cycle::Vector{T}, esrc::T, edst::T) where {T<:Integer} = begin
   src = cycle[end]
   for dst = cycle
     if src == esrc && dst == edst
@@ -247,7 +278,7 @@ cycle_has_edge(cycle::Vector{Int64}, esrc::Int64, edst::Int64) = begin
   false
 end
 
-badcycles_limited_length(g::SimpleWeightedDiGraph{Int64, Float32}, max_cycle_length::Int) = begin
+badcycles_limited_length(g::SimpleWeightedDiGraph{T, Float32}, max_cycle_length::Int) where {T<:Integer} = begin
   cycles = simplecycles_limited_length(g, max_cycle_length)
   filter!(cycles) do cycle
     length(cycle) > 2 || return false
@@ -329,6 +360,7 @@ assembler_leveling(g::SimpleWeightedDiGraph{Int64, Float32}, front_ids::Vector{F
   # order them in bulk.
   sccs = strongly_connected_components(g)
   sccg = condensation(g, sccs)
+  @show length(weakly_connected_components(sccg))
   levels = Union{Nothing,Int}[nothing for v = 1:nv(sccg)]
   # TODO: We may be able to improve on graphviz leveling and save more manual
   # adjustment time. It is a bit icky to shell out like this but it works.
@@ -513,8 +545,15 @@ select_boundary_points_jz(pc::PointCloud, jz::Int) = begin
   PointCloud(pc.id, points, normals)
 end
 
-# Checking both directions yields the same results and is a little slower, so
-# we won't. Leaving this here in case it matters for other graphs.
+# Checking both directions yields similar results. Visually, in some cases it
+# seems to help isolated components be added to the majority component, which
+# probably means a whole cell was reversed and this solved it. However there's
+# one jz group where it results in a big block of multiple turns not being
+# properly split into turns. This might be because labelgen can produce cells
+# with a mix of orientations, so they aren't right backwards or forwards. Cells
+# containing the umbilicus will be like this, for instance.
+# TODO: A more general edit distance may be able to handle this case.
+# Until then, assuming the direction from the chunks seems best.
 # match_boundary(pclouds::Vector{PointCloud}, qclouds::Vector{PointCloud}, threshold::Float32) = begin
 #   m_straight = match_boundary_direct(pclouds, qclouds, threshold)
 #   reverse!(pclouds)
