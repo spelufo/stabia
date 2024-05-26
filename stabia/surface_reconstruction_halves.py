@@ -4,6 +4,7 @@ from stabia.core import *
 from stabia.mesh_utils import *
 import numpy as np
 import open3d as o3d
+import networkx
 
 layer_ojs = {}  # layer_ojs[jz] == (ojx, ojy)
 for jz in [1, 2, 3, 4]:
@@ -37,6 +38,59 @@ def chunk_points_path(name):
   pc_name = name.replace("chunk_recon", "fronts")
   return segmentation_dir() / name[:20] / "sadjs" / f"{pc_name}.ply"
 
+def mesh_cleanup(mesh_o3d):
+  mesh_o3d.remove_non_manifold_edges()
+  mesh_o3d.merge_close_vertices(0.001)
+  mesh_o3d.remove_duplicated_vertices()
+  mesh_o3d.remove_duplicated_triangles()
+  mesh_o3d.remove_unreferenced_vertices()
+  mesh_o3d.remove_degenerate_triangles()
+  # This seems to keep the majority normal direction, but without knowing
+  # how it works there's the risk that it flips all the faces.
+  mesh_o3d.orient_triangles()
+
+  cis, cns, cas = mesh_o3d.cluster_connected_triangles()
+  print("component areas during cleanup:", cas)
+  max_area = max(cas)
+  # Any small value will remove the little bubble artifact components we are
+  # after. For the assembly sheets, I expect a single big component. This can be
+  # false when a umbilicus cell has a bit of sheet from the opposite half of the
+  # turn. A higher value like max_area/2 will likely get rid of these too, which
+  # is easier, but we will want to grab that component later to fill the hole
+  # on the other half turn.
+  max_allowed_area = max_area/2
+  remove_components = []
+  for i, area in enumerate(cas):
+    if area < max_allowed_area:
+      remove_components.append(i)
+  mesh_o3d.remove_triangles_by_mask([ci in remove_components for ci in cis])
+  mesh_o3d.remove_unreferenced_vertices()
+
+  # Fill holes: this may help but may also cost us a fair bit of time too.
+  # We need to convert to the new o3d format, then it converts to vtk internally
+  # (TODO: call vtk directly), which copies the data again...
+  # mesh_o3d = o3d.t.geometry.TriangleMesh.from_legacy(m).fill_holes(hole_size=50.0).to_legacy()
+
+  return mesh_o3d
+
+def mesh_report(mesh_o3d):
+  _, _, cas = mesh_o3d.cluster_connected_triangles()
+  area = sum(cas)
+  n_components = len(cas)
+  X = mesh_o3d.euler_poincare_characteristic()
+  nonmanifold_edges = mesh_o3d.get_non_manifold_edges(allow_boundary_edges=True)
+  boundary_edges = mesh_o3d.get_non_manifold_edges(allow_boundary_edges=False)
+  n_boundary_edges = len(boundary_edges) - len(nonmanifold_edges)
+  g = networkx.Graph()
+  g.add_edges_from(boundary_edges)
+  n_boundary_loops = networkx.number_connected_components(g)
+  genus =  1 - (X + n_boundary_loops*n_components)/2
+  print("n_components:", n_components,
+    "\tgenus:", genus,
+    "\tn_boundary_edges:", n_boundary_edges,
+    "\tn_boundary_loops:", n_boundary_loops,
+    "\tX:", X)
+
 def main(out_dir, *json_files):
   mkdir(out_dir)
   for json_file in json_files:
@@ -63,8 +117,12 @@ def main(out_dir, *json_files):
           # print(f"densities (min, max) == ({densities.min()}, {densities.max()})")
           # Tuned this value to remove the hanging sheets that appear when there
           # are no points nearby. The range is in the 2.0 to 8.0 ballpark.
+          # TODO: Poisson shouldn't produce inner holes in the mesh, but deleting
+          # vertices by density like this can. Removing only the ones that won't
+          # create holes in the mesh when removed would be better.
           mesh_o3d.remove_vertices_by_mask(densities < 5.0)
-          mesh_o3d.remove_non_manifold_edges()
+          mesh_o3d = mesh_cleanup(mesh_o3d)
+          mesh_report(mesh_o3d)
           mesh_tmp_path = f"{tmp_dir}/{mesh_name}.ply"
           o3d.io.write_triangle_mesh(mesh_tmp_path, mesh_o3d)
           mesh = vtk_load_mesh_ply(mesh_tmp_path)
