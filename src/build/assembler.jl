@@ -1,7 +1,12 @@
 const FrontsGraph = SimpleWeightedDiGraph{Int,Float32}
 
 assemble_scroll(scroll::HerculaneumScan; output_dir::String = "logs/assembler") = begin
-  # layers_by_oj, _ = group_layers_by_oj(scroll)
+  ly, lx, lz = grid_size(scroll)
+  assemble_scroll(scroll, 1, lz, output_dir=output_dir)
+end
+
+assemble_scroll_layers_by_oj(scroll::HerculaneumScan; output_dir::String = "logs/assembler") = begin
+    # layers_by_oj, _ = group_layers_by_oj(scroll)
   layers_by_oj = [                   # (ojx, ojy)
     [1, 2, 3, 4],                    #   (8, 5)
     [5, 6, 7, 8, 9],                 #   (8, 4)  # alt. [5, 6, 7], [8, 9],
@@ -15,22 +20,22 @@ assemble_scroll(scroll::HerculaneumScan; output_dir::String = "logs/assembler") 
   n = length(layers_by_oj)
   for (i, jzs) = enumerate(layers_by_oj)
     println("Assembling layer group $i/$n: $jzs ...")
-    @time assemble_layers(scroll::HerculaneumScan, jzs, output_dir=output_dir)
+    @time assemble_scroll(scroll::HerculaneumScan, jzs[1], jzs[end], output_dir=output_dir)
     println()
   end
 end
 
-assemble_layers(scroll::HerculaneumScan, jzs::Vector{Int}; output_dir::String = "logs/assembler") = begin
-  name = "assembly_jzs_$(zpad(jzs[1], 2))_$(zpad(jzs[end], 2))"
+assemble_scroll(scroll::HerculaneumScan, jz_start::Int, jz_end::Int; output_dir::String = "logs/assembler") = begin
+  name = "assembly_jzs_$(zpad(jz_start, 2))_$(zpad(jz_end, 2))"
 
   println("Building fronts graph...")
   threshold = 2f0
   @show threshold
-  g, front_ids, front_is, edges_same, edges_less, edges_wind, ojx, ojy =
-    build_fronts_graph(scroll, jzs, threshold)
+  g, front_ids, front_is, edges_same, edges_less, edges_wind =
+    build_fronts_graph(scroll, jz_start, jz_end, threshold)
 
   println("Breaking small cycles...")
-  max_cycle_length = 10
+  max_cycle_length = 12
   @show max_cycle_length
   edges_broken = assembler_break_cycles!(g, front_ids, max_cycle_length, 20)
 
@@ -42,13 +47,13 @@ assemble_layers(scroll::HerculaneumScan, jzs::Vector{Int}; output_dir::String = 
   # Graphviz debug output.
   dot_path = "$output_dir/$(name).dot"
   open(dot_path, "w") do f
-    debug_print_fronts_graphviz(front_ids, edges_same, edges_less, edges_wind, front_is, turns, edges_broken, ojx, ojy, io=f)
+    debug_print_fronts_graphviz(front_ids, edges_same, edges_less, edges_wind, front_is, turns, edges_broken, io=f)
   end
   run(`neato -Tsvg $dot_path -o $(replace(dot_path, ".dot"=>".svg"))`)
 
   # Blender import script output.
   open("$output_dir/$(name).py", "w") do f
-    print_blender_import_assembly(scroll, jzs, assembly, io=f)
+    print_blender_import_assembly(scroll, jz_start, jz_end, assembly, io=f)
   end
 
   # Save the results.
@@ -95,7 +100,12 @@ skipped_cells = [
   (9,4,26),
 ]
 
-build_fronts_graph(scroll::HerculaneumScan, jzs::Vector{Int}, threshold::Float32) = begin
+@inline jz_ojs(scroll::HerculaneumScan, jz::Int) = begin
+  o = scroll_core_px(scroll)[jz]
+  (round(Int, o[1]/500f0), round(Int, o[2]/500f0))
+end
+
+build_fronts_graph(scroll::HerculaneumScan, jz_start::Int, jz_end::Int, threshold::Float32) = begin
   ly, lx, lz = grid_size(scroll)
   front_ids = FrontId[]
   front_is = []
@@ -103,15 +113,12 @@ build_fronts_graph(scroll::HerculaneumScan, jzs::Vector{Int}, threshold::Float32
   edges_less = Tuple{FrontId,FrontId,Float32}[] # a -> b  iff w(a) < w(b)
   edges_wind = Tuple{FrontId,FrontId}[]
 
-  @assert jzs == jzs[1]:jzs[end] "Expected layers (jzs) to be a contiguous range."
-  ojs = [(round(Int, o[1]/500f0), round(Int, o[2]/500f0)) for o = scroll_core_px(scroll)[jzs]]
-  @assert allequal(ojs) "Expected layer cores to round to the same cell boundary."
-  ojx, ojy = first(ojs)
-
-  # Load all the point clouds. TODO: Don't need all at once, can use less memory.
+  # Load all the point clouds.
+  # TODO: Don't need all at once, could use less memory.
   println("  Loading point clouds...")
   point_clouds = Array{Vector{PointCloud}}(undef, ly, lx, lz)
-  for jz = jzs, jx = 1:lx, jy = 1:ly
+  for jz = jz_start:jz_end, jx = 1:lx, jy = 1:ly
+    ojx, ojy = jz_ojs(scroll, jz)
     point_clouds[jy, jx, jz] = PointCloud[]
     if have_cell_fronts(scroll, jy, jx, jz)
       lasti = nothing; lastid = nothing
@@ -136,7 +143,8 @@ build_fronts_graph(scroll::HerculaneumScan, jzs::Vector{Int}, threshold::Float32
   # Build the graph's edges by matching adjacent point clouds.
   println("  Matching point clouds at boundaries...")
   @inline point_clouds_ids(pcs::Vector{PointCloud}) = [pc.id for pc = pcs]
-  for jz = jzs, jx = 1:lx, jy = 1:ly-1
+  # Grid boundary plane where jy -> jy+1.
+  for jz = jz_start:jz_end, jx = 1:lx, jy = 1:ly-1
     pclouds = point_clouds[jy, jx, jz]; qclouds = point_clouds[jy+1, jx, jz]
     if !isempty(pclouds) && !isempty(qclouds)
       pclouds = select_boundary_points_jy(pclouds, jy)
@@ -149,8 +157,10 @@ build_fronts_graph(scroll::HerculaneumScan, jzs::Vector{Int}, threshold::Float32
       end
     end
   end
-  for jz = jzs, jx = 1:lx-1, jy = 1:ly
+  # Grid boundary plane where jx -> jx+1.
+  for jz = jz_start:jz_end, jx = 1:lx-1, jy = 1:ly
     pclouds = point_clouds[jy, jx, jz]; qclouds = point_clouds[jy, jx+1, jz]
+    ojx, ojy = jz_ojs(scroll, jz)
     if !isempty(pclouds) && !isempty(qclouds)
       pclouds = select_boundary_points_jx(pclouds, jx)
       qclouds = select_boundary_points_jx(qclouds, jx)
@@ -172,7 +182,9 @@ build_fronts_graph(scroll::HerculaneumScan, jzs::Vector{Int}, threshold::Float32
       end
     end
   end
-  for jz = jzs[1:end-1], jx = 1:lx, jy = 1:ly
+  # Grid boundary plane where jz -> jz+1.
+  for jz = jz_start:jz_end-1, jx = 1:lx, jy = 1:ly
+    pojx, pojy = jz_ojs(scroll, jz); qojx, qojy = jz_ojs(scroll, jz+1)
     pclouds = point_clouds[jy, jx, jz]; qclouds = point_clouds[jy, jx, jz+1]
     if !isempty(pclouds) && !isempty(qclouds)
       pclouds = select_boundary_points_jz(pclouds, jz)
@@ -180,7 +192,18 @@ build_fronts_graph(scroll::HerculaneumScan, jzs::Vector{Int}, threshold::Float32
       pids = point_clouds_ids(pclouds); qids = point_clouds_ids(qclouds)
       if length(pclouds) > 0 && length(qclouds) > 0
         for (ip, iq, d) = match_boundary(pclouds, qclouds, threshold)
-          push!(edges_same, (qids[iq], pids[ip], d))
+          if min(pojx, qojx) <= jx < max(pojx, qojx) && min(pojy, qojy) <= jy < max(pojy, qojy)
+            # These faces are ambiguous, so don't insert any edges. They must be
+            # rare if ocurring at all, so warn about their existence.
+            @warn "ambiguous jz->jz+1 boundary"
+            @show jz, jz+1, (pojx, pojy), (qojx, qojy)
+          elseif pojx <= jx < qojx && jy > ceil(Int, (pojy+qojy)/2)
+            push!(edges_wind, (qids[iq], pids[ip]))
+          elseif qojx <= jx < pojx && jy > ceil(Int, (pojy+qojy)/2)
+            push!(edges_wind, (pids[ip], qids[iq]))
+          else
+            push!(edges_same, (qids[iq], pids[ip], d))
+          end
         end
       end
     end
@@ -214,7 +237,7 @@ build_fronts_graph(scroll::HerculaneumScan, jzs::Vector{Int}, threshold::Float32
     end
   end
 
-  g, front_ids, front_is, edges_same, edges_less, edges_wind, ojx, ojy
+  g, front_ids, front_is, edges_same, edges_less, edges_wind
 end
 
 turns_to_assembly(turns::Vector{Int}, front_ids::Vector{FrontId}) = begin
@@ -400,8 +423,8 @@ assembler_leveling(g::SimpleWeightedDiGraph{Int64, Float32}, front_ids::Vector{F
   assembly, front_levels
 end
 
-print_blender_import_assembly(scroll::HerculaneumScan, jzs::Vector{Int}, assembly::Vector{Vector{Vector{FrontId}}}; io::IO=stdout) = begin
-  jztag = "$(zpad(jzs[1],2))_$(zpad(jzs[end],2))"
+print_blender_import_assembly(scroll::HerculaneumScan, jz_start::Int, jz_end::Int, assembly::Vector{Vector{Vector{FrontId}}}; io::IO=stdout) = begin
+  jztag = "$(zpad(jz_start,2))_$(zpad(jz_end,2))"
   println(io, "import bpy")
   println(io, "from vesuvius.utils import activate_collection")
   for (l, level) = enumerate(assembly)
@@ -420,8 +443,8 @@ print_blender_import_assembly(scroll::HerculaneumScan, jzs::Vector{Int}, assembl
   end
 end
 
-print_blender_import_assembly(scroll::HerculaneumScan, jzs::Vector{Int}, assembly::Vector{Vector{FrontId}}; io::IO=stdout) = begin
-  jztag = "$(zpad(jzs[1],2))_$(zpad(jzs[end],2))"
+print_blender_import_assembly(scroll::HerculaneumScan, jz_start::Int, jz_end::Int, assembly::Vector{Vector{FrontId}}; io::IO=stdout) = begin
+  jztag = "$(zpad(jz_start,2))_$(zpad(jz_end,2))"
   println(io, "import bpy")
   println(io, "from vesuvius.utils import activate_collection")
   for (l, level) = enumerate(assembly)
@@ -447,7 +470,7 @@ debug_print_sccg_graphviz(sccg, levels; io::IO=stdout) = begin
   println(io, "}")
 end
 
-debug_print_fronts_graphviz(front_ids, edges_same, edges_less, edges_wind, front_is, front_levels, edges_broken, ojx, ojy; io::IO=stdout) = begin
+debug_print_fronts_graphviz(front_ids, edges_same, edges_less, edges_wind, front_is, front_levels, edges_broken; io::IO=stdout) = begin
   edges_broken = [(a, b) for (a, b, _) = edges_broken]
   # colorschemes = ["paired10", "set310", "puor10", "piyg10", "prgn10"]
   ncolors = maximum(front_levels) + 1
@@ -455,7 +478,7 @@ debug_print_fronts_graphviz(front_ids, edges_same, edges_less, edges_wind, front
   println(io, "digraph {")
   println(io, "  node [style=filled, shape=circle, penwidth=0];")
   println(io, "  edge [style=bold];")
-  o = Vec2f(ojx, ojy)
+  o = Vec2f(8, 6) # one for the whole scroll, hopefully it doesn't matter
   for (front_id, i, l) = zip(front_ids, front_is, front_levels)
     jy, jx, jz = front_id_cell(front_id)
     r = Vec2f(jx, jy) - o
