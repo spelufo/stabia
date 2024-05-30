@@ -1,10 +1,12 @@
+import glob
 import json
 import tempfile
-from stabia.core import *
-from stabia.mesh_utils import *
 import numpy as np
 import open3d as o3d
+import igl
 import networkx
+from stabia.core import *
+from stabia.mesh_utils import *
 
 layer_ojs = {}  # layer_ojs[jz] == (ojx, ojy)
 for jz in [1, 2, 3, 4]:
@@ -85,8 +87,10 @@ def mesh_report(mesh_o3d, name):
   n_boundary_loops = networkx.number_connected_components(g)
   genus =  1 - (X + n_boundary_loops*n_components)/2
   print(name,
+    "\tn_vertices:", len(mesh_o3d.vertices),
+    "\tn_triangles:", len(mesh_o3d.triangles),
     "\tn_components:", n_components,
-    "\tareas:", list(map(round, cas)),
+    "\tareas:", list(map(round, cas)) if n_components < 10 else "[...]",
     "\tgenus:", genus,
     "\tn_boundary_edges:", n_boundary_edges,
     "\tn_boundary_loops:", n_boundary_loops,
@@ -112,10 +116,135 @@ def create_from_point_cloud_poisson(pcd, depth=8, width=0, scale=1.1, **kwargs):
     pcd, width=width, depth=depth, scale=scale, **kwargs
   )
 
-def main(out_dir, *json_files):
+def main(*args):
+  assemble_halves_meshes(*args)
+
+def assemble_halves_meshes(out_dir, assembly_file):
+  lz = 29 # TODO: Generalize: grid_size(scroll, 3)
+  mkdir(out_dir)
+  mkdir(f"{out_dir}/jzs")
+  with open(assembly_file, 'r') as f:
+    turns_chunk_names = json.load(f)
+
+  with tempfile.TemporaryDirectory() as tmp_dir:
+    for turn, (turn_collection_name, turn_chunk_names) in enumerate(turns_chunk_names.items()):
+      turn_name = f"turn_{turn:02d}"
+      print(f"\nReconstructing {turn_name} (from {turn_collection_name})...")
+
+      # Split the chunks between the two halves of the winding boundary.
+      halves = [[], []]
+      for chunk_name in turn_chunk_names:
+        jy, jx, jz, _, _ = parse_chunk_name(chunk_name)
+        jx_split, jy_split = layer_ojs[jz]
+        halves[int(jx <= jx_split)].append(chunk_name)
+
+      # Assemble each half.
+      for ihalf, half in enumerate(halves):
+        if len(half) == 0:
+          continue
+
+        # Load the chunk point clouds and run Poisson reconstruction to mesh them.
+        point_cloud = o3d.geometry.PointCloud()
+        for chunk_name in half:
+          point_cloud += o3d.io.read_point_cloud(str(chunk_points_path(chunk_name)))
+        mesh_name = f"{turn_name}_h{ihalf+1}"
+        # The poisson_width parameter determines the granularity / smoothness
+        # of the result. Twice the scan resolution preserves the surface geometry
+        # well while smoothing out the highest frequency kinks.
+        scan_res = 7.91; poisson_width = 2*scan_res
+        mesh_o3d, densities = create_from_point_cloud_poisson(point_cloud, width=poisson_width)
+        o3d.io.write_point_cloud(f"{out_dir}/{mesh_name}_points.ply", point_cloud)
+        densities = np.asarray(densities)
+        # print(f"densities (min, max) == ({densities.min()}, {densities.max()})")
+        # Tuned this value to remove the hanging sheets that appear when there
+        # are no points nearby. The range is in the 2.0 to 10.5 ballpark.
+        mesh_o3d.remove_vertices_by_mask(densities < 8.0)
+        mesh_o3d = mesh_cleanup(mesh_o3d)
+        mesh_report(mesh_o3d, f"{mesh_name}_tmp")
+        mesh_tmp_path = f"{tmp_dir}/{mesh_name}.ply"
+        o3d.io.write_triangle_mesh(mesh_tmp_path, mesh_o3d)
+
+        # Use vtk to clip the meshes along the winding boundary.
+        mesh = vtk_load(mesh_tmp_path)
+        # Clip the scroll bounds (just the z axis if fine for GP. TODO: x and y)
+        mesh = clip_mesh(mesh, 0, 0, 0*500, 0, 0, 1)
+        mesh = clip_mesh(mesh, 0, 0, lz*500, 0, 0, -1)
+        # Split the mesh at z planes where the umbilicus (ojs) changes grid cell.
+        meshes = []
+        meshes_jzs = [[1, None]]
+        meshes_ojs = [layer_ojs[1]]
+        for jz in range(2, lz+1):
+          if layer_ojs[jz] != layer_ojs[jz-1]:
+            chopped, mesh = split_mesh(mesh, 0, 0, (jz-1)*500, 0, 0, 1)
+            meshes.append(chopped)
+            meshes_jzs[-1][1] = jz-1
+            meshes_jzs.append([jz, None])
+            meshes_ojs.append(layer_ojs[jz])
+        meshes.append(mesh)
+        meshes_jzs[-1][1] = lz
+        assert len(meshes) == len(meshes_jzs) == len(meshes_ojs)
+        # Split at the winding plane for each jzs range with a common one.
+        for i, (mesh, jzs, ojs) in enumerate(zip(meshes, meshes_jzs, meshes_ojs)):
+          jzs_start, jzs_end = jzs
+          jx_split, jy_split = ojs
+          mesh = clip_mesh(mesh, jx_split*500, 0, 0, 1 if ihalf == 0 else -1, 0, 0)
+          meshes[i] = mesh
+          jzs_mesh_name = f"{mesh_name}_jzs_{jzs_start:02d}_{jzs_end:02d}"
+          if not vtk_mesh_is_empty(mesh):
+            vtk_save(f"{out_dir}/jzs/{jzs_mesh_name}.ply", mesh)
+          # else:
+          #   print(f"{jzs_mesh_name} is empty.")
+        mesh = merge_meshes(meshes)
+        n_components, genus = vtk_mesh_report(mesh, mesh_name)
+        # Save both to ply and obj, both work. Some programs may prefer one.
+        vtk_mesh_path = f"{out_dir}/{mesh_name}.ply"
+        vtk_save(vtk_mesh_path, mesh)
+        vtk_mesh_path = f"{out_dir}/{mesh_name}.obj"
+        vtk_save(vtk_mesh_path, mesh)
+
+        # This works but it makes the script take ~50 min instead of ~10 min,
+        # and the results are not so nice that we could naively merge them in
+        # 2d space. We will instead stitch the scroll half turns into one mesh
+        # and uv map the whole banner together.
+        # # Use igl for surface parametrization / uv mapping. Open3d does the io.
+        # if n_components == 1 and genus == 0:
+        #   mesh = o3d.io.read_triangle_mesh(vtk_mesh_path)
+        #   ok, mesh = build_uv_map(mesh)
+        #   if ok:
+        #     o3d.io.write_triangle_mesh(f"{out_dir}/{mesh_name}.obj", mesh)
+
+def build_uv_map(mesh):
+  vertices = np.asarray(mesh.vertices, dtype=np.float64) * 0.01
+  triangles = np.asarray(mesh.triangles, dtype=np.int32)
+  boundary = igl.boundary_loop(triangles)
+  boundary_uvs = igl.map_vertices_to_circle(vertices, boundary)
+  uvs = igl.harmonic(vertices, triangles, boundary, boundary_uvs, 1)
+  slim = igl.SLIM(vertices, triangles, v_init=uvs, b=boundary, bc=boundary_uvs,
+    energy_type=igl.SLIM_ENERGY_TYPE_SYMMETRIC_DIRICHLET, soft_penalty=0)
+  print("slim_energy:", slim.energy(), end="")
+  for i in range(8):
+    slim.solve(1)
+    print("\rslim_energy:", slim.energy(), end="")
+  print("\rslim_energy:", slim.energy())
+  uvs = slim.vertices()
+  uvs = normalize_uvs(uvs)
+  mesh.triangle_uvs = o3d.utility.Vector2dVector(uvs[triangles.flatten()])
+  assert mesh.has_triangle_uvs(), "failed to set triangle uvs"
+  return True, mesh
+
+def normalize_uvs(uvs):
+  uv_min = np.min(uvs, axis=0)
+  uv_max = np.max(uvs, axis=0)
+  uv_rect = (uv_max - uv_min)
+  print("uv_rect:", np.ceil(100*uv_rect))
+  return (uvs - uv_min) / uv_rect
+
+# Previous version, that didn't handle non plane winding boundaries, so it must
+# do each jz layer group separately.
+def assemble_jzs_halves_meshes(out_dir, *assembly_files):
   # o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Debug)
   mkdir(out_dir)
-  for json_file in json_files:
+  for json_file in assembly_files:
     jz_start, jz_end = map(int, json_file[-10:-5].split("_"))
     jx_split, jy_split = layer_ojs[jz_end]
     with open(json_file, 'r') as f:
@@ -124,7 +253,7 @@ def main(out_dir, *json_files):
       for turn, (turn_name, turn_chunk_names) in enumerate(turns_chunk_names.items()):
         turn_abs = turn+1 if jz_start >= 10 else turn + 5
         turn_abs_name = f"jzs_{jz_start:02d}_{jz_end:02d}_turn_{turn_abs:02d}"
-        print(f"Reconstructing {turn_abs_name} (from {turn_name})...")
+        print(f"\nReconstructing {turn_abs_name} (from {turn_name})...")
         halves = [[], []]
         for chunk_name in turn_chunk_names:
           jy, jx, jz, _, _ = parse_chunk_name(chunk_name)
@@ -154,8 +283,8 @@ def main(out_dir, *json_files):
           mesh_report(mesh_o3d, mesh_name)
           mesh_tmp_path = f"{tmp_dir}/{mesh_name}.ply"
           o3d.io.write_triangle_mesh(mesh_tmp_path, mesh_o3d)
-          mesh = vtk_load_mesh_ply(mesh_tmp_path)
+          mesh = vtk_load(mesh_tmp_path)
           mesh = clip_mesh(mesh, 0, 0, (jz_start-1)*500, 0, 0, 1)
           mesh = clip_mesh(mesh, 0, 0, jz_end*500, 0, 0, -1)
           mesh = clip_mesh(mesh, jx_split*500, 0, 0, 1 if ihalf == 0 else -1, 0, 0)
-          vtk_save_mesh_stl(f"{out_dir}/{mesh_name}.stl", mesh)
+          vtk_save(f"{out_dir}/{mesh_name}.stl", mesh)

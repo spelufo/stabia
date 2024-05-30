@@ -66,9 +66,9 @@ def poisson_recon_point_clouds(
         mesh_o3d = poisson_recon(point_cloud)
         mesh_tmp_path = f"{tmp_dir}/{mesh_name}.ply"
         o3d.io.write_triangle_mesh(mesh_tmp_path, mesh_o3d)
-        mesh = vtk_load_mesh_ply(mesh_tmp_path)
+        mesh = vtk_load(mesh_tmp_path)
         mesh = crop_mesh_to_cell(mesh, cell)
-        vtk_save_mesh_stl(f"{out_dir}/{mesh_name}.stl", mesh)
+        vtk_save(f"{out_dir}/{mesh_name}.stl", mesh)
 
 # if __name__ == '__main__':
 #   import sys

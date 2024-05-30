@@ -3,46 +3,7 @@ from pathlib import Path
 import sys
 import vtk
 from stabia.core import *
-
-def mesh_is_empty(mesh):
-  return mesh.GetNumberOfCells() == 0 or mesh.GetNumberOfPoints() == 0
-
-def load_obj(path):
-  reader = vtk.vtkOBJReader()
-  reader.SetFileName(path)
-  reader.Update()
-  return reader.GetOutput()
-
-def split_components(mesh):
-  res = []
-  conn = vtk.vtkConnectivityFilter()
-  conn.SetInputData(mesh)
-  conn.SetExtractionModeToAllRegions()
-  conn.ColorRegionsOn()
-  conn.Update()
-  sel = vtk.vtkThreshold()
-  sel.SetInputArrayToProcess(0, 0, 0, 0, "RegionId")
-  sel.SetInputConnection(conn.GetOutputPort())
-  sel.AllScalarsOff()
-  for i in range(conn.GetNumberOfExtractedRegions()):
-    sel.SetLowerThreshold(i)
-    sel.SetUpperThreshold(i)
-    geom = vtk.vtkGeometryFilter()
-    geom.SetInputConnection(sel.GetOutputPort())
-    geom.Update()
-    res.append((i+1, geom.GetOutput()))
-  return res
-
-def split_mesh(mesh, px, py, pz, nx, ny, nz):
-  plane = vtk.vtkPlane()
-  plane.SetOrigin(px, py, pz)
-  plane.SetNormal(nx, ny, nz)
-  clipper = vtk.vtkClipPolyData()
-  clipper.SetInputData(mesh)
-  clipper.SetClipFunction(plane)
-  clipper.GenerateClippedOutputOn()
-  clipper.Update()
-  return clipper.GetClippedOutput(), clipper.GetOutput()
+from stabia.mesh_utils import *
 
 def split_mesh_through_parallel_planes(mesh, px, py, pz, nx, ny, nz, num_splits):
   # NOTE: We don't split at the endpoints of the range. Makes composition nicer.
@@ -50,9 +11,9 @@ def split_mesh_through_parallel_planes(mesh, px, py, pz, nx, ny, nz, num_splits)
   res = []
   for i in range(1, num_splits+1):
     chopped, mesh = split_mesh(mesh, px + i*nx, py + i*ny, pz + i*nz, nx, ny, nz)
-    if not mesh_is_empty(chopped):
+    if not vtk_mesh_is_empty(chopped):
       res.append((i, chopped))
-    if mesh_is_empty(mesh):
+    if vtk_mesh_is_empty(mesh):
       return res
   res.append((num_splits+1, mesh))
   return res
@@ -73,15 +34,9 @@ def split_mesh_through_grid_planes(mesh, px, py, pz, lx, ly, lz, dx, dy, dz):
 def split_mesh_through_simple_grid(mesh, lx, ly, lz, d):
   return split_mesh_through_grid_planes(mesh, 0, 0, 0, lx, ly, lz, d, d, d)
 
-def save_mesh_stl(mesh, path):
-  writer = vtk.vtkSTLWriter()
-  writer.SetFileName(path)
-  writer.SetInputData(mesh)
-  writer.Write()
-
 def split_segment_into_cell_chunks(segment_obj, segmentation_dir, umbilicus):
   segid = Path(segment_obj).stem
-  mesh = load_obj(segment_obj)
+  mesh = vtk_load(segment_obj)
   dx = dy = dz = 500
   lx = ly = lz = 50
 
@@ -91,7 +46,7 @@ def split_segment_into_cell_chunks(segment_obj, segmentation_dir, umbilicus):
     mkdir(cell_dir)
     chunks_dir = cell_dir / "chunks"
     mkdir(chunks_dir)
-    save_mesh_stl(chunk, chunks_dir / f"{cell_name}_chunk_{segid}_{ihalf}_{i:02d}.stl")
+    vtk_save(chunk, chunks_dir / f"{cell_name}_chunk_{segid}_{ihalf}_{i:02d}.stl")
 
   # 1. Split on z grid.
   # 2. Split each layer on x at grid boundary closest to umbilicus(jz).
@@ -115,7 +70,7 @@ def split_segment_into_cell_chunks(segment_obj, segmentation_dir, umbilicus):
 
 def split_segment_into_layer_rings(segment_obj, rings_dir, umbilicus):
   segid = Path(segment_obj).stem
-  mesh = load_obj(segment_obj)
+  mesh = vtk_load(segment_obj)
   dx = dy = dz = 500
   lx = ly = lz = 50
 
@@ -123,7 +78,7 @@ def split_segment_into_layer_rings(segment_obj, rings_dir, umbilicus):
     layer = f"layer_jz_{jz:03d}"
     layer_dir = rings_dir / layer
     mkdir(layer_dir)
-    save_mesh_stl(ring, layer_dir / f"{layer}_ring_{segid}_{ihalf}_{i:02d}.stl")
+    vtk_save(ring, layer_dir / f"{layer}_ring_{segid}_{ihalf}_{i:02d}.stl")
 
   for jz, layer in split_mesh_through_parallel_planes(mesh, 0, 0, 0, 0, 0, dz, lz+1):
     if jz < 1 or jz > len(umbilicus):
