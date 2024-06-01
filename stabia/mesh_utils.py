@@ -97,6 +97,29 @@ def crop_mesh_to_cell_open3d(mesh, cell):
   return mesh.crop(open3d.geometry.AxisAlignedBoundingBox(p0, p1))
 
 
+def o3d_mesh_report(mesh, name):
+  import networkx
+  _, _, cas = mesh.cluster_connected_triangles()
+  n_components = len(cas)
+  X = mesh.euler_poincare_characteristic()
+  nonmanifold_edges = mesh.get_non_manifold_edges(allow_boundary_edges=True)
+  boundary_edges = mesh.get_non_manifold_edges(allow_boundary_edges=False)
+  n_boundary_edges = len(boundary_edges) - len(nonmanifold_edges)
+  g = networkx.Graph()
+  g.add_edges_from(boundary_edges)
+  n_boundary_loops = networkx.number_connected_components(g)
+  genus =  1 - (X + n_boundary_loops*n_components)/2
+  print(name,
+    "\tn_vertices:", len(mesh.vertices),
+    "\tn_triangles:", len(mesh.triangles),
+    "\tn_components:", n_components,
+    "\tareas:", list(map(round, cas)) if n_components < 10 else "[...]",
+    "\tgenus:", genus,
+    "\tn_boundary_edges:", n_boundary_edges,
+    "\tn_boundary_loops:", n_boundary_loops,
+    "\tX:", X)
+
+
 def vtk_mesh_report(mesh, name):
   n_vertices = mesh.GetNumberOfPoints()
 
@@ -149,3 +172,27 @@ def vtk_mesh_report(mesh, name):
     "\tX:", X)
 
   return n_components, genus
+
+
+def vtk_is_edge_manifold(mesh):
+  f = vtk.vtkFeatureEdges()
+  f.SetInputData(mesh)
+  f.BoundaryEdgesOff()
+  f.FeatureEdgesOff()
+  f.NonManifoldEdgesOn()
+  f.ManifoldEdgesOff()
+  f.Update()
+  return f.GetOutput().GetNumberOfCells() == 0
+
+
+# This can probably introduce non-manifoldness.
+# def o3d_mesh_cleanup(mesh):
+#   mesh.remove_non_manifold_edges()
+#   mesh.merge_close_vertices(0.001) # in what coords? We can increase this to avoid thin triangles, probably
+#   mesh.remove_duplicated_vertices()
+#   mesh.remove_duplicated_triangles()
+#   mesh.remove_unreferenced_vertices()
+#   mesh.remove_degenerate_triangles()
+#   mesh.orient_triangles()
+#   mesh = o3d_keep_largest_component(mesh)
+#   return mesh
