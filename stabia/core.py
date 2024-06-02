@@ -68,3 +68,21 @@ scroll_1_umbilicus = [
   (2879, 4627, 13250),
   (2879, 4627, 13750),
 ]
+
+scroll_1_layer_ojs = {}  # scroll_1_layer_ojs[jz] == (ojx, ojy)
+for jz in [1, 2, 3, 4]:
+  scroll_1_layer_ojs[jz] = (8, 5)
+for jz in [5, 6, 7, 8, 9]:
+  scroll_1_layer_ojs[jz] = (8, 4)
+for jz in [10, 11]:
+  scroll_1_layer_ojs[jz] = (8, 5)
+for jz in [12]:
+  scroll_1_layer_ojs[jz] = (8, 6)
+for jz in [13, 14]:
+  scroll_1_layer_ojs[jz] = (8, 7)
+for jz in [15, 16, 17, 18, 19, 20, 21]:
+  scroll_1_layer_ojs[jz] = (7, 7)
+for jz in [22, 23, 24, 25]:
+  scroll_1_layer_ojs[jz] = (6, 8)
+for jz in [26, 27, 28, 29]:
+  scroll_1_layer_ojs[jz] = (6, 9)

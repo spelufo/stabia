@@ -6,24 +6,6 @@ from stabia.core import *
 from stabia.mesh_utils import *
 from stabia.uv_mapping import *
 
-layer_ojs = {}  # layer_ojs[jz] == (ojx, ojy)
-for jz in [1, 2, 3, 4]:
-  layer_ojs[jz] = (8, 5)
-for jz in [5, 6, 7, 8, 9]:
-  layer_ojs[jz] = (8, 4)
-for jz in [10, 11]:
-  layer_ojs[jz] = (8, 5)
-for jz in [12]:
-  layer_ojs[jz] = (8, 6)
-for jz in [13, 14]:
-  layer_ojs[jz] = (8, 7)
-for jz in [15, 16, 17, 18, 19, 20, 21]:
-  layer_ojs[jz] = (7, 7)
-for jz in [22, 23, 24, 25]:
-  layer_ojs[jz] = (6, 8)
-for jz in [26, 27, 28, 29]:
-  layer_ojs[jz] = (6, 9)
-
 def parse_chunk_name(name):
   # e.g. 'cell_yxz_005_007_001_sadj_chunk_recon_01_20230702185753002',
   parts = name.split("_")
@@ -81,12 +63,12 @@ def poisson_cleanup(mesh, densities):
       imax = i
   mesh.remove_triangles_by_mask([ci in remove_components for ci in cis])
   mesh.remove_unreferenced_vertices()
-  # NOTE: It would be nice to remove low density areas here, but we would need
+  # TODO: It would be nice to remove low density areas here, but we would need
   # to find a way to do it without creating non-manifold elements. Since we are
   # clipping at the winding boundaries it is not such a big deal not to. I will
   # do it manually in blender and it will be better for unfolding because I can
   # check the papyrus texture and delete bad segmentation areas at the top end
-  # of the scroll while I'm at it. Shouldn't take more than an hour.
+  # of the scroll while I'm at it. It took 2hs on GP segments.
   return mesh
 
 def assemble_halves_meshes(out_dir, assembly_file, rm_tmp=True):
@@ -109,7 +91,7 @@ def assemble_halves_meshes(out_dir, assembly_file, rm_tmp=True):
     jz_range = [[lz+1, 0], [lz+1, 0]]
     for chunk_name in turn_chunk_names:
       jy, jx, jz, _, _ = parse_chunk_name(chunk_name)
-      jx_split, jy_split = layer_ojs[jz]
+      jx_split, jy_split = scroll_1_layer_ojs[jz]
       ihalf = int(jx <= jx_split)
       halves[ihalf].append(chunk_name)
       jz_range[ihalf][0] = min(jz_range[ihalf][0], jz-1)
@@ -148,14 +130,14 @@ def assemble_halves_meshes(out_dir, assembly_file, rm_tmp=True):
       # Split the mesh at z planes where the umbilicus (ojs) changes grid cell.
       meshes = []
       meshes_jzs = [[1, None]]
-      meshes_ojs = [layer_ojs[1]]
+      meshes_ojs = [scroll_1_layer_ojs[1]]
       for jz in range(2, lz+1):
-        if layer_ojs[jz] != layer_ojs[jz-1]:
+        if scroll_1_layer_ojs[jz] != scroll_1_layer_ojs[jz-1]:
           chopped, mesh = split_mesh(mesh, 0, 0, (jz-1)*500, 0, 0, 1)
           meshes.append(chopped)
           meshes_jzs[-1][1] = jz-1
           meshes_jzs.append([jz, None])
-          meshes_ojs.append(layer_ojs[jz])
+          meshes_ojs.append(scroll_1_layer_ojs[jz])
       meshes.append(mesh)
       meshes_jzs[-1][1] = lz
       assert len(meshes) == len(meshes_jzs) == len(meshes_ojs)
