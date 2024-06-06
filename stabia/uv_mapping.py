@@ -104,4 +104,4 @@ def build_uvs_for_files(out_dir, *input_paths, debug_ic_mesh=False):
 # Each column (~500k vertices) takes ~7 min.
 
 def main(out_dir, *input_paths):
-  build_uvs_for_files(out_dir, *input_paths, debug_ic_mesh=True)
+  build_uvs_for_files(out_dir, *input_paths)

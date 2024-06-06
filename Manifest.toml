@@ -1,6 +1,6 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.2"
+julia_version = "1.10.3"
 manifest_format = "2.0"
 project_hash = "b7c1b6f124460731f46158c5efefe464bda297c0"
 
@@ -248,7 +248,7 @@ weakdeps = ["Dates", "LinearAlgebra"]
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.1.0+0"
+version = "1.1.1+0"
 
 [[deps.ComputationalResources]]
 git-tree-sha1 = "52cb3ec90e8a8bea0e62e275ba577ad0f74821f7"
@@ -1127,9 +1127,7 @@ version = "2.28.2+1"
 
 [[deps.MeshIO]]
 deps = ["ColorTypes", "FileIO", "GeometryBasics", "Printf"]
-git-tree-sha1 = "e1f862c9967d24d9497a5b710e8f6a036acc918e"
-repo-rev = "ply-normals"
-repo-url = "https://github.com/spelufo/MeshIO.jl"
+path = "/home/spelufo/pro/repos/MeshIO"
 uuid = "7269a6da-0436-5bbc-96c2-40638cbb6118"
 version = "0.4.11"
 

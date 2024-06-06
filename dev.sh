@@ -31,16 +31,33 @@ repl() {
 }
 
 build_snic() {
-  cc -Wall -O3 -fPIC src/segment/snic.c -shared -o snic.so
-  nm -D --defined-only snic.so
+  if [ ! -f ./snic.so ]; then
+    cc -Wall -O3 -fPIC src/build/snic.c -shared -o snic.so
+    nm -D --defined-only snic.so
+  fi
 
   # TODO: Adapt slic too, and compare performance.
-  # cc -Wall -O3 -fPIC src/segment/slic.c -shared -o slic.so
+  # cc -Wall -O3 -fPIC src/build/slic.c -shared -o slic.so
   # nm -D --defined-only slic.so
 }
 
+build_recon() {
+  (
+    cd recon
+    make poissonvesuvius
+  )
+  cp recon/Bin/Linux/PoissonVesuvius.so recon.so
+}
+
 build() {
+  build_recon
   build_snic
+}
+
+clean() {
+  (cd recon; make clean)
+  rm snic.so
+  # rm stabia_sysimage.so
 }
 
 # run_gdb() {

@@ -1,3 +1,5 @@
+include("snic.jl")
 include("labelgen.jl")
 include("assembler.jl")
+include("recon_poisson.jl")
 include("recon.jl")

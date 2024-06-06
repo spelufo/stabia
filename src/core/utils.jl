@@ -1,3 +1,7 @@
+using MeshIO
+
+save_ply(path, mesh; kwargs...) =
+  MeshIO.save(File{format"PLY_BINARY"}(path), mesh; kwargs...)
 
 @inline zpad(i::Int, ndigits::Int)::String =
   lpad(i, ndigits, "0")

@@ -367,7 +367,7 @@ save_point_cloud!(path, cell_origin::Point3f, points::Vector{Vec3f}, normals::Ve
   points = Point3f.(points)
   points .+= cell_origin
   mesh = Mesh(meta(points; normals=normals), Int[])
-  save(path, mesh)
+  save_ply(path, mesh)
 end
 
 mesh_and_save_superpixels!(

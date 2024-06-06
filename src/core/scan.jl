@@ -236,21 +236,24 @@ print_thaumato_umbilicus_txt(core_scan::HerculaneumScan, scan791::HerculaneumSca
   end
 end
 
+layer_oj(scroll::HerculaneumScan, jz::Int) = begin
+  o = scroll_core_px(scroll)[jz]
+  (round(Int, o[1]/500f0), round(Int, o[2]/500f0))
+end
+
 group_layers_by_oj(scroll::HerculaneumScan) = begin
   ly, lx, lz = grid_size(scroll)
   groups = []
   ojs = []
   jz = 1
   while jz <= lz
-    o = scroll_core_px(scroll)[jz]
-    oj1 = (round(Int, o[1]/500f0), round(Int, o[2]/500f0))
+    oj1 = layer_oj(scroll, jz)
     group = [jz]
     push!(groups, group)
     push!(ojs, oj1)
     jz += 1
     while jz <= lz
-      o = scroll_core_px(scroll)[jz]
-      oj = (round(Int, o[1]/500f0), round(Int, o[2]/500f0))
+      oj = layer_oj(scroll, jz)
       if oj == oj1
         push!(group, jz)
         jz += 1
@@ -261,3 +264,4 @@ group_layers_by_oj(scroll::HerculaneumScan) = begin
   end
   groups, ojs
 end
+
