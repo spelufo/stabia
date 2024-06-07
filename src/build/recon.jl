@@ -19,37 +19,44 @@ build_recon_halves(scroll::HerculaneumScan, out_dir, assembly_file; save_points=
 
   assembly = JSON.parsefile(assembly_file, dicttype=OrderedDict)
   layer_ojs_by_jz = [layer_oj(scroll, jz) for jz = 1:lz]
-  for (turn, (turn_collection_name, turn_chunk_names)) = enumerate(assembly)
-    turn_name = "turn_$(zpad(turn-1, 2))"
-    println("\nReconstructing $turn_name (from $turn_collection_name)...")
 
-    # Split the chunks between the two halves of the winding boundary.
-    halves = [[], []]
-    jz_range = [[lz+1, 0], [lz+1, 0]]
+  # Read in all the meshes and group them.
+  println("\nLoading chunk point clouds...")
+  chunks = [Mesh[] for _ = 1:4*length(assembly)]
+  jz_ranges = [Int[lz+1, 0] for _ = 1:2*length(assembly)]
+  for (turn, (turn_collection_name, turn_chunk_names)) = enumerate(assembly)
     for chunk_name = turn_chunk_names
       jy, jx, jz, _, _ = parse_chunk_name(chunk_name)
       jx_split, jy_split = layer_ojs_by_jz[jz]
-      ihalf = (jx <= jx_split) ? 2 : 1
+      ihalf  = (jx <= jx_split) ? 2 : 1
       iyhalf = (jy <= jy_split) ? 2 : 1
-      push!(halves[ihalf], chunk_name)
-      # Add the ones from the following quarter turn, to help poisson close in
-      # the form of a cylinder. Otherwise the pointWeights term makes it want
-      # to go back around and those regions aren't clipped.
-      ihalf == iyhalf && push!(halves[ihalf == 1 ? 2 : 1], chunk_name)
-      jz_range[ihalf][1] = min(jz_range[ihalf][1], jz-1)
-      jz_range[ihalf][2] = max(jz_range[ihalf][2], jz)
+      jz_ranges[2*(turn-1)+ihalf][1] = min(jz_ranges[2*(turn-1)+ihalf][1], jz-1)
+      jz_ranges[2*(turn-1)+ihalf][2] = max(jz_ranges[2*(turn-1)+ihalf][2], jz)
+      iquarter =
+        (ihalf == 1 && iyhalf == 1) ? 1 :
+        (ihalf == 1 && iyhalf == 2) ? 2 :
+        (ihalf == 2 && iyhalf == 2) ? 3 :
+        (ihalf == 2 && iyhalf == 1) ? 4 : 0
+      push!(chunks[(turn-1)*4 + iquarter], load(chunk_points_path(scroll, chunk_name)))
     end
+  end
 
-    for (ihalf, half) = enumerate(halves)
-      length(half) > 0 || continue
-
-      # Mesh the half turn with PoissonRecon.
+  # Run poisson on each half turn. A full turn of points is used, with a quarter
+  # before and a quarter after the half turn for extra support. They are clipped
+  # from the half turn result mesh.
+  for (turn, (turn_collection_name, turn_chunk_names)) = enumerate(assembly)
+    turn_name = "turn_$(zpad(turn-1, 2))"
+    println("\nReconstructing $turn_name (from $turn_collection_name)...")
+    for ihalf = 1:2
+      jz_min, jz_max = jz_ranges[2*(turn-1)+ihalf]
       ps = Point3f[]
       ns = Vec3f[]
-      for chunk_name = half
-        chunk_points_mesh = load(chunk_points_path(scroll, chunk_name))
-        append!(ps, metafree(coordinates(chunk_points_mesh)))
-        append!(ns, normals(chunk_points_mesh))
+      iq1 = (ihalf == 1) ? 4*turn - 4 : 4*turn - 2
+      for chunks_turn_for_half = @view chunks[max(1,iq1):min(iq1+3, length(chunks))]
+        for chunk_points_mesh = chunks_turn_for_half
+          append!(ps, metafree(coordinates(chunk_points_mesh)))
+          append!(ns, normals(chunk_points_mesh))
+        end
       end
       half_name = "$(turn_name)_h$(ihalf)"
       save_points && save_ply("$out_dir/tmp/$(half_name)_points.ply", Mesh(meta(ps, normals=ns), Int[]))
@@ -58,15 +65,9 @@ build_recon_halves(scroll::HerculaneumScan, out_dir, assembly_file; save_points=
       )
       save_poisson && save_ply("$out_dir/tmp/$(half_name)_poisson.ply", Mesh(meta(ps_recon, normals=ns_recon), tris_recon); values=densities)
 
-      # Split at the winding boundary.
       filter_mesh!(ps_recon, ns_recon, densities, tris_recon) do ip::Int, p::Point3f
-        # This threshold is very low on purpose. It only serves to remove the
-        # really coarse artifacts far away from the points. We can increase it (e.g. 8f0)
-        # to get more trimming for free, and in a sense that is fairer. But if
-        # we do we get holes and non-manifold artifacts.
-        densities[ip] >= 5f0 || return false
-        # Clip outside the jz extremes.
-        jz_range[ihalf][1]*500f0 <= p[3] <= jz_range[ihalf][2]*500f0 || return false
+        densities[ip] >= 8f0 || return false
+        jz_min*500f0 <= p[3] <= jz_max*500f0 || return false
         # Clip outside the winding boundary. The jz_inc/jz_dec stuff handles
         # vertices at the boundary, all of which we want to keep.
         x = p[1]; y = p[2]; z = p[3]
@@ -82,8 +83,9 @@ build_recon_halves(scroll::HerculaneumScan, out_dir, assembly_file; save_points=
       end
       # The normals will be all zero unless outputGradients is passed to PoissonRecon.
       # Do we want them? Save a little space skipping them for now.
-      # save_ply("$out_dir/$(half_name).ply", Mesh(meta(ps_recon, normals=ns_recon), tris_recon))
-      save_ply("$out_dir/$(half_name).ply", Mesh(ps_recon, tris_recon))
+      if length(ps_recon) > 0
+        save_ply("$out_dir/$(half_name).ply", Mesh(meta(ps_recon, normals=ns_recon), tris_recon))
+      end
     end
   end
 
