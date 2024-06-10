@@ -1,4 +1,4 @@
-scroll_1_54_segments_by_quality = Dict(
+scroll_1a_segments_by_quality = Dict(
   # 5 - as accurate as a succcessful khartes segment with visible continuous papyrus fibres
   5 => [
     "20230517204451",
@@ -280,7 +280,7 @@ scroll_1_54_segments_by_quality = Dict(
 )
 
 
-scroll_1_gp_segments = [
+scroll_1a_gp_segments = [
   "20230929220926",
   "20231005123336",
   "20231007101619",

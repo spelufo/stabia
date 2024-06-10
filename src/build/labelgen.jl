@@ -1,10 +1,10 @@
 
 build_sadjs_gp_layer(jz::Int) = begin
-  cells = collect(filter((row) -> (row[3] == jz), eachrow(scroll_1_54_gp_mask)))
+  cells = collect(filter((row) -> (row[3] == jz), eachrow(scroll_1a_gp_mask)))
   n = length(cells)
   for (i, (jy, jx, jz)) = enumerate(cells)
     println("\nAdjusting ($jy, $jx, $jz)\t$(round(100*i/n))%")
-    @time build_superpixel_adjusted_sheet_labels(scroll_1_54, jy, jx, jz)
+    @time build_superpixel_adjusted_sheet_labels(scroll_1a, jy, jx, jz)
   end
 end
 
@@ -16,13 +16,13 @@ end
   in_cell_bounds(iy, ix, iz)
 end
 
-scroll_1_gp_seg_ids = parse.(UInt64, scroll_1_gp_segments)
+scroll_1a_gp_seg_ids = parse.(UInt64, scroll_1a_gp_segments)
 
 # Is segment seg_id_1 is preferable to segment seg_id_2?
 @inline segment_gt(seg_id_1, seg_id_2) = begin
-  if seg_id_1 in scroll_1_gp_seg_ids && !(seg_id_2 in scroll_1_gp_seg_ids)
+  if seg_id_1 in scroll_1a_gp_seg_ids && !(seg_id_2 in scroll_1a_gp_seg_ids)
     true
-  elseif seg_id_2 in scroll_1_gp_seg_ids && !(seg_id_1 in scroll_1_gp_seg_ids)
+  elseif seg_id_2 in scroll_1a_gp_seg_ids && !(seg_id_1 in scroll_1a_gp_seg_ids)
     false
   else
     seg_id_1 > seg_id_2

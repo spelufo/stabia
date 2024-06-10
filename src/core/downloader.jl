@@ -167,7 +167,7 @@ end
 extract_server_dir_links(s) = begin
   links = []
   for l = split(s, "\n")
-    if startswith(l, "<a ")
+    if startswith(l, "<tr><td class=\"link\"><a ")
       m = match(r"href=\"([^\"]*)/\"", l)
       if !isnothing(m)
         push!(links, m.captures[1])
@@ -181,10 +181,13 @@ get_server_dir_links(path) =
   extract_server_dir_links(download_file_to_string(path))
 
 list_scans(path) = begin
-  volpkgs = get_server_dir_links(path)
+  folders = get_server_dir_links(path)
   scans = Dict{String, Vector{String}}()
-  for volpkg in volpkgs
-    scans[volpkg] = get_server_dir_links("$path/$volpkg/volumes")
+  for folder in folders
+    volpkgs = get_server_dir_links("$path/$folder")
+    for volpkg in volpkgs
+      scans["$folder/$volpkg"] = get_server_dir_links("$path/$folder/$volpkg/volumes")
+    end
   end
   scans
 end

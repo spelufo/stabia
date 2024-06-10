@@ -1,38 +1,36 @@
-# const scroll_1_54 = HerculaneumScan("full-scrolls/Scroll1.volpkg", "20230205180739", 7.91f0, 54f0, 8096, 7888, 14376)
-
-scroll_1_54_core_mm = [
-  blender_to_mm(scroll_1_54, Vec3f(40.7893, 24.4325, 2.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(40.6968, 23.6726, 7.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(40.8146, 23.2685, 12.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(40.3812, 22.9994, 17.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(39.7798, 22.4042, 22.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(38.5250, 21.8075, 27.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(38.2981, 21.9632, 32.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(38.0322, 22.1108, 37.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(38.2727, 22.4664, 42.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(37.8478, 23.7743, 47.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(37.9543, 25.5073, 52.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(38.5216, 28.6843, 57.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(38.8352, 32.8236, 62.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(37.7650, 34.8459, 67.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(37.2105, 35.3458, 72.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(36.4926, 35.2362, 77.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(35.4728, 34.9789, 82.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(34.7065, 34.9009, 87.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(33.9290, 34.8040, 92.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(33.6485, 35.9563, 97.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(32.8831, 36.9041, 102.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(31.9933, 37.8243, 107.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(30.8478, 39.1678, 112.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(29.7594, 40.1652, 117.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(29.7758, 41.8506, 122.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(29.6297, 43.8699, 127.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(28.7917, 46.2693, 132.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(28.7917, 46.2693, 137.5000)),
-  blender_to_mm(scroll_1_54, Vec3f(28.7917, 46.2693, 142.5000)),
+scroll_1a_core_mm = [
+  blender_to_mm(scroll_1a, Vec3f(40.7893, 24.4325, 2.5000)),
+  blender_to_mm(scroll_1a, Vec3f(40.6968, 23.6726, 7.5000)),
+  blender_to_mm(scroll_1a, Vec3f(40.8146, 23.2685, 12.5000)),
+  blender_to_mm(scroll_1a, Vec3f(40.3812, 22.9994, 17.5000)),
+  blender_to_mm(scroll_1a, Vec3f(39.7798, 22.4042, 22.5000)),
+  blender_to_mm(scroll_1a, Vec3f(38.5250, 21.8075, 27.5000)),
+  blender_to_mm(scroll_1a, Vec3f(38.2981, 21.9632, 32.5000)),
+  blender_to_mm(scroll_1a, Vec3f(38.0322, 22.1108, 37.5000)),
+  blender_to_mm(scroll_1a, Vec3f(38.2727, 22.4664, 42.5000)),
+  blender_to_mm(scroll_1a, Vec3f(37.8478, 23.7743, 47.5000)),
+  blender_to_mm(scroll_1a, Vec3f(37.9543, 25.5073, 52.5000)),
+  blender_to_mm(scroll_1a, Vec3f(38.5216, 28.6843, 57.5000)),
+  blender_to_mm(scroll_1a, Vec3f(38.8352, 32.8236, 62.5000)),
+  blender_to_mm(scroll_1a, Vec3f(37.7650, 34.8459, 67.5000)),
+  blender_to_mm(scroll_1a, Vec3f(37.2105, 35.3458, 72.5000)),
+  blender_to_mm(scroll_1a, Vec3f(36.4926, 35.2362, 77.5000)),
+  blender_to_mm(scroll_1a, Vec3f(35.4728, 34.9789, 82.5000)),
+  blender_to_mm(scroll_1a, Vec3f(34.7065, 34.9009, 87.5000)),
+  blender_to_mm(scroll_1a, Vec3f(33.9290, 34.8040, 92.5000)),
+  blender_to_mm(scroll_1a, Vec3f(33.6485, 35.9563, 97.5000)),
+  blender_to_mm(scroll_1a, Vec3f(32.8831, 36.9041, 102.5000)),
+  blender_to_mm(scroll_1a, Vec3f(31.9933, 37.8243, 107.5000)),
+  blender_to_mm(scroll_1a, Vec3f(30.8478, 39.1678, 112.5000)),
+  blender_to_mm(scroll_1a, Vec3f(29.7594, 40.1652, 117.5000)),
+  blender_to_mm(scroll_1a, Vec3f(29.7758, 41.8506, 122.5000)),
+  blender_to_mm(scroll_1a, Vec3f(29.6297, 43.8699, 127.5000)),
+  blender_to_mm(scroll_1a, Vec3f(28.7917, 46.2693, 132.5000)),
+  blender_to_mm(scroll_1a, Vec3f(28.7917, 46.2693, 137.5000)),
+  blender_to_mm(scroll_1a, Vec3f(28.7917, 46.2693, 142.5000)),
 ]
 
-scroll_1_54_mask = [
+scroll_1a_mask = [
   1  7  1 ;
   1  8  1 ;
   1  9  1 ;
@@ -3718,7 +3716,7 @@ scroll_1_54_mask = [
   11 11 29 ]
 
 
-scroll_1_54_gp_mask = [
+scroll_1a_gp_mask = [
   4 7 1 ;
   4 8 1 ;
   4 9 1 ;

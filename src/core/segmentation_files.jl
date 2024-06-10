@@ -373,7 +373,7 @@ cell_inkblocks(cells) = begin
 end
 
 download_inkblocks_jzs(jzs) = begin
-  blocks = cell_inkblocks(filter(j -> j[3]∈jzs, eachrow(scroll_1_54_gp_mask)))
+  blocks = cell_inkblocks(filter(j -> j[3]∈jzs, eachrow(scroll_1a_gp_mask)))
   n = length(blocks)
   path = "community-uploads/ryan/3d_predictions_scroll1.zarr"
   dir = joinpath(DATA_DIR, path)

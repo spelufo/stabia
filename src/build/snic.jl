@@ -91,7 +91,7 @@ load_cell_snic(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
 end
 
 build_snic(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = begin
-  W = convert(Array{Float32, 3}, load_cell(scroll_1_54, jy, jx, jz))
+  W = convert(Array{Float32, 3}, load_cell(scan, jy, jx, jz))
   labels, superpixels, d_seed, compactness = snic(W, 10, 100f0)
   save_cell_snic(scan, jy, jx, jz, labels, superpixels, d_seed, compactness)
 end

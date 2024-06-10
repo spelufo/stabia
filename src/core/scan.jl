@@ -28,9 +28,9 @@ const Ints3 = NTuple{3, Int}
 
 scroll_core_mm(scan::HerculaneumScan) = begin
   core = nothing
-  if     scan == scroll_1_54    core = scroll_1_54_core_mm
-  elseif scan == scroll_2_54    core = scroll_2_54_core_mm
-  elseif scan == pherc_1667_88  core = pherc_1667_88_core_mm
+  if     scan == scroll_1a          core = scroll_1a_core_mm
+  elseif scan == scroll_2a_791_54   core = scroll_2a_791_54_core_mm
+  elseif scan == scroll_4_324_88    core = scroll_4_324_88_core_mm
   end
   core
 end
@@ -40,9 +40,9 @@ scroll_core_px(scan::HerculaneumScan) =
 
 scan_mask(scan::HerculaneumScan) = begin
   mask = nothing
-  if     scan == scroll_1_54    mask = scroll_1_54_mask
-  elseif scan == pherc_1667_88  mask = pherc_1667_88_mask
-  elseif scan == pherc_0332_53  mask = pherc_0332_53_mask
+  if     scan == scroll_1a        mask = scroll_1a_mask
+  elseif scan == scroll_4_324_88  mask = scroll_4_324_88_mask
+  elseif scan == scroll_3_324_53  mask = scroll_3_324_53_mask
   end
   mask
 end
@@ -178,24 +178,24 @@ segment_cells(scan::HerculaneumScan, segment_id) =
 segment_cents(scan::HerculaneumScan, segment_id) =
   mesh_cents(scan, load_segment_mesh(scan, segment_id))
 
-scroll_1_gp_segments_cents() = begin
+scroll_1a_gp_segments_cents() = begin
   cents = Set{Tuple{Int,Int,Int}}()
-  for segment_id = scroll_1_gp_segments
-    union!(cents, segment_cents(scroll_1_54, segment_id))
+  for segment_id = scroll_1a_gp_segments
+    union!(cents, segment_cents(scroll_1a, segment_id))
   end
   cents
 end
 
-scroll_1_gp_cells_with_cent_counts() = begin
-  cents = scroll_1_gp_segments_cents()
+scroll_1a_gp_cells_with_cent_counts() = begin
+  cents = scroll_1a_gp_segments_cents()
   cents_cells = map(cent_cell, collect(cents))
   cells_with_cent_count = counter(cents_cells)
   cells_with_cent_count
 end
 
 segment_quality(scan::HerculaneumScan, segment_id) = begin
-  @assert scan == scroll_1_54 "unsupported scan"
-  maximum(k for (k,ss) = scroll_1_54_segments_by_quality if segment_id in ss; init=-1)
+  @assert scan == scroll_1a "unsupported scan"
+  maximum(k for (k,ss) = scroll_1a_segments_by_quality if segment_id in ss; init=-1)
 end
 
 print_blender_add_cells_code(cells) = begin

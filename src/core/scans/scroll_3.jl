@@ -1,9 +1,4 @@
-# const pherc_0332_53 = HerculaneumScan("full-scrolls/PHerc0332.volpkg", "20231027191953", 3.24f0, 53f0, 9414, 9414, 22941)
-
-# TODO:
-# pherc_0332_53_core_mm = []
-
-pherc_0332_53_mask = [
+scroll_3_324_53_mask = [
   16 5  3  ;
   11 10 3  ;
   13 5  3  ;

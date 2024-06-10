@@ -67,7 +67,7 @@ SheetSim() =
     # sheet sim
     nothing, # sheet
     nothing, # sheet_update!
-    Ref(cell_mm(scroll_1_54)/500f0), # δ
+    Ref(cell_mm(scroll_1a)/500f0), # δ
     Ref(1f0), # k_s
     Ref(1f0), # k_n
     false,

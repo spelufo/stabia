@@ -56,7 +56,7 @@ build_cell_derivatives(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int; thickne
   println("Done.")
 end
 
-# julia> build_cell_derivatives(scroll_1_54, 7, 7, 14)
+# julia> build_cell_derivatives(scroll_1a, 7, 7, 14)
 # Loading cell...
 #   1.615908 seconds (66.41 k allocations: 1.168 GiB, 2.61% gc time, 2.97% compilation time)
 # Building steger kernels...
@@ -109,7 +109,7 @@ build_cell_normals_steger(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = be
   nothing
 end
 
-# julia> build_cell_normals_steger(scroll_1_54, 7, 7, 14)
+# julia> build_cell_normals_steger(scroll_1a, 7, 7, 14)
 # Loading cell...
 #   1.331782 seconds (2.21 k allocations: 1.164 GiB, 1.90% gc time)
 # Loading cell derivatives...
@@ -174,7 +174,7 @@ build_cell_normals_relaxed(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) = b
   println("Done.")
 end
 
-# julia> build_cell_normals_relaxed(scroll_1_54, 7,7,14)
+# julia> build_cell_normals_relaxed(scroll_1a, 7,7,14)
 # Loading cell derivatives...
 #   0.742260 seconds (436.66 k allocations: 2.819 GiB, 5.36% gc time, 32.50% compilation time)
 # Loading cell normals...

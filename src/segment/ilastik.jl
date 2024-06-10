@@ -2,16 +2,16 @@
 
 ILASTIK_DIR = ENV["VESUVIUS_ILASTIK_DIR"]
 ILASTIK_TRAIN_CELL = Dict{String,Ints3}(
-  scroll_1_54.id   => (6, 8, 17),
-  pherc_1667_88.id => (9, 11, 23),
+  scroll_1a.id   => (6, 8, 17),
+  scroll_4_324_88.id => (9, 11, 23),
 )
 ILASTIK_PROJECTS_PC = Dict{String,String}(
-  scroll_1_54.id   => joinpath(ILASTIK_DIR, "PixelClassification_06_08_17.ilp"),
-  pherc_1667_88.id => joinpath(ILASTIK_DIR, "PixelClassification_pherc_1667_09_11_23.ilp"),
+  scroll_1a.id   => joinpath(ILASTIK_DIR, "PixelClassification_06_08_17.ilp"),
+  scroll_4_324_88.id => joinpath(ILASTIK_DIR, "PixelClassification_pherc_1667_09_11_23.ilp"),
 )
 ILASTIK_PROJECTS_OC = Dict{String,String}(
-  scroll_1_54.id   => joinpath(ILASTIK_DIR, "ObjectClassification_06_08_17.ilp"),
-  pherc_1667_88.id => joinpath(ILASTIK_DIR, "ObjectClassification_pherc_1667_09_11_23.ilp"),
+  scroll_1a.id   => joinpath(ILASTIK_DIR, "ObjectClassification_06_08_17.ilp"),
+  scroll_4_324_88.id => joinpath(ILASTIK_DIR, "ObjectClassification_pherc_1667_09_11_23.ilp"),
 )
 
 # File Conversion
@@ -175,16 +175,16 @@ run_ilastik_mesh_holes_threads(scan::HerculaneumScan) = begin
   end
 end
 
-# Chunk pherc_1667_88 small for ilastik.
-# build_pherc_1667_88_h5_chunks() = begin
-#   V = load_small_volume(pherc_1667_88)
+# Chunk scroll_4_324_88 small for ilastik.
+# build_scroll_4_324_88_h5_chunks() = begin
+#   V = load_small_volume(scroll_4_324_88)
 #   c = div.(size(V), 2)
 #   n = div.(size(V), 500)
 #   r = map((cx, nx) -> cx - div(500*nx, 2) + 1 : 500 : cx + div(500*nx, 2), c, n)
 #   for iz0 = r[3], ix0 = r[2], iy0 = r[1]
 #     v = V[iy0:iy0+499, ix0:ix0+499, iz0:iz0+499]
 #     filename = "chunk_y$(zpad(iy0, 5))_x$(zpad(ix0, 5))_z$(zpad(iz0, 5)).h5"
-#     save_ilastik_h5(v, joinpath(DATA_DIR, pherc_1667_88.volpkg_path, "volumes_small", filename))
+#     save_ilastik_h5(v, joinpath(DATA_DIR, scroll_4_324_88.volpkg_path, "volumes_small", filename))
 #   end
 # end
 
