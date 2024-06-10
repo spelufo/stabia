@@ -63,7 +63,7 @@ build_recon_halves(scroll::HerculaneumScan, out_dir, assembly_file; save_points=
       ps_recon, ns_recon, densities, tris_recon = poisson_recon(
         ps, ns, Vec3f(0), poisson_cube_length*500f0, depth=poisson_depth
       )
-      save_poisson && save_ply("$out_dir/tmp/$(half_name)_poisson.ply", Mesh(meta(ps_recon, normals=ns_recon), tris_recon); values=densities)
+      save_poisson && save_ply("$out_dir/tmp/$(half_name)_poisson.ply", Mesh(meta(ps_recon, normals=ns_recon), tris_recon)) #; values=densities)
 
       filter_mesh!(ps_recon, ns_recon, densities, tris_recon) do ip::Int, p::Point3f
         densities[ip] >= 8f0 || return false
