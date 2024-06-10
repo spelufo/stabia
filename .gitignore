@@ -12,3 +12,4 @@ src/python
 *.nrrd
 __pycache__
 /logs
+docs/drafts

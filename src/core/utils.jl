@@ -3,6 +3,21 @@ using MeshIO
 save_ply(path, mesh; kwargs...) =
   MeshIO.save(File{format"PLY_BINARY"}(path), mesh; kwargs...)
 
+ply_n_verts(path) = begin
+  open(path) do file
+    n_points = 0
+    line = readline(file)
+    while !startswith(line, "end_header")
+      if startswith(line, "element vertex")
+        n_points = parse(Int, split(line)[3])
+        break
+      end
+      line = readline(file)
+    end
+    n_points
+  end
+end
+
 @inline zpad(i::Int, ndigits::Int)::String =
   lpad(i, ndigits, "0")
 
