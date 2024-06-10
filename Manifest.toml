@@ -1,6 +1,6 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.3"
+julia_version = "1.10.4"
 manifest_format = "2.0"
 project_hash = "b7c1b6f124460731f46158c5efefe464bda297c0"
 
@@ -1127,7 +1127,9 @@ version = "2.28.2+1"
 
 [[deps.MeshIO]]
 deps = ["ColorTypes", "FileIO", "GeometryBasics", "Printf"]
-path = "/home/spelufo/pro/repos/MeshIO"
+git-tree-sha1 = "06fcafebb6f805586d598a2062bbf1c68ec8fac3"
+repo-rev = "ply-normals"
+repo-url = "https://github.com/spelufo/MeshIO.jl"
 uuid = "7269a6da-0436-5bbc-96c2-40638cbb6118"
 version = "0.4.11"
 
