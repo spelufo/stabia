@@ -1,3 +1,4 @@
+import os
 import vtk
 import numpy as np
 
@@ -104,7 +105,8 @@ def o3d_mesh_report(mesh, name):
   X = mesh.euler_poincare_characteristic()
   nonmanifold_edges = mesh.get_non_manifold_edges(allow_boundary_edges=True)
   boundary_edges = mesh.get_non_manifold_edges(allow_boundary_edges=False)
-  n_boundary_edges = len(boundary_edges) - len(nonmanifold_edges)
+  n_nonmanifold_edges = len(nonmanifold_edges)
+  n_boundary_edges = len(boundary_edges) - n_nonmanifold_edges
   g = networkx.Graph()
   g.add_edges_from(boundary_edges)
   n_boundary_loops = networkx.number_connected_components(g)
@@ -115,6 +117,7 @@ def o3d_mesh_report(mesh, name):
     "\tn_components:", n_components,
     "\tareas:", list(map(round, cas)) if n_components < 10 else "[...]",
     "\tgenus:", genus,
+    "\tn_nonmanifold_edges:", n_nonmanifold_edges,
     "\tn_boundary_edges:", n_boundary_edges,
     "\tn_boundary_loops:", n_boundary_loops,
     "\tX:", X)

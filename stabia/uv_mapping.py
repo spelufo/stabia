@@ -1,3 +1,4 @@
+import os
 import math
 import numpy as np
 import open3d as o3d
@@ -74,8 +75,8 @@ def build_uv_map(mesh, slim_energy_threshold=8.05, slim_max_iters=20, tex_size=1
 
 def build_uvs_for_file(input_path, output_path, debug_ic_mesh=False):
   mesh = o3d.io.read_triangle_mesh(input_path)
-  mesh_dir, mesh_filename = input_path.rsplit("/", 1)
-  mesh_name, _ = mesh_filename.rsplit(".", 1)
+  mesh_dir, mesh_filename = os.path.split(input_path)
+  mesh_name, _ = os.path.splitext(mesh_filename)
   ok, mesh, texture = build_uv_map(mesh, mesh_name=mesh_name, debug_ic_mesh=debug_ic_mesh)
   if ok:
     o3d.io.write_triangle_mesh(output_path, mesh)
@@ -89,7 +90,7 @@ def build_uvs_for_file(input_path, output_path, debug_ic_mesh=False):
 def build_uvs_for_files(out_dir, *input_paths, debug_ic_mesh=False):
   mkdir(out_dir)
   for input_path in input_paths:
-    mesh_dir, mesh_filename = input_path.rsplit("/", 1)
+    mesh_dir, mesh_filename = os.path.split(input_path)
     print(f"\nBuilding uvs for {mesh_filename} ...")
     out_filename = mesh_filename.replace(".ply", ".obj") # o3d doesn't support uvs on ply :(
     out_path = f"{out_dir}/{out_filename}"
