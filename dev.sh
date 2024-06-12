@@ -60,6 +60,25 @@ clean() {
   # rm stabia_sysimage.so
 }
 
+grids_docker_build() {
+  docker build --tag spelufo/stabia-grids:latest -f envs/grids/Dockerfile .
+}
+grids_docker_run() {
+  volpkg="$1"
+  scanid="$2"
+  shift; shift
+  if [ ! -f "$VESUVIUS_DATA_DIR/$volpkg/volumes/$scanid/meta.json" ]; then
+    echo "usage: ./dev.sh grids_docker_run \$volpkg \$scanid"
+    exit 1
+  fi
+  exec docker run --name stabia-grids \
+    -e "VESUVIUS_SERVER_AUTH=$VESUVIUS_SERVER_AUTH" -e JULIA_NUM_THREADS=auto \
+    -v "$VESUVIUS_DATA_DIR:/mnt/vesuvius/data:ro" \
+    -v "$VESUVIUS_DATA_DIR/$volpkg/volume_grids:/mnt/vesuvius/data/$volpkg/volume_grids:rw" \
+    -v "$VESUVIUS_DATA_DIR/$volpkg/volumes_small:/mnt/vesuvius/data/$volpkg/volumes_small:rw" \
+    -it spelufo/stabia-grids:latest "$@"
+}
+
 # run_gdb() {
 #   build && command gdb -ex "break __assert_fail" -ex run  --args ./main "$tif"
 # }

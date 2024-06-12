@@ -1,9 +1,19 @@
 env.sh
 
 *.so
+*.log
+*.bak
 *.jld2
 imgui.ini
 
 TODO.md
 src/attic
 src/python
+/ilastik
+*.nrrd
+__pycache__
+/logs
+docs/drafts
+
+/recon
+/stabia/net

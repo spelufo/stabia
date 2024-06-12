@@ -11,15 +11,16 @@ struct HerculaneumScan
   slices::Int
 end
 
-scan_from_meta(meta_path, volpkg_path) = begin
+scan_from_meta(meta_path::String) = begin
   meta = JSON.parsefile(meta_path)
+  volpkg_path = relpath(dirname(dirname(dirname(meta_path))), DATA_DIR)
   energy = parse(Float32, match(r"(\d+)\s*KeV"i, meta["name"])[1])
   HerculaneumScan(volpkg_path, meta["uuid"], meta["voxelsize"], energy, meta["width"], meta["height"], meta["slices"])
 end
 
-scan_from_volpkg(volpkg_path, id) = begin
+scan_from_volpkg(volpkg_path::String, id::String) = begin
   meta_path = joinpath(DATA_DIR, volpkg_path, "volumes", id, "meta.json")
-  scan_from_meta(meta_path, volpkg_path)
+  scan_from_meta(meta_path)
 end
 
 const Ints1 = NTuple{1, Int}

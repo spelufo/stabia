@@ -2,6 +2,7 @@ env.sh
 
 *.so
 *.log
+*.bak
 *.jld2
 imgui.ini
 
