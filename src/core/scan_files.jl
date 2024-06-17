@@ -63,6 +63,13 @@ cell_path(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int)::String =
 have_cell(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
   isfile(cell_path(scan, jy, jx, jz))
 
+have_cells(scan::HerculaneumScan, jys::UnitRange{Int}, jxs::UnitRange{Int}, jz::Int) = begin
+  for jy in jys, jx in jxs
+    have_cell(scan, jy, jx, jz) || return false
+  end
+  true
+end
+
 load_cell(scan::HerculaneumScan, jy::Int, jx::Int, jz::Int) =
   TiffImages.load(cell_path(scan, jy, jx, jz); verbose=false)
 
